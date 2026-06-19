@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f8fafc;
+  font-family: "Outfit", "Inter", "Segoe UI", sans-serif;
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  border-inline: none;
+  max-width: 100%;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Premium Glassmorphism */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+}
+
+.dark-glass-panel {
+  background: rgba(15, 23, 42, 0.95) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Soft Premium Card */
+.premium-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 20px -2px rgba(148, 163, 184, 0.12), 0 2px 8px -1px rgba(148, 163, 184, 0.08) !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+}
+
+.premium-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px -4px rgba(148, 163, 184, 0.2), 0 4px 12px -2px rgba(148, 163, 184, 0.12) !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #0284c7 0%, #0d9488 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-text-orange {
+  background: linear-gradient(135deg, #ea580c 0%, #d97706 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Custom modern scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
