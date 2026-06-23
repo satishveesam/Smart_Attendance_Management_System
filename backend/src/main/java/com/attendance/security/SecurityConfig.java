@@ -49,8 +49,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 // Swagger & API Docs
                 .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                // Allow own profile fetch
-                .requestMatchers("/api/employees/me").authenticated()
+                // Allow own profile fetch and password change
+                .requestMatchers("/api/employees/me", "/api/employees/me/password").authenticated()
                 // Require ADMIN for managing employees
                 .requestMatchers("/api/employees/**").hasRole("ADMIN")
                 // Other api requests require authentication
@@ -69,7 +69,9 @@ public class SecurityConfig {
             "http://localhost:5173", 
             "http://127.0.0.1:5173",
             "http://localhost:5174",
-            "http://127.0.0.1:5174"
+            "http://127.0.0.1:5174",
+            "http://52.63.150.105",
+            "https://52.63.150.105"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control"));

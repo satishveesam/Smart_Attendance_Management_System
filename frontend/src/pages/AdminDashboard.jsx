@@ -15,6 +15,17 @@ import {
   CircularProgress,
   TextField,
   Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip,
+  IconButton,
+  Tooltip as MuiTooltip,
+  Avatar,
 } from '@mui/material';
 import {
   PeopleAlt as PeopleIcon,
@@ -25,6 +36,11 @@ import {
   QrCode2 as QrCodeIcon,
   PinDrop as PinIcon,
   MyLocation as DetectIcon,
+  Close as CloseIcon,
+  Search as SearchIcon,
+  Settings as SettingsIcon,
+  AccessTime as TimeIcon,
+  Event as DateIcon,
 } from '@mui/icons-material';
 import {
   ResponsiveContainer,
@@ -41,11 +57,100 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [recentLogs, setRecentLogs] = useState([]);
   
+  // Card click details dialog states
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [detailsDialogTitle, setDetailsDialogTitle] = useState('');
+  const [detailsDialogData, setDetailsDialogData] = useState([]);
+  const [detailsType, setDetailsType] = useState(''); // 'employees' | 'present' | 'absent' | 'late' | 'percentage'
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [dialogSearch, setDialogSearch] = useState('');
+
+  const formatTime = (timeStr) => {
+    if (!timeStr) return '—';
+    try {
+      return new Date(timeStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (err) {
+      return '—';
+    }
+  };
+
+  const handleCardClick = async (title) => {
+    setDetailsDialogTitle(title);
+    setDetailsDialogOpen(true);
+    setDetailsLoading(true);
+    setDialogSearch('');
+    try {
+      if (title === 'Total Employees') {
+        setDetailsType('employees');
+        const res = await API.get('/employees');
+        setDetailsDialogData(res.data);
+      } else if (title === 'Present Today') {
+        setDetailsType('present');
+        const todayStr = new Date().toLocaleDateString('sv-SE');
+        const res = await API.get(`/reports?startDate=${todayStr}&endDate=${todayStr}`);
+        setDetailsDialogData(res.data);
+      } else if (title === 'Absent Today') {
+        setDetailsType('absent');
+        const todayStr = new Date().toLocaleDateString('sv-SE');
+        const [empRes, logsRes] = await Promise.all([
+          API.get('/employees'),
+          API.get(`/reports?startDate=${todayStr}&endDate=${todayStr}`)
+        ]);
+        const presentIds = new Set(logsRes.data.map(log => log.employeeId));
+        const absentEmployees = empRes.data.filter(emp => !presentIds.has(emp.id));
+        setDetailsDialogData(absentEmployees);
+      } else if (title === 'Late Arrivals') {
+        setDetailsType('late');
+        const todayStr = new Date().toLocaleDateString('sv-SE');
+        const res = await API.get(`/reports?startDate=${todayStr}&endDate=${todayStr}`);
+        const lateLogs = res.data.filter(log => log.status === 'LATE');
+        setDetailsDialogData(lateLogs);
+      } else if (title === 'Attendance %') {
+        setDetailsType('percentage');
+        const todayStr = new Date().toLocaleDateString('sv-SE');
+        const [empRes, logsRes] = await Promise.all([
+          API.get('/employees'),
+          API.get(`/reports?startDate=${todayStr}&endDate=${todayStr}`)
+        ]);
+        const presentCount = logsRes.data.length;
+        const totalCount = empRes.data.length;
+        const absentCount = totalCount - presentCount;
+        const lateCount = logsRes.data.filter(log => log.status === 'LATE').length;
+        
+        setDetailsDialogData({
+          total: totalCount,
+          present: presentCount,
+          absent: absentCount,
+          late: lateCount,
+          percentage: totalCount > 0 ? (presentCount / totalCount) * 100 : 0
+        });
+      }
+    } catch (err) {
+      console.error("Failed to fetch details for " + title, err);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  const filteredData = Array.isArray(detailsDialogData)
+    ? detailsDialogData.filter(item => {
+        if (!dialogSearch) return true;
+        const searchLower = dialogSearch.toLowerCase();
+        const code = (item.employeeCode || '').toLowerCase();
+        const name = (item.firstName ? `${item.firstName} ${item.lastName}` : item.employeeName || '').toLowerCase();
+        const dept = (item.department || '').toLowerCase();
+        const email = (item.email || '').toLowerCase();
+        return code.includes(searchLower) || name.includes(searchLower) || dept.includes(searchLower) || email.includes(searchLower);
+      })
+    : [];
+
   // QR Dialog state
   const [qrOpen, setQrOpen] = useState(false);
   const [qrToken, setQrToken] = useState('');
   const [qrLoading, setQrLoading] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
 
   // Geofence Location Settings state
   const [locationOpen, setLocationOpen] = useState(false);
@@ -130,6 +235,24 @@ const AdminDashboard = () => {
       const chartsRes = await API.get('/dashboard/admin/charts');
       setStats(statsRes.data);
       setChartData(chartsRes.data);
+
+      // Fetch office location coordinates for geofencing status widget
+      try {
+        const locRes = await API.get('/attendance/office-location');
+        setLocLatitude(locRes.data.latitude || '');
+        setLocLongitude(locRes.data.longitude || '');
+        setLocRadius(locRes.data.radiusMeters || '');
+      } catch (locErr) {
+        console.error("Failed to load geofencing settings in background", locErr);
+      }
+
+      // Fetch today's logs for recent activities feed
+      const todayStr = new Date().toLocaleDateString('sv-SE');
+      const logsRes = await API.get(`/reports?startDate=${todayStr}&endDate=${todayStr}`);
+      const sortedLogs = (logsRes.data || [])
+        .sort((a, b) => new Date(b.checkIn || b.attendanceDate) - new Date(a.checkIn || a.attendanceDate))
+        .slice(0, 4);
+      setRecentLogs(sortedLogs);
     } catch (err) {
       console.error("Failed to load dashboard statistics", err);
     } finally {
@@ -137,14 +260,31 @@ const AdminDashboard = () => {
     }
   };
 
+  // Cleanup QR Code URL to avoid memory leaks
+  useEffect(() => {
+    return () => {
+      if (qrCodeUrl) {
+        URL.revokeObjectURL(qrCodeUrl);
+      }
+    };
+  }, [qrCodeUrl]);
+
   const handleGenerateQr = async () => {
     setQrLoading(true);
     setQrOpen(true);
     try {
       const res = await API.get('/attendance/generate-qr');
-      setQrToken(res.data.token);
+      const token = res.data.token;
+      setQrToken(token);
+
+      // Fetch the QR image using API to pass JWT Authorization header
+      const imgRes = await API.get(`/attendance/qr-code/${token}`, {
+        responseType: 'blob'
+      });
+      const imageUrl = URL.createObjectURL(imgRes.data);
+      setQrCodeUrl(imageUrl);
     } catch (err) {
-      console.error("Failed to generate QR token", err);
+      console.error("Failed to generate QR token or load QR image", err);
     } finally {
       setQrLoading(false);
     }
@@ -156,140 +296,184 @@ const AdminDashboard = () => {
           title: 'Total Employees',
           value: stats.totalEmployees,
           icon: <PeopleIcon sx={{ fontSize: 22, color: '#0284c7' }} />,
-          bg: 'rgba(2, 132, 199, 0.08)',
-          borderColor: '#0284c7',
+          bg: '#e0f2fe',
+          themeColor: '#0284c7',
         },
         {
           title: 'Present Today',
           value: stats.presentToday,
           icon: <PresentIcon sx={{ fontSize: 22, color: '#10b981' }} />,
-          bg: 'rgba(16, 185, 129, 0.08)',
-          borderColor: '#10b981',
+          bg: '#d1fae5',
+          themeColor: '#10b981',
         },
         {
           title: 'Absent Today',
           value: stats.absentToday,
           icon: <AbsentIcon sx={{ fontSize: 22, color: '#ef4444' }} />,
-          bg: 'rgba(239, 68, 68, 0.08)',
-          borderColor: '#ef4444',
+          bg: '#fee2e2',
+          themeColor: '#ef4444',
         },
         {
           title: 'Late Arrivals',
           value: stats.lateArrivals,
           icon: <LateIcon sx={{ fontSize: 22, color: '#f59e0b' }} />,
-          bg: 'rgba(245, 158, 11, 0.08)',
-          borderColor: '#f59e0b',
+          bg: '#fef3c7',
+          themeColor: '#f59e0b',
         },
         {
           title: 'Attendance %',
           value: `${stats.attendancePercentage.toFixed(1)}%`,
           icon: <PercentIcon sx={{ fontSize: 22, color: '#8b5cf6' }} />,
-          bg: 'rgba(139, 92, 246, 0.08)',
-          borderColor: '#8b5cf6',
+          bg: '#ede9fe',
+          themeColor: '#8b5cf6',
         },
       ]
     : [];
 
   return (
     <AdminLayout>
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2.5 }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1e293b', fontFamily: 'Outfit', fontSize: { xs: '22px', sm: '28px' } }}>
-            Dashboard Overview
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter', fontSize: '13px' }}>
-            Live attendance tracking, geofence definitions, and operational controls.
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
-          <Button
-            variant="outlined"
-            startIcon={<PinIcon sx={{ fontSize: 16 }} />}
-            onClick={handleOpenLocationSettings}
-            fullWidth
-            sx={{
-              width: { sm: 'auto' },
-              textTransform: 'none',
-              borderRadius: 2.5,
-              px: 2.5,
-              py: 1.2,
-              fontFamily: 'Outfit',
-              fontSize: '12.5px',
-              borderColor: '#cbd5e1',
-              color: '#334155',
-              fontWeight: 600,
-              backgroundColor: '#fff',
-              '&:hover': {
-                borderColor: '#94a3b8',
-                backgroundColor: '#f8fafc',
-              },
-            }}
-          >
-            Office Geofence Settings
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<QrCodeIcon sx={{ fontSize: 16 }} />}
-            onClick={handleGenerateQr}
-            fullWidth
-            sx={{
-              width: { sm: 'auto' },
-              background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-              textTransform: 'none',
-              borderRadius: 2.5,
-              px: 2.5,
-              py: 1.2,
-              fontFamily: 'Outfit',
-              fontSize: '12.5px',
-              fontWeight: 600,
-              boxShadow: '0 4px 12px 0 rgba(2, 132, 199, 0.25)',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #0369a1 0%, #075985 100%)',
-                boxShadow: '0 6px 16px 0 rgba(2, 132, 199, 0.35)',
-              },
-            }}
-          >
-            Generate Attendance QR
-          </Button>
-        </Box>
-      </Box>
+      {/* Premium Hero Welcome Section */}
+      <Paper 
+        elevation={0}
+        sx={{ 
+          p: { xs: 1.5, sm: 4 }, 
+          mb: 2.5, 
+          borderRadius: 4, 
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          color: '#fff',
+          boxShadow: '0 10px 30px -5px rgba(15, 23, 42, 0.3)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Decorative background gradients */}
+        <Box sx={{ position: 'absolute', top: '-50%', right: '-20%', width: '400px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, rgba(56, 189, 248, 0) 70%)', zIndex: 0 }} />
+        <Box sx={{ position: 'absolute', bottom: '-40%', left: '-10%', width: '300px', height: '300px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0) 70%)', zIndex: 0 }} />
+
+        <Grid container spacing={{ xs: 1.5, sm: 3 }} alignItems="center" sx={{ position: 'relative', zIndex: 1 }}>
+          <Grid item xs={12}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <Chip 
+                label="Operational Control Active" 
+                size="small" 
+                sx={{ 
+                  bgcolor: 'rgba(16, 185, 129, 0.15)', 
+                  color: '#34d399', 
+                  fontWeight: 'bold', 
+                  fontFamily: 'Inter',
+                  fontSize: { xs: '8px', sm: '11px' },
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  height: { xs: 18, sm: 24 },
+                  '& .MuiChip-label': { px: 1 }
+                }} 
+              />
+            </Box>
+            <Typography variant="h4" sx={{ fontWeight: 800, fontFamily: 'Outfit', letterSpacing: '-0.5px', fontSize: { xs: '18px', sm: '32px' } }}>
+              SmartAttendance Dashboard
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#94a3b8', mt: 0.5, fontFamily: 'Inter', maxWidth: '600px', fontSize: '13px', lineHeight: 1.6, display: { xs: 'none', sm: 'block' } }}>
+              Monitor real-time biometric and location check-ins, manage geofencing coordinates, and export audit trails for your workforce.
+            </Typography>
+          </Grid>
+        </Grid>
+      </Paper>
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '40vh' }}>
           <CircularProgress color="primary" />
         </Box>
       ) : (
         <>
+                 {/* Quick Actions Panel */}
+          <Box sx={{ mb: 4, display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: { xs: 'stretch', sm: 'flex-end' } }}>
+            <Button
+              variant="outlined"
+              startIcon={<SettingsIcon sx={{ fontSize: 16 }} />}
+              onClick={handleOpenLocationSettings}
+              sx={{
+                width: { xs: '100%', sm: 'auto' },
+                textTransform: 'none',
+                borderRadius: 3,
+                px: 3,
+                py: 1.2,
+                fontFamily: 'Outfit',
+                fontSize: '12.5px',
+                borderColor: '#e2e8f0',
+                color: '#334155',
+                fontWeight: 600,
+                backgroundColor: '#fff',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.01)',
+                '&:hover': {
+                  borderColor: '#cbd5e1',
+                  backgroundColor: '#f8fafc',
+                },
+              }}
+            >
+              Configure Geofencing
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<QrCodeIcon sx={{ fontSize: 16 }} />}
+              onClick={handleGenerateQr}
+              sx={{
+                width: { xs: '100%', sm: 'auto' },
+                background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                textTransform: 'none',
+                borderRadius: 3,
+                px: 3,
+                py: 1.2,
+                fontFamily: 'Outfit',
+                fontSize: '12.5px',
+                fontWeight: 600,
+                boxShadow: '0 4px 14px 0 rgba(2, 132, 199, 0.2)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #0369a1 0%, #075985 100%)',
+                  boxShadow: '0 6px 18px 0 rgba(2, 132, 199, 0.3)',
+                },
+              }}
+            >
+              Generate Attendance QR
+            </Button>
+          </Box>
+
           {/* Stats Cards Row */}
-          <Grid container spacing={2.5} sx={{ mb: 4 }}>
-            {statCards.map((card) => (
-              <Grid item xs={6} sm={4} md={2.4} key={card.title}>
+          <Grid container spacing={1.5} sx={{ mb: 4 }}>
+            {statCards.map((card, index) => (
+              <Grid item xs={4} sm={4} md={2.4} key={card.title}>
                 <Card 
+                  onClick={() => handleCardClick(card.title)}
                   sx={{ 
                     height: '100%', 
-                    borderRadius: 3.5, 
-                    bgcolor: '#fff',
-                    border: '1px solid #f1f5f9',
-                    borderTop: `4px solid ${card.borderColor}`,
-                    boxShadow: '0 4px 20px -2px rgba(50, 50, 93, 0.03), 0 2px 8px -1px rgba(0, 0, 0, 0.01)',
-                    transition: 'all 0.2s ease',
+                    borderRadius: 3, 
+                    bgcolor: card.bg || '#fff',
+                    border: 'none',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    transition: 'all 0.2s ease-in-out',
                     '&:hover': {
-                      transform: 'translateY(-3px)',
-                      boxShadow: '0 8px 24px -2px rgba(50, 50, 93, 0.08), 0 4px 12px -1px rgba(0, 0, 0, 0.02)',
+                      transform: 'translateY(-4px)',
+                      boxShadow: `0 8px 24px -4px ${card.themeColor}40`,
+                      filter: 'brightness(0.98)'
                     }
                   }}
                 >
-                  <CardContent sx={{ p: { xs: 2, sm: 3 }, '&:last-child': { pb: { xs: 2, sm: 3 } } }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-                      <Typography variant="body2" sx={{ color: '#64748b', fontWeight: '600', fontSize: { xs: '11px', sm: '12.5px' }, fontFamily: 'Inter' }}>
+                  <CardContent sx={{ p: { xs: 0.8, sm: 2.2 }, '&:last-child': { pb: { xs: 0.8, sm: 2.2 } } }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: { xs: 0.6, sm: 1.2 } }}>
+                      <Typography variant="body2" sx={{ color: card.themeColor, fontWeight: '700', fontSize: { xs: '6.8px', sm: '12px' }, fontFamily: 'Inter', textTransform: 'uppercase', letterSpacing: '0.3px', opacity: 0.85 }}>
                         {card.title}
                       </Typography>
-                      <Box sx={{ p: 0.8, borderRadius: 2, bgcolor: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Box sx={{ width: { xs: 18, sm: 36 }, height: { xs: 18, sm: 36 }, borderRadius: 1.5, bgcolor: 'rgba(255, 255, 255, 0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', '& svg': { fontSize: { xs: 11, sm: 20 }, color: card.themeColor } }}>
                         {card.icon}
                       </Box>
                     </Box>
-                    <Typography variant="h4" sx={{ fontWeight: '800', color: '#1e293b', fontSize: { xs: '20px', sm: '26px' }, fontFamily: 'Outfit' }}>
+                    <Typography variant="h4" sx={{ fontWeight: '800', color: '#0f172a', fontSize: { xs: '13px', sm: '26px' }, fontFamily: 'Outfit', mb: 0.5 }}>
                       {card.value}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: card.themeColor, fontFamily: 'Inter', display: 'flex', alignItems: 'center', gap: 0.5, fontSize: { xs: '6px', sm: '11px' }, opacity: 0.85 }}>
+                      <Box component="span" sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: card.themeColor }} />
+                      Click to audit
                     </Typography>
                   </CardContent>
                 </Card>
@@ -297,31 +481,33 @@ const AdminDashboard = () => {
             ))}
           </Grid>
 
-          {/* Charts Row */}
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
+          {/* Main Content Grid: Charts + Side Utilities */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            {/* Chart Area */}
+            <Grid item xs={12} md={8}>
               <Card 
                 sx={{ 
-                  borderRadius: 3.5, 
-                  p: { xs: 2.5, sm: 3.5 }, 
+                  borderRadius: 4.5, 
+                  p: { xs: 2, sm: 3 }, 
                   bgcolor: '#fff', 
                   border: '1px solid #f1f5f9',
-                  boxShadow: '0 4px 20px -2px rgba(50, 50, 93, 0.03), 0 2px 8px -1px rgba(0, 0, 0, 0.01)',
+                  height: '100%',
+                  boxShadow: '0 4px 20px -2px rgba(50, 50, 93, 0.02), 0 2px 8px -1px rgba(0, 0, 0, 0.01)',
                 }}
               >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                   <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1e293b', fontFamily: 'Outfit', fontSize: '16.5px' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#0f172a', fontFamily: 'Outfit', fontSize: '16.5px' }}>
                       Weekly Attendance Analytics
                     </Typography>
-                    <Typography variant="caption" sx={{ color: '#94a3b8', fontFamily: 'Inter' }}>
-                      Visual representation of daily check-ins and late occurrences
+                    <Typography variant="caption" sx={{ color: '#94a3b8', fontFamily: 'Inter', display: 'block', mt: 0.2 }}>
+                      Daily tracking showing present counts against late occurrences
                     </Typography>
                   </Box>
                 </Box>
-                <Box sx={{ height: 350, width: '100%' }}>
+                <Box sx={{ height: 320, width: '100%' }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                       <defs>
                         <linearGradient id="colorPresent" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#10b981" stopOpacity={0.15}/>
@@ -332,9 +518,9 @@ const AdminDashboard = () => {
                           <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                      <XAxis dataKey="date" stroke="#94a3b8" style={{ fontSize: 11, fontFamily: 'Inter' }} />
-                      <YAxis stroke="#94a3b8" style={{ fontSize: 11, fontFamily: 'Inter' }} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" vertical={false} />
+                      <XAxis dataKey="date" stroke="#94a3b8" style={{ fontSize: 10.5, fontFamily: 'Inter' }} />
+                      <YAxis stroke="#94a3b8" style={{ fontSize: 10.5, fontFamily: 'Inter' }} />
                       <Tooltip 
                         contentStyle={{ 
                           borderRadius: 8, 
@@ -344,7 +530,7 @@ const AdminDashboard = () => {
                           fontSize: '12px'
                         }} 
                       />
-                      <Legend wrapperStyle={{ fontFamily: 'Inter', fontSize: '12px', marginTop: '10px' }} />
+                      <Legend wrapperStyle={{ fontFamily: 'Inter', fontSize: '11.5px', marginTop: '10px' }} />
                       <Area type="monotone" name="Present Count" dataKey="present" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorPresent)" />
                       <Area type="monotone" name="Late Arrivals" dataKey="late" stroke="#f59e0b" strokeWidth={2.5} fillOpacity={1} fill="url(#colorLate)" />
                     </AreaChart>
@@ -352,7 +538,152 @@ const AdminDashboard = () => {
                 </Box>
               </Card>
             </Grid>
+
+            {/* Sidebar widgets */}
+            <Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {/* Geofence Status Widget */}
+              <Card 
+                sx={{ 
+                  borderRadius: 4.5, 
+                  p: 2.5, 
+                  bgcolor: '#fff', 
+                  border: '1px solid #f1f5f9',
+                  boxShadow: '0 4px 20px -2px rgba(50, 50, 93, 0.02), 0 2px 8px -1px rgba(0, 0, 0, 0.01)',
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                  <Box sx={{ p: 1, borderRadius: 2, bgcolor: 'rgba(2, 132, 199, 0.08)', color: '#0284c7', display: 'flex' }}>
+                    <PinIcon sx={{ fontSize: 18 }} />
+                  </Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', fontFamily: 'Outfit', color: '#0f172a', fontSize: '14.5px' }}>
+                    Office Geofence Status
+                  </Typography>
+                </Box>
+                
+                {locLatitude && locLongitude ? (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5, borderBottom: '1px dashed #f1f5f9' }}>
+                      <Typography sx={{ fontSize: '12px', color: '#64748b', fontFamily: 'Inter' }}>Latitude</Typography>
+                      <Typography sx={{ fontSize: '12px', fontWeight: 600, color: '#1e293b', fontFamily: 'Inter' }}>{parseFloat(locLatitude).toFixed(6)}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5, borderBottom: '1px dashed #f1f5f9' }}>
+                      <Typography sx={{ fontSize: '12px', color: '#64748b', fontFamily: 'Inter' }}>Longitude</Typography>
+                      <Typography sx={{ fontSize: '12px', fontWeight: 600, color: '#1e293b', fontFamily: 'Inter' }}>{parseFloat(locLongitude).toFixed(6)}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5, borderBottom: '1px dashed #f1f5f9' }}>
+                      <Typography sx={{ fontSize: '12px', color: '#64748b', fontFamily: 'Inter' }}>Allowed Radius</Typography>
+                      <Typography sx={{ fontSize: '12px', fontWeight: 600, color: '#0284c7', fontFamily: 'Inter' }}>{locRadius} meters</Typography>
+                    </Box>
+                  </Box>
+                ) : (
+                  <Typography variant="body2" sx={{ color: '#94a3b8', fontFamily: 'Inter', my: 1 }}>
+                    No geofence coordinates configured.
+                  </Typography>
+                )}
+
+                <Button 
+                  fullWidth
+                  variant="text"
+                  onClick={handleOpenLocationSettings}
+                  sx={{ textTransform: 'none', mt: 2, fontSize: '12px', fontFamily: 'Outfit', fontWeight: 600, color: '#0284c7' }}
+                >
+                  Modify coordinates settings &rarr;
+                </Button>
+              </Card>
+
+              {/* Live Operational Feed widget */}
+              <Card 
+                sx={{ 
+                  borderRadius: 4.5, 
+                  p: 2.5, 
+                  bgcolor: '#fff', 
+                  border: '1px solid #f1f5f9',
+                  boxShadow: '0 4px 20px -2px rgba(50, 50, 93, 0.02), 0 2px 8px -1px rgba(0, 0, 0, 0.01)',
+                  flexGrow: 1
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box sx={{ p: 1, borderRadius: 2, bgcolor: 'rgba(16, 185, 129, 0.08)', color: '#10b981', display: 'flex' }}>
+                      <DetectIcon sx={{ fontSize: 18 }} />
+                    </Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', fontFamily: 'Outfit', color: '#0f172a', fontSize: '14.5px' }}>
+                      Live Activity Feed
+                    </Typography>
+                  </Box>
+                  {/* Pulsing indicator */}
+                  <Box 
+                    sx={{ 
+                      width: 8, 
+                      height: 8, 
+                      borderRadius: '50%', 
+                      bgcolor: '#10b981', 
+                      boxShadow: '0 0 0 0 rgba(16, 185, 129, 0.7)',
+                      animation: 'pulse 1.8s infinite'
+                    }} 
+                  />
+                </Box>
+
+                {recentLogs && recentLogs.length > 0 ? (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {recentLogs.map((log, idx) => (
+                      <Box key={log.id || idx} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Avatar sx={{ width: 32, height: 32, bgcolor: log.status === 'LATE' ? '#f59e0b' : '#10b981', fontSize: '11.5px', fontFamily: 'Outfit', fontWeight: 'bold' }}>
+                          {log.employeeName ? log.employeeName[0].toUpperCase() : 'E'}
+                        </Avatar>
+                        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                          <Typography noWrap sx={{ fontSize: '12px', fontWeight: 'bold', color: '#1e293b', fontFamily: 'Outfit' }}>
+                            {log.employeeName}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: '#94a3b8', fontFamily: 'Inter', display: 'block' }}>
+                            Checked In: {formatTime(log.checkIn)} ({log.checkInLocationType || 'Office'})
+                          </Typography>
+                        </Box>
+                        <Chip 
+                          label={log.status === 'LATE' ? 'Late' : 'Present'} 
+                          size="small" 
+                          color={log.status === 'LATE' ? 'warning' : 'success'} 
+                          sx={{ 
+                            height: 18, 
+                            fontSize: '9px', 
+                            fontWeight: 'bold', 
+                            fontFamily: 'Inter',
+                            borderRadius: 1
+                          }} 
+                        />
+                      </Box>
+                    ))}
+                  </Box>
+                ) : (
+                  <Box sx={{ py: 3, textAlign: 'center' }}>
+                    <Typography variant="body2" sx={{ color: '#94a3b8', fontFamily: 'Inter', fontSize: '12px' }}>
+                      Waiting for today's logs...
+                    </Typography>
+                  </Box>
+                )}
+              </Card>
+            </Grid>
           </Grid>
+          
+          {/* Keyframe animations */}
+          <style>
+            {`
+              @keyframes pulse {
+                0% {
+                  transform: scale(0.95);
+                  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+                }
+                70% {
+                  transform: scale(1);
+                  box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+                }
+                100% {
+                  transform: scale(0.95);
+                  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+                }
+              }
+            `}
+          </style>
         </>
       )}
 
@@ -374,7 +705,7 @@ const AdminDashboard = () => {
             <>
               <Box
                 component="img"
-                src={`http://localhost:8080/api/attendance/qr-code/${qrToken}`}
+                src={qrCodeUrl}
                 alt="Daily QR Code"
                 sx={{ 
                   width: 250, 
@@ -552,6 +883,210 @@ const AdminDashboard = () => {
             </Button>
           </DialogActions>
         </form>
+      </Dialog>
+
+      {/* Details Dialog for Clickable Cards */}
+      <Dialog
+        open={detailsDialogOpen}
+        onClose={() => {
+          setDetailsDialogOpen(false);
+          setDialogSearch('');
+        }}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 4,
+            p: 1.5,
+          }
+        }}
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
+          <Typography variant="h5" sx={{ fontWeight: 'bold', fontFamily: 'Outfit', color: '#1e293b' }}>
+            {detailsDialogTitle}
+          </Typography>
+          <IconButton onClick={() => {
+            setDetailsDialogOpen(false);
+            setDialogSearch('');
+          }} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers sx={{ p: 2 }}>
+          {detailsLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+              <CircularProgress size={36} />
+            </Box>
+          ) : detailsType === 'percentage' ? (
+            <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+              <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+                <CircularProgress
+                  variant="determinate"
+                  value={detailsDialogData.percentage || 0}
+                  size={120}
+                  thickness={5}
+                  sx={{ color: '#8b5cf6' }}
+                />
+                <Box
+                  sx={{
+                    top: 0,
+                    left: 0,
+                    bottom: 0,
+                    right: 0,
+                    position: 'absolute',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Typography variant="h5" component="div" color="text.secondary" sx={{ fontWeight: 'bold', fontFamily: 'Outfit' }}>
+                    {`${(detailsDialogData.percentage || 0).toFixed(1)}%`}
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Grid container spacing={2} sx={{ mt: 1, width: '100%', maxWidth: '500px' }}>
+                <Grid item xs={6}>
+                  <Card variant="outlined" sx={{ borderRadius: 3, p: 2, textAlign: 'center' }}>
+                    <Typography variant="caption" color="text.secondary" display="block">Total Employees</Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{detailsDialogData.total}</Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={6}>
+                  <Card variant="outlined" sx={{ borderRadius: 3, p: 2, textAlign: 'center', borderColor: '#10b981' }}>
+                    <Typography variant="caption" color="text.secondary" display="block">Present Today</Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#10b981' }}>{detailsDialogData.present}</Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={6}>
+                  <Card variant="outlined" sx={{ borderRadius: 3, p: 2, textAlign: 'center', borderColor: '#ef4444' }}>
+                    <Typography variant="caption" color="text.secondary" display="block">Absent Today</Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#ef4444' }}>{detailsDialogData.absent}</Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={6}>
+                  <Card variant="outlined" sx={{ borderRadius: 3, p: 2, textAlign: 'center', borderColor: '#f59e0b' }}>
+                    <Typography variant="caption" color="text.secondary" display="block">Late Arrivals</Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f59e0b' }}>{detailsDialogData.late}</Typography>
+                  </Card>
+                </Grid>
+              </Grid>
+            </Box>
+          ) : (
+            <>
+              <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                placeholder="Search by code, name, department..."
+                value={dialogSearch}
+                onChange={(e) => setDialogSearch(e.target.value)}
+                sx={{ mb: 2.5 }}
+                InputProps={{
+                  startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
+                  style: { borderRadius: 8, fontSize: '13px', fontFamily: 'Inter' }
+                }}
+              />
+
+              {filteredData.length === 0 ? (
+                <Box sx={{ py: 6, textAlign: 'center', color: '#64748b' }}>
+                  <Typography variant="body2" sx={{ fontFamily: 'Inter' }}>
+                    No matching records found.
+                  </Typography>
+                </Box>
+              ) : (
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 3, overflowX: 'auto' }}>
+                  <Table size="small">
+                    <TableHead sx={{ bgcolor: '#f8fafc' }}>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold', py: 1.5, fontFamily: 'Outfit' }}>Code</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', py: 1.5, fontFamily: 'Outfit' }}>Name</TableCell>
+                        {detailsType === 'employees' || detailsType === 'absent' ? (
+                          <>
+                            <TableCell sx={{ fontWeight: 'bold', py: 1.5, fontFamily: 'Outfit' }}>Department</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', py: 1.5, fontFamily: 'Outfit' }}>Designation</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', py: 1.5, fontFamily: 'Outfit' }}>Email</TableCell>
+                          </>
+                        ) : (
+                          <>
+                            <TableCell sx={{ fontWeight: 'bold', py: 1.5, fontFamily: 'Outfit' }}>Check In</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', py: 1.5, fontFamily: 'Outfit' }}>Check Out</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', py: 1.5, fontFamily: 'Outfit' }}>Location</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', py: 1.5, fontFamily: 'Outfit' }}>Selfie</TableCell>
+                          </>
+                        )}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {filteredData.map((item, idx) => {
+                        const code = item.employeeCode || item.employeeCode || '—';
+                        const name = item.firstName ? `${item.firstName} ${item.lastName}` : item.employeeName || '—';
+                        
+                        return (
+                          <TableRow key={item.id || idx} hover>
+                            <TableCell sx={{ py: 1.5, fontSize: '12.5px', fontFamily: 'Inter', fontWeight: 600, color: '#0284c7' }}>{code}</TableCell>
+                            <TableCell sx={{ py: 1.5, fontSize: '13px', fontFamily: 'Outfit', fontWeight: 'bold' }}>{name}</TableCell>
+                            {detailsType === 'employees' || detailsType === 'absent' ? (
+                              <>
+                                <TableCell sx={{ py: 1.5, fontSize: '12.5px', fontFamily: 'Inter' }}>{item.department || '—'}</TableCell>
+                                <TableCell sx={{ py: 1.5, fontSize: '12.5px', fontFamily: 'Inter' }}>{item.designation || '—'}</TableCell>
+                                <TableCell sx={{ py: 1.5, fontSize: '12.5px', fontFamily: 'Inter', color: '#64748b' }}>{item.email || '—'}</TableCell>
+                              </>
+                            ) : (
+                              <>
+                                <TableCell sx={{ py: 1.5, fontSize: '12.5px', fontFamily: 'Inter', color: '#10b981', fontWeight: 600 }}>{formatTime(item.checkIn)}</TableCell>
+                                <TableCell sx={{ py: 1.5, fontSize: '12.5px', fontFamily: 'Inter', color: '#3b82f6', fontWeight: 600 }}>{formatTime(item.checkOut)}</TableCell>
+                                <TableCell sx={{ py: 1.5, fontSize: '12.5px', fontFamily: 'Inter' }}>
+                                  <Chip
+                                    label={item.checkInLocationType || 'Office'}
+                                    size="small"
+                                    color={item.checkInLocationType === 'Office Location' || !item.checkInLocationType ? 'success' : 'warning'}
+                                    sx={{ fontWeight: 'bold', fontSize: '10px', height: 20 }}
+                                  />
+                                </TableCell>
+                                <TableCell sx={{ py: 1 }}>
+                                  {item.checkInSelfie ? (
+                                    <MuiTooltip title="Selfie (Hover to zoom)">
+                                      <Box
+                                        component="img"
+                                        src={item.checkInSelfie}
+                                        alt="Selfie"
+                                        sx={{
+                                          width: 32,
+                                          height: 32,
+                                          borderRadius: '50%',
+                                          objectFit: 'cover',
+                                          border: '1.5px solid #10b981',
+                                          cursor: 'pointer',
+                                          transition: 'transform 0.2s',
+                                          '&:hover': { transform: 'scale(3.5)', zIndex: 10 }
+                                        }}
+                                      />
+                                    </MuiTooltip>
+                                  ) : '—'}
+                                </TableCell>
+                              </>
+                            )}
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ px: 2, py: 1.5 }}>
+          <Button onClick={() => {
+            setDetailsDialogOpen(false);
+            setDialogSearch('');
+          }} sx={{ fontFamily: 'Outfit', fontWeight: 600 }}>
+            Close
+          </Button>
+        </DialogActions>
       </Dialog>
     </AdminLayout>
   );

@@ -76,4 +76,22 @@ public class AttendanceController {
     public ResponseEntity<OfficeLocation> updateOfficeLocation(@RequestBody OfficeLocation location) {
         return ResponseEntity.ok(attendanceService.updateOfficeLocation(location));
     }
+
+    @GetMapping("/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<AttendanceDto>> getPendingAttendances() {
+        return ResponseEntity.ok(attendanceService.getPendingAttendances());
+    }
+
+    @PostMapping("/{id}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AttendanceDto> approveAttendance(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(attendanceService.approvePendingAttendance(id));
+    }
+
+    @PostMapping("/{id}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AttendanceDto> rejectAttendance(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(attendanceService.rejectPendingAttendance(id));
+    }
 }

@@ -21,6 +21,8 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     
     long countByAttendanceDateAndStatus(LocalDate date, AttendanceStatus status);
     
-    @Query("SELECT COUNT(a) FROM Attendance a WHERE a.attendanceDate = :date")
+    @Query("SELECT COUNT(a) FROM Attendance a WHERE a.attendanceDate = :date AND a.status NOT IN (com.attendance.entity.AttendanceStatus.PENDING, com.attendance.entity.AttendanceStatus.ABSENT)")
     long countPresentToday(@Param("date") LocalDate date);
+
+    List<Attendance> findByStatusOrderByAttendanceDateDescCheckInDesc(AttendanceStatus status);
 }

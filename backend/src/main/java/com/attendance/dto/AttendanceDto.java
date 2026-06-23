@@ -26,4 +26,6 @@ public class AttendanceDto {
     private String checkOutSelfie;
     private String checkInAddress;
     private String checkOutAddress;
+    private String checkInLocationType;  // "Office Location" or "Other Location"
+    private String checkOutLocationType; // "Office Location" or "Other Location"
 }

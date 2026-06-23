@@ -150,8 +150,8 @@ const EmployeeLayout = ({ children }) => {
 
           {/* User Account Controls */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" sx={{ display: { xs: 'none', md: 'block' }, color: '#64748b', fontSize: '12px', fontFamily: 'Inter' }}>
-              Welcome, <strong>{user?.username}</strong>
+            <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' }, color: '#1e293b', fontSize: '12.5px', fontFamily: 'Outfit', fontWeight: '600' }}>
+              {user?.employeeCode || user?.username}
             </Typography>
             <IconButton
               size="large"

@@ -40,6 +40,7 @@ import {
   History as HistoryIcon,
   Face as ProfileIcon,
   AccessTime as TimeIcon,
+  Warning as WarningIcon,
 } from '@mui/icons-material';
 
 const EmployeeDashboard = () => {
@@ -65,6 +66,10 @@ const EmployeeDashboard = () => {
   const [taskSuccess, setTaskSuccess] = useState('');
   const [taskError, setTaskError] = useState('');
 
+  // Dynamic broadcast states
+  const [broadcasts, setBroadcasts] = useState([]);
+  const [loadingBroadcasts, setLoadingBroadcasts] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -89,11 +94,12 @@ const EmployeeDashboard = () => {
         API.get('/leaves/my')
       ]);
       
-      setAttendanceHistory(attRes.data);
+      const sortedAttendance = attRes.data.sort((a, b) => new Date(b.attendanceDate) - new Date(a.attendanceDate));
+      setAttendanceHistory(sortedAttendance);
       setLeaveHistory(leaveRes.data);
 
-      const todayStr = new Date().toISOString().split('T')[0];
-      const todayRecord = attRes.data.find((r) => r.attendanceDate === todayStr);
+      const todayStr = new Date().toLocaleDateString('sv-SE');
+      const todayRecord = sortedAttendance.find((r) => r.attendanceDate === todayStr);
       setTodayLog(todayRecord || null);
     } catch (err) {
       console.error('Failed to load dashboard statistics', err);
@@ -109,16 +115,50 @@ const EmployeeDashboard = () => {
       navigate(path);
     } else {
       setDialogTitle(title);
-      if (title === 'Salary Overview') {
-        setDialogContent('Current Month Salary: ₹55,000\nBasic Pay: ₹35,000\nHRA: ₹15,000\nSpecial Allowance: ₹5,000\nDeductions (PF/Tax): ₹4,200\nNet Take Home: ₹50,800');
+      if (title === 'Broadcast Board') {
+        setLoadingBroadcasts(true);
+        setInfoDialogOpen(true);
+        API.get('/broadcasts')
+          .then((res) => {
+            const activeBroadcasts = res.data.filter((b) => b.active);
+            setBroadcasts(activeBroadcasts);
+          })
+          .catch((err) => {
+            console.error('Failed to fetch broadcasts', err);
+          })
+          .finally(() => {
+            setLoadingBroadcasts(false);
+          });
+      } else if (title === 'Salary Overview') {
+        if (profile && profile.netTakeHome !== null && profile.netTakeHome !== undefined) {
+          const bp = profile.basicPay ? `₹${profile.basicPay.toLocaleString('en-IN')}` : '₹0';
+          const hra = profile.hra ? `₹${profile.hra.toLocaleString('en-IN')}` : '₹0';
+          const sa = profile.specialAllowance ? `₹${profile.specialAllowance.toLocaleString('en-IN')}` : '₹0';
+          const ded = profile.deductions ? `₹${profile.deductions.toLocaleString('en-IN')}` : '₹0';
+          const net = profile.netTakeHome ? `₹${profile.netTakeHome.toLocaleString('en-IN')}` : '₹0';
+          setDialogContent(`Current Month Salary Status: Active\n\nBasic Pay: ${bp}\nHRA: ${hra}\nSpecial Allowance: ${sa}\nDeductions (PF/Tax): ${ded}\n\nNet Take Home: ${net}`);
+        } else {
+          setDialogContent('Salary details are not configured for your profile.\nPlease contact Human Resources.');
+        }
       } else if (title === 'Salary Slips') {
         setDialogContent('Available Payslips:\n• May 2026 - Paid (Download PDF)\n• Apr 2026 - Paid (Download PDF)\n• Mar 2026 - Paid (Download PDF)');
-      } else if (title === 'Loan') {
+      } else if (title === 'Loan' || title === 'Loan Request') {
         setDialogContent('No active loans found.\nMaximum eligible advance loan amount: ₹50,000.\nClick Apply to request an advance salary loan.');
-      } else if (title === 'Broadcast Messages') {
-        setDialogContent('📢 Notice: Biometric facial check-in is mandatory for all office working days.\n📢 Update: System upgrading scheduled on Sunday 2:00 AM.');
       } else if (title === 'Roster Schedule') {
-        setDialogContent('Shift Schedule:\nGeneral Shift (10:00 AM - 06:30 PM)\nWeekly Offs: Saturday, Sunday');
+        setDialogContent(profile?.rosterSchedule ? `Shift Schedule:\n${profile.rosterSchedule}` : 'Shift Schedule:\nGeneral Shift (10:00 AM - 06:30 PM)\nWeekly Offs: Saturday, Sunday');
+      } else if (title === 'Late Entries') {
+        const lateLogs = attendanceHistory.filter(log => log.status === 'LATE');
+        if (lateLogs.length > 0) {
+          const listText = lateLogs.map(log => {
+            const dateObj = new Date(log.attendanceDate);
+            const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+            const checkInTime = log.checkIn ? new Date(log.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-';
+            return `• ${formattedDate}: checked in at ${checkInTime}`;
+          }).join('\n');
+          setDialogContent(`You have ${lateLogs.length} late entry/entries:\n\n${listText}`);
+        } else {
+          setDialogContent('Congratulations! You have 0 late entries. Keep up the good work! 🎉');
+        }
       }
       setInfoDialogOpen(true);
     }
@@ -135,7 +175,7 @@ const EmployeeDashboard = () => {
     setSubmittingTask(true);
     try {
       await API.post('/work-entries/submit', {
-        entryDate: new Date().toISOString().split('T')[0],
+        entryDate: new Date().toLocaleDateString('sv-SE'),
         taskDescription: taskDescription,
         hoursSpent: Number(hoursSpent)
       });
@@ -153,11 +193,34 @@ const EmployeeDashboard = () => {
     }
   };
 
+  // Helper to format duration
+  const formatDuration = (totalHours) => {
+    if (totalHours === null || totalHours === undefined) return '';
+    const totalMinutes = Math.round(totalHours * 60);
+    const hrs = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    if (hrs > 0) {
+      return `${hrs}h ${mins}m`;
+    }
+    return `${mins}m`;
+  };
+
   // Compute stats metrics
   const presentDays = attendanceHistory.filter(r => r.checkIn).length;
   const lateDays = attendanceHistory.filter(r => r.status === 'LATE').length;
   const approvedLeaves = leaveHistory.filter(l => l.status === 'APPROVED').length;
   const pendingLeaves = leaveHistory.filter(l => l.status === 'PENDING').length;
+
+  // Calculate extra hours (over 8 hours)
+  let totalExtraMins = 0;
+  attendanceHistory.forEach(log => {
+    if (log.totalHours && log.totalHours > 8.0) {
+      totalExtraMins += Math.round((log.totalHours - 8.0) * 60);
+    }
+  });
+  const extraHours = Math.floor(totalExtraMins / 60);
+  const extraMins = totalExtraMins % 60;
+  const extraHoursStr = extraHours > 0 || extraMins > 0 ? `${extraHours}h ${extraMins}m` : '0h';
 
   // Actions menu
   const primaryActions = [
@@ -166,6 +229,7 @@ const EmployeeDashboard = () => {
     { title: 'Apply Leaves', icon: <LeaveIcon sx={{ fontSize: { xs: 16, sm: 22 }, color: '#f59e0b' }} />, path: '/employee/leaves', bg: '#fffbeb' },
     { title: 'Daily Work Entry', icon: <TasksIcon sx={{ fontSize: { xs: 16, sm: 22 }, color: '#4f46e5' }} />, action: 'work-entry', bg: '#e0e7ff' },
     { title: 'Face Registration', icon: <ProfileIcon sx={{ fontSize: { xs: 16, sm: 22 }, color: '#ec4899' }} />, path: '/employee/profile', bg: '#fdf2f8' },
+    { title: 'Late Entries', icon: <WarningIcon sx={{ fontSize: { xs: 16, sm: 22 }, color: '#f59e0b' }} />, bg: '#fffbeb' },
     { title: 'Roster Schedule', icon: <RosterIcon sx={{ fontSize: { xs: 16, sm: 22 }, color: '#8b5cf6' }} />, bg: '#f5f3ff' },
     { title: 'Salary Overview', icon: <SalaryIcon sx={{ fontSize: { xs: 16, sm: 22 }, color: '#10b981' }} />, bg: '#ecfdf5' },
     { title: 'Salary Slips', icon: <SlipsIcon sx={{ fontSize: { xs: 16, sm: 22 }, color: '#06b6d4' }} />, bg: '#ecfeff' },
@@ -233,7 +297,7 @@ const EmployeeDashboard = () => {
                 </Typography>
               </Box>
 
-              <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+              <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
 
               {/* Stat 3: Today's Status */}
               <Box sx={{ textAlign: 'center', flex: 1 }}>
@@ -250,6 +314,8 @@ const EmployeeDashboard = () => {
                       ? 'warning'
                       : todayLog?.status === 'HALF_DAY'
                       ? 'warning'
+                      : todayLog?.status === 'EXTRA_SHIFT'
+                      ? 'secondary'
                       : 'default'
                   }
                   sx={{
@@ -258,12 +324,29 @@ const EmployeeDashboard = () => {
                     fontWeight: 'bold',
                     borderRadius: '4px',
                     '& .MuiChip-label': { px: 0.8 },
+                    bgcolor: todayLog?.status === 'EXTRA_SHIFT' ? '#8b5cf6' : undefined,
+                    color: todayLog?.status === 'EXTRA_SHIFT' ? '#fff' : undefined,
                   }}
                 />
                 <Typography sx={{ color: '#64748b', fontSize: '8px', display: 'block', mt: 0.3 }}>
                   {todayLog?.checkIn
                     ? `In: ${new Date(todayLog.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
                     : '10:00 AM Shift'}
+                </Typography>
+              </Box>
+
+              <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+
+              {/* Stat 4: Extra Hours */}
+              <Box sx={{ textAlign: 'center', flex: 1 }}>
+                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 'bold', display: 'block', fontSize: '9px', letterSpacing: '0.5px', mb: 0.5 }}>
+                  EXTRA HOURS
+                </Typography>
+                <Typography sx={{ fontWeight: 'bold', fontSize: '13px', color: '#8b5cf6', fontFamily: 'Outfit' }}>
+                  {extraHoursStr}
+                </Typography>
+                <Typography sx={{ color: '#94a3b8', fontSize: '8px', display: 'block' }}>
+                  Shift threshold: 8h
                 </Typography>
               </Box>
             </CardContent>
@@ -344,14 +427,29 @@ const EmployeeDashboard = () => {
                               <Typography variant="caption" sx={{ color: '#64748b', fontSize: '9px' }}>
                                 In: {log.checkIn ? new Date(log.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
                                 {log.checkOut ? ` | Out: ${new Date(log.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
+                                {log.totalHours ? ` (Duration: ${formatDuration(log.totalHours)})` : ''}
                               </Typography>
                             }
                           />
                           <Chip
                             label={log.status}
                             size="small"
-                            color={log.status === 'PRESENT' ? 'success' : log.status === 'LATE' ? 'warning' : 'error'}
-                            sx={{ height: 16, fontSize: '8px', fontWeight: 'bold' }}
+                            color={
+                              log.status === 'PRESENT'
+                                ? 'success'
+                                : log.status === 'LATE'
+                                ? 'warning'
+                                : log.status === 'EXTRA_SHIFT'
+                                ? 'secondary'
+                                : 'error'
+                            }
+                            sx={{
+                              height: 16,
+                              fontSize: '8px',
+                              fontWeight: 'bold',
+                              bgcolor: log.status === 'EXTRA_SHIFT' ? '#8b5cf6' : undefined,
+                              color: log.status === 'EXTRA_SHIFT' ? '#fff' : undefined,
+                            }}
                           />
                         </ListItem>
                       </React.Fragment>
@@ -369,9 +467,38 @@ const EmployeeDashboard = () => {
       <Dialog open={infoDialogOpen} onClose={() => setInfoDialogOpen(false)} PaperProps={{ sx: { borderRadius: 3, p: 1 } }}>
         <DialogTitle sx={{ fontWeight: 'bold', fontSize: { xs: '15px', sm: '17px' }, fontFamily: 'Outfit' }}>{dialogTitle}</DialogTitle>
         <DialogContent>
-          <Typography sx={{ whiteSpace: 'pre-line', color: '#475569', fontSize: { xs: '11.5px', sm: '13px' }, fontFamily: 'Inter' }}>
-            {dialogContent}
-          </Typography>
+          {dialogTitle === 'Broadcast Board' ? (
+            loadingBroadcasts ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : broadcasts.length === 0 ? (
+              <Typography sx={{ color: '#64748b', fontSize: '12px', fontFamily: 'Inter', textAlign: 'center', py: 2 }}>
+                No active announcements at this time.
+              </Typography>
+            ) : (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxIdWidth: '100%', minWidth: { xs: 260, sm: 380 } }}>
+                {broadcasts.map((b) => (
+                  <Box key={b.id} sx={{ p: 1.5, borderRadius: 2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <Typography sx={{ fontWeight: 'bold', color: '#0f172a', fontSize: '13px', fontFamily: 'Outfit' }}>
+                      📢 {b.title}
+                    </Typography>
+                    <Typography sx={{ color: '#94a3b8', fontSize: '9px', fontFamily: 'Inter', mt: 0.5 }}>
+                      Published: {new Date(b.createdAt).toLocaleDateString()}
+                    </Typography>
+                    <Divider sx={{ my: 1, borderColor: '#e2e8f0' }} />
+                    <Typography sx={{ color: '#475569', fontSize: '12px', fontFamily: 'Inter', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                      {b.message}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            )
+          ) : (
+            <Typography sx={{ whiteSpace: 'pre-line', color: '#475569', fontSize: { xs: '11.5px', sm: '13px' }, fontFamily: 'Inter' }}>
+              {dialogContent}
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setInfoDialogOpen(false)} variant="contained" sx={{ borderRadius: 2, textTransform: 'none', bgcolor: '#1e293b', fontSize: '11px', fontWeight: 'bold' }}>

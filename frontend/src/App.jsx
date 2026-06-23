@@ -15,6 +15,7 @@ import EmployeeHistory from './pages/EmployeeHistory';
 import EmployeeProfile from './pages/EmployeeProfile';
 import EmployeeLeaves from './pages/EmployeeLeaves';
 import AdminLeaves from './pages/AdminLeaves';
+import AdminBroadcasts from './pages/AdminBroadcasts';
 import EmployeeApprovals from './pages/EmployeeApprovals';
 import EmployeeAttendanceSummary from './pages/EmployeeAttendanceSummary';
 import EmployeeAttendanceDetail from './pages/EmployeeAttendanceDetail';
@@ -86,6 +87,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
               <AdminLeaves />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/broadcasts"
+          element={
+            <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
+              <AdminBroadcasts />
             </ProtectedRoute>
           }
         />

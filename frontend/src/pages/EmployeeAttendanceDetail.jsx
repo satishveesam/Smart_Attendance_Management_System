@@ -63,11 +63,32 @@ const EmployeeAttendanceDetail = () => {
   };
 
   const getWorkDuration = () => {
-    if (!log?.checkIn || !log?.checkOut) return null;
-    const diffMs = new Date(log.checkOut) - new Date(log.checkIn);
+    if (!log?.checkIn) return null;
+    
+    let diffMs = 0;
+    if (log.checkOut) {
+      if (log.totalHours != null && log.totalHours > 0) {
+        diffMs = Math.round(log.totalHours * 3600000);
+      } else {
+        diffMs = new Date(log.checkOut) - new Date(log.checkIn);
+      }
+    } else {
+      // Currently checked in - show elapsed time since check-in
+      diffMs = new Date() - new Date(log.checkIn);
+    }
+    
     if (diffMs < 0) return null;
+    
     const diffHrs = Math.floor(diffMs / 3600000);
     const diffMins = Math.floor((diffMs % 3600000) / 60000);
+    const diffSecs = Math.floor((diffMs % 60000) / 1000);
+    
+    if (diffHrs === 0 && diffMins === 0) {
+      return `${diffSecs} secs`;
+    }
+    if (diffHrs === 0) {
+      return `${diffMins} mins ${diffSecs} secs`;
+    }
     return `${diffHrs} hrs ${diffMins} mins`;
   };
 
@@ -77,6 +98,7 @@ const EmployeeAttendanceDetail = () => {
       case 'LATE': return { bg: '#fffbeb', border: '#fde68a', text: '#b45309' };
       case 'HALF_DAY': return { bg: '#faf5ff', border: '#e9d5ff', text: '#7e22ce' };
       case 'LEAVE': return { bg: '#eff6ff', border: '#bfdbfe', text: '#1d4ed8' };
+      case 'EXTRA_SHIFT': return { bg: '#f5f3ff', border: '#ddd6fe', text: '#6d28d9' };
       default: return { bg: '#fef2f2', border: '#fecaca', text: '#b91c1c' };
     }
   };
@@ -91,7 +113,7 @@ const EmployeeAttendanceDetail = () => {
         type: 'PUNCH_IN',
         title: `Punched In — ${log.checkInAddress || 'Office Premises'}`,
         subTitle: `Authenticated on ${formatFullDateTime(log.checkIn)}`,
-        image: log.checkInSelfie || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256"
+        image: log.checkInSelfie || null
       });
     }
 
@@ -101,7 +123,7 @@ const EmployeeAttendanceDetail = () => {
         type: 'PUNCH_OUT',
         title: `Punched Out — ${log.checkOutAddress || 'Office Premises'}`,
         subTitle: `Authenticated on ${formatFullDateTime(log.checkOut)}`,
-        image: log.checkOutSelfie || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=256"
+        image: log.checkOutSelfie || null
       });
     }
 

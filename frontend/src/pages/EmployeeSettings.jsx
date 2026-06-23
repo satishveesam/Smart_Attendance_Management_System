@@ -44,11 +44,13 @@ import {
   Person as PersonalIcon,
   Info as GeneralIcon,
   Business as EmploymentIcon,
-  Description as DocumentIcon,
   Campaign as BroadcastIcon,
   Logout as LogoutIcon,
   Edit as EditIcon,
   ExpandMore as ExpandIcon,
+  Lock as LockIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
 } from '@mui/icons-material';
 
 const EmployeeSettings = () => {
@@ -69,6 +71,14 @@ const EmployeeSettings = () => {
   const [saveLoading, setSaveLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Change Password state
+  const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwSuccess, setPwSuccess] = useState('');
+  const [pwError, setPwError] = useState('');
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
 
   const [preferences, setPreferences] = useState({
     emailAlerts: true,
@@ -123,6 +133,37 @@ const EmployeeSettings = () => {
   const handleLogout = () => {
     dispatch(logout());
     navigate('/login');
+  };
+
+  const handleChangePassword = async () => {
+    setPwError('');
+    setPwSuccess('');
+    if (!pwForm.currentPassword || !pwForm.newPassword || !pwForm.confirmPassword) {
+      setPwError('All password fields are required.');
+      return;
+    }
+    if (pwForm.newPassword !== pwForm.confirmPassword) {
+      setPwError('New password and confirm password do not match.');
+      return;
+    }
+    if (pwForm.newPassword.length < 6) {
+      setPwError('New password must be at least 6 characters.');
+      return;
+    }
+    setPwLoading(true);
+    try {
+      await API.put('/employees/me/password', {
+        currentPassword: pwForm.currentPassword,
+        newPassword: pwForm.newPassword,
+      });
+      setPwSuccess('Password changed successfully!');
+      setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setTimeout(() => setPwSuccess(''), 4000);
+    } catch (err) {
+      setPwError(err.response?.data?.message || 'Failed to change password. Check your current password.');
+    } finally {
+      setPwLoading(false);
+    }
   };
 
   const handleChange = (panel) => (event, isExpanded) => {
@@ -255,128 +296,37 @@ const EmployeeSettings = () => {
                       Profile Information
                     </Typography>
                     <Typography sx={{ color: '#64748b', fontSize: '11px', fontFamily: 'Inter' }}>
-                      Update your contact phone, email, and personal name details.
+                      View your official profile, contact email, and personal name details. (Read-only)
                     </Typography>
                   </Box>
 
                   {successMsg && <Alert severity="success" sx={{ py: 0.5, px: 2, fontSize: '12px', mb: 2 }}>{successMsg}</Alert>}
                   {errorMsg && <Alert severity="error" sx={{ py: 0.5, px: 2, fontSize: '12px', mb: 2 }}>{errorMsg}</Alert>}
 
-                  {editMode ? (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} sm={6}>
-                          <TextField
-                            label="First Name"
-                            size="small"
-                            fullWidth
-                            value={formData.firstName}
-                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                            inputProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter' } }}
-                            InputLabelProps={{ style: { fontSize: '12px', fontFamily: 'Inter' } }}
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <TextField
-                            label="Last Name"
-                            size="small"
-                            fullWidth
-                            value={formData.lastName}
-                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                            inputProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter' } }}
-                            InputLabelProps={{ style: { fontSize: '12px', fontFamily: 'Inter' } }}
-                          />
-                        </Grid>
-                        <Grid item xs={12}>
-                          <TextField
-                            label="Phone Number"
-                            size="small"
-                            fullWidth
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            inputProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter' } }}
-                            InputLabelProps={{ style: { fontSize: '12px', fontFamily: 'Inter' } }}
-                          />
-                        </Grid>
-                        <Grid item xs={12}>
-                          <TextField
-                            label="Email Address"
-                            size="small"
-                            fullWidth
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            inputProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter' } }}
-                            InputLabelProps={{ style: { fontSize: '12px', fontFamily: 'Inter' } }}
-                          />
-                        </Grid>
-                      </Grid>
-
-                      <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                        <Button
-                          variant="contained"
-                          size="small"
-                          disabled={saveLoading}
-                          onClick={handleSaveChanges}
-                          sx={{ textTransform: 'none', fontSize: '11px', fontWeight: 'bold', px: 2.5, borderRadius: 2, bgcolor: '#1e293b' }}
-                        >
-                          {saveLoading ? 'Saving...' : 'Save Changes'}
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => {
-                            setEditMode(false);
-                            setFormData({
-                              firstName: profile?.firstName || '',
-                              lastName: profile?.lastName || '',
-                              phone: profile?.phone || '',
-                              email: profile?.email || ''
-                            });
-                          }}
-                          sx={{ textTransform: 'none', fontSize: '11px', fontWeight: 'bold', px: 2.5, borderRadius: 2 }}
-                        >
-                          Cancel
-                        </Button>
-                      </Box>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 1 }}>
+                      <Typography sx={{ color: '#64748b', fontSize: '11px' }}>Full Name</Typography>
+                      <Typography sx={{ color: '#1e293b', fontSize: '11px', fontWeight: 'bold' }}>
+                        {profile ? `${profile.firstName} ${profile.lastName || ''}` : '...'}
+                      </Typography>
                     </Box>
-                  ) : (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 1 }}>
-                        <Typography sx={{ color: '#64748b', fontSize: '11px' }}>Full Name</Typography>
-                        <Typography sx={{ color: '#1e293b', fontSize: '11px', fontWeight: 'bold' }}>
-                          {profile ? `${profile.firstName} ${profile.lastName || ''}` : '...'}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 1 }}>
-                        <Typography sx={{ color: '#64748b', fontSize: '11px' }}>Email Address</Typography>
-                        <Typography sx={{ color: '#1e293b', fontSize: '11px', fontWeight: 'bold' }}>{profile?.email || '...'}</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 1 }}>
-                        <Typography sx={{ color: '#64748b', fontSize: '11px' }}>Phone Number</Typography>
-                        <Typography sx={{ color: '#1e293b', fontSize: '11px', fontWeight: 'bold' }}>{profile?.phone || 'Not Provided'}</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 1 }}>
-                        <Typography sx={{ color: '#64748b', fontSize: '11px' }}>Emergency Contact</Typography>
-                        <Typography sx={{ color: '#1e293b', fontSize: '11px', fontWeight: 'bold' }}>+91 9876543210</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', pb: 0.5 }}>
-                        <Typography sx={{ color: '#64748b', fontSize: '11px' }}>Current Address</Typography>
-                        <Typography sx={{ color: '#1e293b', fontSize: '11px', fontWeight: 'bold' }}>HITEC City, Hyderabad, 500081</Typography>
-                      </Box>
-
-                      <Box sx={{ mt: 1 }}>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<EditIcon sx={{ fontSize: 12 }} />}
-                          onClick={() => setEditMode(true)}
-                          sx={{ textTransform: 'none', fontSize: '11px', fontWeight: 'bold', borderRadius: 2, color: '#2563eb', borderColor: '#2563eb' }}
-                        >
-                          Edit Profile Details
-                        </Button>
-                      </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 1 }}>
+                      <Typography sx={{ color: '#64748b', fontSize: '11px' }}>Email Address</Typography>
+                      <Typography sx={{ color: '#1e293b', fontSize: '11px', fontWeight: 'bold' }}>{profile?.email || '...'}</Typography>
                     </Box>
-                  )}
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 1 }}>
+                      <Typography sx={{ color: '#64748b', fontSize: '11px' }}>Phone Number</Typography>
+                      <Typography sx={{ color: '#1e293b', fontSize: '11px', fontWeight: 'bold' }}>{profile?.phone || 'Not Provided'}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 1 }}>
+                      <Typography sx={{ color: '#64748b', fontSize: '11px' }}>Emergency Contact</Typography>
+                      <Typography sx={{ color: '#1e293b', fontSize: '11px', fontWeight: 'bold' }}>+91 9876543210</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 1 }}>
+                      <Typography sx={{ color: '#64748b', fontSize: '11px' }}>Current Address</Typography>
+                      <Typography sx={{ color: '#1e293b', fontSize: '11px', fontWeight: 'bold' }}>HITEC City, Hyderabad, 500081</Typography>
+                    </Box>
+                  </Box>
                 </Grid>
 
                 {/* Right: Preferences Switches */}
@@ -547,6 +497,17 @@ const EmployeeSettings = () => {
                 </Grid>
 
                 <Grid item xs={12}>
+                  <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <Typography sx={{ color: '#64748b', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', mb: 0.5 }}>
+                      Roster Schedule
+                    </Typography>
+                    <Typography sx={{ fontWeight: 'bold', fontSize: '13px', color: '#1e293b' }}>
+                      {profile?.rosterSchedule || 'General Shift (10:00 AM - 06:30 PM) | Offs: Saturday, Sunday'}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12}>
                   <Box sx={{ p: 2, borderRadius: 3, bgcolor: '#eff6ff', border: '1px solid #bfdbfe' }}>
                     <Typography sx={{ color: '#1e3a8a', fontSize: '11px', fontWeight: 'bold', mb: 1 }}>
                       📍 Geofence Boundary Coordinates
@@ -620,74 +581,153 @@ const EmployeeSettings = () => {
             <AccordionDetails sx={{ p: { xs: 2, md: 3 } }}>
               <Box sx={{ mb: 2 }}>
                 <Typography sx={{ fontWeight: 'bold', fontSize: '14px', fontFamily: 'Outfit', color: '#1e293b', mb: 0.5 }}>
-                  Bank Account Details
+                  Salary & Bank Account Parameters
                 </Typography>
                 <Typography sx={{ color: '#64748b', fontSize: '11px', fontFamily: 'Inter' }}>
-                  Your verified salary payout parameters and bank settings.
+                  Your verified bank payout credentials and active monthly salary structure.
                 </Typography>
               </Box>
 
-              <Grid container spacing={3} alignItems="center">
+              <Grid container spacing={3}>
+                {/* Left: Bank Account Payout Details */}
                 <Grid item xs={12} md={6}>
-                  <Box sx={{
-                    p: 2.5,
-                    borderRadius: 3.5,
-                    background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-                    color: '#fff',
-                    boxShadow: '0 4px 14px rgba(3, 105, 161, 0.2)'
-                  }}>
-                    <Typography sx={{ fontSize: '9px', letterSpacing: '1.2px', textTransform: 'uppercase', opacity: 0.8, mb: 1.5 }}>
-                      Salary Payout Account
-                    </Typography>
-                    <Typography sx={{ fontSize: '18px', fontWeight: 'bold', fontFamily: 'Outfit', mb: 3 }}>
-                      State Bank of India
-                    </Typography>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#1e293b', mb: 1.5, fontFamily: 'Outfit', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    🏦 Bank Payout Details
+                  </Typography>
+                  
+                  {profile?.accountNumber ? (
+                    <Box sx={{
+                      p: 2.5,
+                      borderRadius: 3.5,
+                      background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                      color: '#fff',
+                      boxShadow: '0 4px 14px rgba(3, 105, 161, 0.2)',
+                      mb: 2
+                    }}>
+                      <Typography sx={{ fontSize: '9px', letterSpacing: '1.2px', textTransform: 'uppercase', opacity: 0.8, mb: 1.5 }}>
+                        Salary Payout Account
+                      </Typography>
+                      <Typography sx={{ fontSize: '18px', fontWeight: 'bold', fontFamily: 'Outfit', mb: 3 }}>
+                        {profile?.bankName || 'Not Set'}
+                      </Typography>
 
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                      <Box>
-                        <Typography sx={{ fontSize: '8px', opacity: 0.8, textTransform: 'uppercase' }}>
-                          Account Holder
-                        </Typography>
-                        <Typography sx={{ fontSize: '12px', fontWeight: 'bold', fontFamily: 'Outfit' }}>
-                          {profile?.firstName ? `${profile.firstName} ${profile.lastName || ''}` : 'Employee'}
-                        </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                        <Box>
+                          <Typography sx={{ fontSize: '8px', opacity: 0.8, textTransform: 'uppercase' }}>
+                            Account Holder
+                          </Typography>
+                          <Typography sx={{ fontSize: '12px', fontWeight: 'bold', fontFamily: 'Outfit' }}>
+                            {profile?.firstName ? `${profile.firstName} ${profile.lastName || ''}` : 'Employee'}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ textAlign: 'right' }}>
+                          <Typography sx={{ fontSize: '8px', opacity: 0.8, textTransform: 'uppercase' }}>
+                            Account Number
+                          </Typography>
+                          <Typography sx={{ fontSize: '12px', fontWeight: 'bold', fontFamily: 'Outfit' }}>
+                            {profile?.accountNumber ? `•••• •••• ${profile.accountNumber.slice(-4)}` : 'Not Set'}
+                          </Typography>
+                        </Box>
                       </Box>
-                      <Box sx={{ textAlign: 'right' }}>
-                        <Typography sx={{ fontSize: '8px', opacity: 0.8, textTransform: 'uppercase' }}>
-                          Account Number
-                        </Typography>
-                        <Typography sx={{ fontSize: '12px', fontWeight: 'bold', fontFamily: 'Outfit' }}>
-                          •••• •••• 5690
-                        </Typography>
-                      </Box>
+                    </Box>
+                  ) : (
+                    <Box sx={{ p: 3, borderRadius: 3.5, bgcolor: '#f8fafc', border: '1px dashed #cbd5e1', textAlign: 'center', mb: 2 }}>
+                      <Typography sx={{ fontSize: '11.5px', color: '#64748b', fontFamily: 'Inter' }}>
+                        No bank account details registered by HR yet.
+                      </Typography>
+                    </Box>
+                  )}
+
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 0.8 }}>
+                      <Typography sx={{ color: '#64748b', fontSize: '11px' }}>Bank Name</Typography>
+                      <Typography sx={{ color: '#1e293b', fontSize: '11px', fontWeight: 'bold' }}>{profile?.bankName || 'Not Set'}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 0.8 }}>
+                      <Typography sx={{ color: '#64748b', fontSize: '11px' }}>Account Number</Typography>
+                      <Typography sx={{ color: '#1e293b', fontSize: '11px', fontWeight: 'bold' }}>{profile?.accountNumber || 'Not Set'}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 0.8 }}>
+                      <Typography sx={{ color: '#64748b', fontSize: '11px' }}>IFSC Code</Typography>
+                      <Typography sx={{ color: '#1e293b', fontSize: '11px', fontWeight: 'bold' }}>{profile?.ifscCode || 'Not Set'}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 0.8 }}>
+                      <Typography sx={{ color: '#64748b', fontSize: '11px' }}>Branch Name</Typography>
+                      <Typography sx={{ color: '#1e293b', fontSize: '11px', fontWeight: 'bold' }}>{profile?.branchName || 'Not Set'}</Typography>
                     </Box>
                   </Box>
                 </Grid>
 
+                {/* Right: Salary Breakdown Details */}
                 <Grid item xs={12} md={6}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 1 }}>
-                      <Typography sx={{ color: '#64748b', fontSize: '11.5px' }}>Bank Name</Typography>
-                      <Typography sx={{ color: '#1e293b', fontSize: '11.5px', fontWeight: 'bold' }}>State Bank of India</Typography>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#1e293b', mb: 1.5, fontFamily: 'Outfit', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    💰 Salary Structure
+                  </Typography>
+
+                  {profile?.netTakeHome !== null && profile?.netTakeHome !== undefined ? (
+                    <>
+                      <Box sx={{
+                        p: 2.5,
+                        borderRadius: 3.5,
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        color: '#fff',
+                        boxShadow: '0 4px 14px rgba(16, 185, 129, 0.2)',
+                        mb: 2
+                      }}>
+                        <Typography sx={{ fontSize: '9px', letterSpacing: '1.2px', textTransform: 'uppercase', opacity: 0.8, mb: 1 }}>
+                          Net Take Home (Monthly)
+                        </Typography>
+                        <Typography sx={{ fontSize: '22px', fontWeight: 'bold', fontFamily: 'Outfit' }}>
+                          ₹{profile.netTakeHome.toLocaleString('en-IN')}
+                        </Typography>
+                        <Typography sx={{ fontSize: '9px', opacity: 0.8, mt: 1 }}>
+                          Calculated from standard employee pay terms.
+                        </Typography>
+                      </Box>
+
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 0.8 }}>
+                          <Typography sx={{ color: '#64748b', fontSize: '11px' }}>Basic Pay</Typography>
+                          <Typography sx={{ color: '#1e293b', fontSize: '11px', fontWeight: 'bold' }}>
+                            {profile.basicPay ? `₹${profile.basicPay.toLocaleString('en-IN')}` : '₹0'}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 0.8 }}>
+                          <Typography sx={{ color: '#64748b', fontSize: '11px' }}>HRA</Typography>
+                          <Typography sx={{ color: '#1e293b', fontSize: '11px', fontWeight: 'bold' }}>
+                            {profile.hra ? `₹${profile.hra.toLocaleString('en-IN')}` : '₹0'}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 0.8 }}>
+                          <Typography sx={{ color: '#64748b', fontSize: '11px' }}>Special Allowance</Typography>
+                          <Typography sx={{ color: '#1e293b', fontSize: '11px', fontWeight: 'bold' }}>
+                            {profile.specialAllowance ? `₹${profile.specialAllowance.toLocaleString('en-IN')}` : '₹0'}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 0.8 }}>
+                          <Typography sx={{ color: '#64748b', fontSize: '11px' }}>Deductions (PF/Tax)</Typography>
+                          <Typography sx={{ color: '#ef4444', fontSize: '11px', fontWeight: 'bold' }}>
+                            {profile.deductions ? `₹${profile.deductions.toLocaleString('en-IN')}` : '₹0'}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </>
+                  ) : (
+                    <Box sx={{ p: 4, borderRadius: 3.5, bgcolor: '#f8fafc', border: '1px dashed #cbd5e1', textAlign: 'center', height: '70%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Typography sx={{ fontSize: '11.5px', color: '#64748b', fontFamily: 'Inter' }}>
+                        Salary structures are not configured by HR yet.
+                      </Typography>
                     </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 1 }}>
-                      <Typography sx={{ color: '#64748b', fontSize: '11.5px' }}>IFSC Code</Typography>
-                      <Typography sx={{ color: '#1e293b', fontSize: '11.5px', fontWeight: 'bold' }}>SBIN0004561</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', pb: 1 }}>
-                      <Typography sx={{ color: '#64748b', fontSize: '11.5px' }}>Branch</Typography>
-                      <Typography sx={{ color: '#1e293b', fontSize: '11.5px', fontWeight: 'bold' }}>HITEC City, Hyderabad</Typography>
-                    </Box>
-                  </Box>
+                  )}
                 </Grid>
               </Grid>
             </AccordionDetails>
           </Accordion>
 
-          {/* Panel 4: Document Hub */}
-          <Accordion 
-            expanded={expanded === 'documents'} 
-            onChange={handleChange('documents')}
+          {/* Panel 4: Change Password */}
+          <Accordion
+            expanded={expanded === 'security'}
+            onChange={handleChange('security')}
             sx={{
               mb: 1.8,
               borderRadius: '12px !important',
@@ -698,60 +738,116 @@ const EmployeeSettings = () => {
               bgcolor: '#fff'
             }}
           >
-            <AccordionSummary 
+            <AccordionSummary
               expandIcon={<ExpandIcon sx={{ color: '#64748b' }} />}
-              sx={{ 
-                bgcolor: expanded === 'documents' ? '#f8fafc' : 'transparent',
-                borderBottom: expanded === 'documents' ? '1px solid #e2e8f0' : 'none',
+              sx={{
+                bgcolor: expanded === 'security' ? '#f8fafc' : 'transparent',
+                borderBottom: expanded === 'security' ? '1px solid #e2e8f0' : 'none',
                 minHeight: 58,
                 px: 2.5
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  width: 36, 
-                  height: 36, 
-                  borderRadius: 2.5, 
-                  bgcolor: '#eef2ff', 
-                  color: '#4f46e5' 
+                <Box sx={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 36, height: 36, borderRadius: 2.5, bgcolor: '#fef3c7', color: '#d97706'
                 }}>
-                  <DocumentIcon sx={{ fontSize: 20 }} />
+                  <LockIcon sx={{ fontSize: 20 }} />
                 </Box>
                 <Box>
                   <Typography sx={{ fontWeight: 'bold', fontSize: '13px', fontFamily: 'Outfit', color: '#1e293b' }}>
-                    Document Center & Contracts
+                    Security &amp; Password
                   </Typography>
                   <Typography sx={{ fontSize: '10.5px', color: '#64748b', fontFamily: 'Inter' }}>
-                    Download employment agreements, letters, and policy documents
+                    Change your login password using your current password
                   </Typography>
                 </Box>
               </Box>
             </AccordionSummary>
             <AccordionDetails sx={{ p: { xs: 2, md: 3 } }}>
-              <Box sx={{ mb: 2 }}>
+              <Box sx={{ maxWidth: 480 }}>
                 <Typography sx={{ fontWeight: 'bold', fontSize: '14px', fontFamily: 'Outfit', color: '#1e293b', mb: 0.5 }}>
-                  Document Center
+                  Change Password
                 </Typography>
-                <Typography sx={{ color: '#64748b', fontSize: '11px', fontFamily: 'Inter' }}>
-                  Download your official contracts, letters of verification, and NDAs.
+                <Typography sx={{ color: '#64748b', fontSize: '11px', fontFamily: 'Inter', mb: 2.5 }}>
+                  Enter your current password and a new secure password to update your credentials.
                 </Typography>
-              </Box>
 
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                {['Employment_Contract.pdf', 'NDA_Agreement.pdf', 'Latest_Increment_Letter.pdf'].map((docName, index) => (
-                  <Paper key={index} variant="outlined" sx={{ p: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderColor: '#e2e8f0', borderRadius: 2.5, bgcolor: '#f8fafc' }}>
-                    <Box>
-                      <Typography sx={{ fontWeight: 'bold', fontSize: '11.5px', color: '#334155' }}>{docName}</Typography>
-                      <Typography sx={{ color: '#64748b', fontSize: '9px' }}>Verified & Signed PDF</Typography>
-                    </Box>
-                    <Button variant="text" size="small" sx={{ textTransform: 'none', fontWeight: 'bold', fontSize: '11px', px: 1.5 }}>
-                      Download
-                    </Button>
-                  </Paper>
-                ))}
+                {pwSuccess && <Alert severity="success" sx={{ mb: 2, py: 0.5, fontSize: '12px' }}>{pwSuccess}</Alert>}
+                {pwError && <Alert severity="error" sx={{ mb: 2, py: 0.5, fontSize: '12px' }}>{pwError}</Alert>}
+
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Current Password"
+                    type={showCurrentPw ? 'text' : 'password'}
+                    value={pwForm.currentPassword}
+                    onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })}
+                    InputProps={{
+                      style: { fontSize: '13px', fontFamily: 'Inter' },
+                      endAdornment: (
+                        <IconButton size="small" onClick={() => setShowCurrentPw(!showCurrentPw)} edge="end">
+                          {showCurrentPw ? <VisibilityOffIcon sx={{ fontSize: 16 }} /> : <VisibilityIcon sx={{ fontSize: 16 }} />}
+                        </IconButton>
+                      )
+                    }}
+                    InputLabelProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter' } }}
+                  />
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="New Password"
+                    type={showNewPw ? 'text' : 'password'}
+                    value={pwForm.newPassword}
+                    onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })}
+                    InputProps={{
+                      style: { fontSize: '13px', fontFamily: 'Inter' },
+                      endAdornment: (
+                        <IconButton size="small" onClick={() => setShowNewPw(!showNewPw)} edge="end">
+                          {showNewPw ? <VisibilityOffIcon sx={{ fontSize: 16 }} /> : <VisibilityIcon sx={{ fontSize: 16 }} />}
+                        </IconButton>
+                      )
+                    }}
+                    InputLabelProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter' } }}
+                    helperText="Minimum 6 characters"
+                    FormHelperTextProps={{ style: { fontSize: '10px', fontFamily: 'Inter' } }}
+                  />
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Confirm New Password"
+                    type="password"
+                    value={pwForm.confirmPassword}
+                    onChange={(e) => setPwForm({ ...pwForm, confirmPassword: e.target.value })}
+                    InputProps={{ style: { fontSize: '13px', fontFamily: 'Inter' } }}
+                    InputLabelProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter' } }}
+                  />
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleChangePassword}
+                    disabled={pwLoading}
+                    startIcon={pwLoading ? null : <LockIcon sx={{ fontSize: 15 }} />}
+                    sx={{
+                      alignSelf: 'flex-start',
+                      textTransform: 'none',
+                      fontFamily: 'Outfit',
+                      fontWeight: 700,
+                      fontSize: '12.5px',
+                      borderRadius: 2,
+                      px: 3,
+                      background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
+                      boxShadow: 'none',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #b45309 0%, #92400e 100%)',
+                        boxShadow: 'none'
+                      }
+                    }}
+                  >
+                    {pwLoading ? 'Updating...' : 'Update Password'}
+                  </Button>
+                </Box>
               </Box>
             </AccordionDetails>
           </Accordion>

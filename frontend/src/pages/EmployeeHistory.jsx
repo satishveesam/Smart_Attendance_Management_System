@@ -47,6 +47,8 @@ const EmployeeHistory = () => {
         return <Chip label="Half Day" color="primary" size="small" sx={{ fontWeight: 'bold' }} />;
       case 'ABSENT':
         return <Chip label="Absent" color="error" size="small" sx={{ fontWeight: 'bold' }} />;
+      case 'EXTRA_SHIFT':
+        return <Chip label="Extra Shift" size="small" sx={{ fontWeight: 'bold', bgcolor: '#8b5cf6', color: '#fff' }} />;
       default:
         return <Chip label={status} size="small" />;
     }
