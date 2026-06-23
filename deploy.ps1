@@ -4,7 +4,7 @@ $ErrorActionPreference = "Stop"
 # Configuration
 $KEY_PATH = "C:\Users\satish\OneDrive\Desktop\attendance-key.pem"
 $EC2_IP = "52.63.150.105"
-$EC2_USER = "ec2-user"
+$EC2_USER = "ubuntu"
 $BASE_DIR = $PSScriptRoot
 
 Write-Host "🚀 Starting Deployment Process..." -ForegroundColor Cyan
@@ -26,7 +26,7 @@ npm run build
 
 # 4. Upload Backend JAR
 Write-Host "📤 Uploading backend JAR to EC2..." -ForegroundColor Yellow
-scp -i $KEY_PATH "$BASE_DIR\backend\target\*.jar" "$($EC2_USER)@$($EC2_IP):/home/ec2-user/app.jar"
+scp -i $KEY_PATH "$BASE_DIR\backend\target\*.jar" "$($EC2_USER)@$($EC2_IP):/home/ubuntu/app.jar"
 
 # 5. Upload Frontend Files
 Write-Host "📤 Uploading frontend static assets to EC2..." -ForegroundColor Yellow
