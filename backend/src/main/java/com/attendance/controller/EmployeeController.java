@@ -47,35 +47,6 @@ public class EmployeeController {
         return ResponseEntity.ok(updated);
     }
 
-    @PutMapping("/me/password")
-    public ResponseEntity<?> changeMyPassword(
-            @org.springframework.security.core.annotation.AuthenticationPrincipal com.attendance.entity.User user,
-            @RequestBody java.util.Map<String, String> request) {
-        String currentPassword = request.get("currentPassword");
-        String newPassword = request.get("newPassword");
-        
-        employeeService.changePassword(user.getId(), currentPassword, newPassword);
-        
-        java.util.Map<String, Object> response = new java.util.HashMap<>();
-        response.put("success", true);
-        response.put("message", "Password changed successfully");
-        return ResponseEntity.ok(response);
-    }
-
-    @PutMapping("/{id}/reset-password")
-    public ResponseEntity<?> resetEmployeePassword(
-            @PathVariable("id") Long id,
-            @RequestBody java.util.Map<String, String> request) {
-        String newPassword = request.get("newPassword");
-        
-        employeeService.resetPassword(id, newPassword);
-        
-        java.util.Map<String, Object> response = new java.util.HashMap<>();
-        response.put("success", true);
-        response.put("message", "Employee password reset successfully");
-        return ResponseEntity.ok(response);
-    }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteEmployee(@PathVariable("id") Long id) {
         employeeService.deleteEmployee(id);

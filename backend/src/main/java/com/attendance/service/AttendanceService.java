@@ -74,10 +74,8 @@ public class AttendanceService {
         
         // 1. Check if already checked in today
         Optional<Attendance> existingAttendance = attendanceRepository.findByEmployeeIdAndAttendanceDate(employee.getId(), today);
-        
-        // Check if shift time has ended (skip for weekly offs)
-        if (!isWeekOff(employee, today) && isAfterShiftEndTime(employee)) {
-            throw new BadRequestException("Your shift time has ended. Check-in is no longer allowed for today.");
+        if (existingAttendance.isPresent()) {
+            throw new BadRequestException("You have already checked in for today!");
         }
 
         // 2. Geofence Verification
@@ -108,8 +106,10 @@ public class AttendanceService {
                 targetRadius = officeLoc.getRadiusMeters();
             }
 
-            // Geofence check is logged, but we no longer throw exception so employees can check in from other locations
             double distance = GeofencingUtils.distance(request.getLatitude(), request.getLongitude(), targetLat, targetLon);
+            if (distance > targetRadius) {
+                throw new BadRequestException(String.format("Geofence verification failed. You are outside the allowed office area (Distance: %.1f meters, Radius: %.1f meters)", distance, targetRadius));
+            }
         }
 
         // 3. QR Session Verification (Optional, but validated if token is provided)
@@ -131,9 +131,9 @@ public class AttendanceService {
                 double[] registeredDescriptor = objectMapper.readValue(faceData.getFaceDescriptor(), double[].class);
                 
                 double euclideanDistance = calculateEuclideanDistance(targetDescriptor, registeredDescriptor);
-                // Tighten threshold to 0.45 for strict security verification
-                if (euclideanDistance > 0.45) {
-                    throw new BadRequestException("Face does not match registered profile. Verification failed.");
+                // Standard face recognition threshold for Euclidean distance is <= 0.6 for match (equivalent to 90% match threshold)
+                if (euclideanDistance > 0.6) {
+                    throw new BadRequestException(String.format("Facial verification failed. Match confidence below threshold (Distance: %.3f)", euclideanDistance));
                 }
             } catch (BadRequestException ex) {
                 throw ex;
@@ -147,37 +147,23 @@ public class AttendanceService {
 
         // 5. Establish Attendance status
         LocalDateTime now = LocalDateTime.now();
-        AttendanceStatus status = AttendanceStatus.PENDING;
-
-        Attendance savedAttendance;
-        if (existingAttendance.isPresent()) {
-            Attendance attendance = existingAttendance.get();
-            if (attendance.getCheckOut() == null) {
-                throw new BadRequestException("You are already checked in. You must check-out first.");
-            }
-            
-            // Allow multiple check-ins: clear checkOut, checkOutSelfie, checkOutAddress, update checkIn, checkInSelfie, checkInAddress, status
-            attendance.setCheckIn(now);
-            attendance.setCheckOut(null);
-            attendance.setCheckOutSelfie(null);
-            attendance.setCheckOutAddress(null);
-            attendance.setCheckInSelfie(request.getSelfieBase64());
-            attendance.setCheckInAddress(request.getAddress());
-            attendance.setStatus(status);
-            
-            savedAttendance = attendanceRepository.save(attendance);
-        } else {
-            Attendance attendance = Attendance.builder()
-                    .employee(employee)
-                    .attendanceDate(today)
-                    .checkIn(now)
-                    .status(status)
-                    .checkInSelfie(request.getSelfieBase64())
-                    .checkInAddress(request.getAddress())
-                    .build();
-
-            savedAttendance = attendanceRepository.save(attendance);
+        AttendanceStatus status = AttendanceStatus.PRESENT;
+        if (isWfhToday) {
+            status = AttendanceStatus.WFH;
+        } else if (now.toLocalTime().isAfter(LATE_THRESHOLD)) {
+            status = AttendanceStatus.LATE;
         }
+
+        Attendance attendance = Attendance.builder()
+                .employee(employee)
+                .attendanceDate(today)
+                .checkIn(now)
+                .status(status)
+                .checkInSelfie(request.getSelfieBase64())
+                .checkInAddress(request.getAddress())
+                .build();
+
+        Attendance savedAttendance = attendanceRepository.save(attendance);
 
         // 6. Save Location Details
         AttendanceLocation location = AttendanceLocation.builder()
@@ -234,8 +220,10 @@ public class AttendanceService {
                 targetRadius = officeLoc.getRadiusMeters();
             }
 
-            // Geofence check is logged, but we no longer throw exception so employees can check out from other locations
             double distance = GeofencingUtils.distance(request.getLatitude(), request.getLongitude(), targetLat, targetLon);
+            if (distance > targetRadius) {
+                throw new BadRequestException(String.format("Geofence verification failed. You are outside the allowed office area (Distance: %.1f meters, Radius: %.1f meters)", distance, targetRadius));
+            }
         }
 
         // 2. Face Recognition Verification
@@ -248,8 +236,8 @@ public class AttendanceService {
                 double[] registeredDescriptor = objectMapper.readValue(faceData.getFaceDescriptor(), double[].class);
                 
                 double euclideanDistance = calculateEuclideanDistance(targetDescriptor, registeredDescriptor);
-                if (euclideanDistance > 0.45) {
-                    throw new BadRequestException("Face does not match registered profile. Verification failed.");
+                if (euclideanDistance > 0.6) {
+                    throw new BadRequestException(String.format("Facial verification failed. Match confidence below threshold (Distance: %.3f)", euclideanDistance));
                 }
             } catch (BadRequestException ex) {
                 throw ex;
@@ -266,13 +254,14 @@ public class AttendanceService {
         attendance.setCheckOutSelfie(request.getSelfie());
         attendance.setCheckOutAddress(request.getAddress());
         
-        // Calculate Total Working Hours (accumulate over multiple check-in/check-out sessions)
-        double currentSessionHours = Duration.between(attendance.getCheckIn(), now).toMinutes() / 60.0;
-        double previousHours = attendance.getTotalHours() != null ? attendance.getTotalHours() : 0.0;
-        attendance.setTotalHours(previousHours + currentSessionHours);
+        // Calculate Total Working Hours
+        double hours = Duration.between(attendance.getCheckIn(), now).toMinutes() / 60.0;
+        attendance.setTotalHours(hours);
 
-        // Keep status as PENDING — admin will resolve it to PRESENT/LATE/HALF_DAY at approval
-        // (Do NOT override PENDING with HALF_DAY here)
+        // If hours is less than 4, mark as HALF_DAY (unless they are WFH)
+        if (hours < 4.0 && attendance.getStatus() != AttendanceStatus.WFH) {
+            attendance.setStatus(AttendanceStatus.HALF_DAY);
+        }
 
         Attendance savedAttendance = attendanceRepository.save(attendance);
 
@@ -334,83 +323,6 @@ public class AttendanceService {
         return QrCodeUtils.generateQrCodeImage(token, 300, 300);
     }
 
-    private boolean isWeekOff(Employee employee, LocalDate date) {
-        String schedule = employee.getRosterSchedule();
-        if (schedule == null || schedule.isEmpty()) {
-            DayOfWeek day = date.getDayOfWeek();
-            return day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY;
-        }
-
-        String lowerSchedule = schedule.toLowerCase();
-        DayOfWeek day = date.getDayOfWeek();
-        String dayName = day.name().toLowerCase();
-
-        int offsIndex = lowerSchedule.indexOf("offs");
-        if (offsIndex == -1) {
-            offsIndex = lowerSchedule.indexOf("off");
-        }
-
-        if (offsIndex != -1) {
-            String offsPart = lowerSchedule.substring(offsIndex);
-            return offsPart.contains(dayName);
-        }
-
-        if (lowerSchedule.contains("monday to friday") || lowerSchedule.contains("mon-fri") || lowerSchedule.contains("mon to fri")) {
-            return day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY;
-        }
-
-        if (!lowerSchedule.contains("sat") && !lowerSchedule.contains("sun") && 
-            !lowerSchedule.contains("mon") && !lowerSchedule.contains("tue") && 
-            !lowerSchedule.contains("wed") && !lowerSchedule.contains("thu") && 
-            !lowerSchedule.contains("fri")) {
-            return day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY;
-        }
-
-        return lowerSchedule.contains(dayName);
-    }
-
-    private boolean isAfterShiftEndTime(Employee employee) {
-        String schedule = employee.getRosterSchedule();
-        // Default shift end time is 18:30 (06:30 PM)
-        int endHour = 18;
-        int endMinute = 30;
-
-        if (schedule != null && !schedule.isEmpty()) {
-            // Regex to find all times like 06:30 PM or 6:30 PM or 18:30
-            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(\\d{1,2}):(\\d{2})\\s*(AM|PM)", java.util.regex.Pattern.CASE_INSENSITIVE);
-            java.util.regex.Matcher matcher = pattern.matcher(schedule);
-            
-            List<String[]> matches = new ArrayList<>();
-            while (matcher.find()) {
-                matches.add(new String[]{matcher.group(1), matcher.group(2), matcher.group(3)});
-            }
-            
-            if (matches.size() >= 2) {
-                // Usually the second matched time is the end time
-                String[] endMatch = matches.get(1);
-                try {
-                    int hour = Integer.parseInt(endMatch[0]);
-                    int minute = Integer.parseInt(endMatch[1]);
-                    String ampm = endMatch[2].toUpperCase();
-                    
-                    if ("PM".equals(ampm) && hour < 12) {
-                        hour += 12;
-                    } else if ("AM".equals(ampm) && hour == 12) {
-                        hour = 0;
-                    }
-                    endHour = hour;
-                    endMinute = minute;
-                } catch (Exception e) {
-                    // Ignore and fall back to default
-                }
-            }
-        }
-
-        LocalTime now = LocalTime.now();
-        LocalTime shiftEnd = LocalTime.of(endHour, endMinute);
-        return now.isAfter(shiftEnd);
-    }
-
     private double calculateEuclideanDistance(double[] desc1, double[] desc2) {
         if (desc1.length != desc2.length) {
             throw new IllegalArgumentException("Descriptors length mismatch: " + desc1.length + " vs " + desc2.length);
@@ -437,35 +349,6 @@ public class AttendanceService {
             }
         }
 
-        String checkInLocType = "-";
-        String checkOutLocType = "-";
-
-        try {
-            Employee employee = attendance.getEmployee();
-            double targetLat, targetLon, targetRadius;
-            if (employee.getCustomLatitude() != null && employee.getCustomLongitude() != null && employee.getCustomRadiusMeters() != null) {
-                targetLat = employee.getCustomLatitude();
-                targetLon = employee.getCustomLongitude();
-                targetRadius = employee.getCustomRadiusMeters();
-            } else {
-                OfficeLocation officeLoc = getEffectiveOfficeLocation();
-                targetLat = officeLoc.getLatitude();
-                targetLon = officeLoc.getLongitude();
-                targetRadius = officeLoc.getRadiusMeters();
-            }
-
-            if (inLat != null && inLon != null) {
-                double distance = GeofencingUtils.distance(inLat, inLon, targetLat, targetLon);
-                checkInLocType = (distance <= targetRadius) ? "Office Location" : "Other Location";
-            }
-            if (outLat != null && outLon != null) {
-                double distance = GeofencingUtils.distance(outLat, outLon, targetLat, targetLon);
-                checkOutLocType = (distance <= targetRadius) ? "Office Location" : "Other Location";
-            }
-        } catch (Exception e) {
-            // fallback
-        }
-
         return AttendanceDto.builder()
                 .id(attendance.getId())
                 .employeeId(attendance.getEmployee().getId())
@@ -484,8 +367,6 @@ public class AttendanceService {
                 .checkOutSelfie(attendance.getCheckOutSelfie())
                 .checkInAddress(attendance.getCheckInAddress())
                 .checkOutAddress(attendance.getCheckOutAddress())
-                .checkInLocationType(checkInLocType)
-                .checkOutLocationType(checkOutLocType)
                 .build();
     }
 
@@ -498,65 +379,5 @@ public class AttendanceService {
     public OfficeLocation updateOfficeLocation(OfficeLocation newLocation) {
         newLocation.setId(1L);
         return officeLocationRepository.save(newLocation);
-    }
-
-    @Transactional(readOnly = true)
-    public List<AttendanceDto> getPendingAttendances() {
-        return attendanceRepository.findByStatusOrderByAttendanceDateDescCheckInDesc(AttendanceStatus.PENDING)
-                .stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional
-    public AttendanceDto approvePendingAttendance(Long attendanceId) {
-        Attendance attendance = attendanceRepository.findById(attendanceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Attendance record not found"));
-        if (attendance.getStatus() != AttendanceStatus.PENDING) {
-            throw new BadRequestException("Attendance record is not in PENDING state");
-        }
-
-        LocalDate date = attendance.getAttendanceDate();
-        Employee employee = attendance.getEmployee();
-
-        // Re-check if employee had approved WFH leave on that date
-        boolean isWfh = false;
-        List<LeaveRequest> activeApprovedRequests = leaveRequestRepository
-                .findByEmployeeIdAndStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
-                        employee.getId(), LeaveRequest.LeaveStatus.APPROVED, date, date);
-        for (LeaveRequest r : activeApprovedRequests) {
-            if (r.getLeaveType() == LeaveRequest.LeaveType.WFH) {
-                isWfh = true;
-                break;
-            }
-        }
-
-        // Determine final status based on actual check-in time and hours worked
-        AttendanceStatus finalStatus;
-        if (isWeekOff(employee, date)) {
-            finalStatus = AttendanceStatus.EXTRA_SHIFT;
-        } else if (isWfh) {
-            finalStatus = AttendanceStatus.WFH;
-        } else if (attendance.getTotalHours() != null && attendance.getTotalHours() < 4.0) {
-            finalStatus = AttendanceStatus.HALF_DAY;
-        } else if (attendance.getCheckIn() != null && attendance.getCheckIn().toLocalTime().isAfter(LATE_THRESHOLD)) {
-            finalStatus = AttendanceStatus.LATE;
-        } else {
-            finalStatus = AttendanceStatus.PRESENT;
-        }
-
-        attendance.setStatus(finalStatus);
-        return mapToDto(attendanceRepository.save(attendance));
-    }
-
-    @Transactional
-    public AttendanceDto rejectPendingAttendance(Long attendanceId) {
-        Attendance attendance = attendanceRepository.findById(attendanceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Attendance record not found"));
-        if (attendance.getStatus() != AttendanceStatus.PENDING) {
-            throw new BadRequestException("Attendance record is not in PENDING state");
-        }
-        attendance.setStatus(AttendanceStatus.ABSENT);
-        return mapToDto(attendanceRepository.save(attendance));
     }
 }

@@ -56,103 +56,18 @@ const EmployeeAttendance = () => {
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState('');
   const [apiSuccess, setApiSuccess] = useState('');
-  const [profile, setProfile] = useState(null);
-  const [officeLocation, setOfficeLocation] = useState(null);
-  const [isShiftOver, setIsShiftOver] = useState(false);
 
-  // Calculate if the shift time has ended
-  useEffect(() => {
-    const checkShiftOver = () => {
-      // Default shift end time is 18:30 (06:30 PM)
-      let endHour = 18;
-      let endMinute = 30;
-
-      const schedule = profile?.rosterSchedule;
-      if (schedule) {
-        // Regex to extract time ranges like "10:00 AM - 06:30 PM"
-        const matches = [...schedule.matchAll(/(\d{1,2}):(\d{2})\s*(AM|PM)/gi)];
-        if (matches.length >= 2) {
-          const endMatch = matches[1];
-          let hour = parseInt(endMatch[1], 10);
-          const minute = parseInt(endMatch[2], 10);
-          const ampm = endMatch[3].toUpperCase();
-
-          if (ampm === 'PM' && hour < 12) {
-            hour += 12;
-          } else if (ampm === 'AM' && hour === 12) {
-            hour = 0;
-          }
-          endHour = hour;
-          endMinute = minute;
-        }
-      }
-
-      const now = new Date();
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
-
-      // Check if today is a week-off day. If it is, then the shift is not over (they can check in anytime).
-      const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-      const todayDayName = daysOfWeek[now.getDay()];
-
-      let isTodayWeekOff = false;
-      if (!schedule) {
-        isTodayWeekOff = todayDayName === 'saturday' || todayDayName === 'sunday';
-      } else {
-        const lowerSchedule = schedule.toLowerCase();
-        let offsIndex = lowerSchedule.indexOf("offs");
-        if (offsIndex === -1) offsIndex = lowerSchedule.indexOf("off");
-
-        if (offsIndex !== -1) {
-          isTodayWeekOff = lowerSchedule.substring(offsIndex).includes(todayDayName);
-        } else if (lowerSchedule.includes("monday to friday") || lowerSchedule.includes("mon-fri") || lowerSchedule.includes("mon to fri")) {
-          isTodayWeekOff = todayDayName === 'saturday' || todayDayName === 'sunday';
-        } else if (!lowerSchedule.includes("sat") && !lowerSchedule.includes("sun") && 
-                   !lowerSchedule.includes("mon") && !lowerSchedule.includes("tue") && 
-                   !lowerSchedule.includes("wed") && !lowerSchedule.includes("thu") && 
-                   !lowerSchedule.includes("fri")) {
-          isTodayWeekOff = todayDayName === 'saturday' || todayDayName === 'sunday';
-        } else {
-          isTodayWeekOff = lowerSchedule.includes(todayDayName);
-        }
-      }
-
-      const ended = !isTodayWeekOff && ((currentHour > endHour) || (currentHour === endHour && currentMinute >= endMinute));
-      setIsShiftOver(ended);
-    };
-
-    checkShiftOver();
-    // Re-evaluate every 30 seconds
-    const interval = setInterval(checkShiftOver, 30000);
-    return () => clearInterval(interval);
-  }, [profile]);
-
-  // Calculate distance to correct office coordinates dynamically
+  // Calculate distance to HITEC City office coordinates (17.4483, 78.3741)
   useEffect(() => {
     if (simulateLocation) {
       setDistanceToOffice(0);
       setIsInGeofence(true);
     } else if (gps.latitude && gps.longitude) {
-      // Determine target coordinates (employee custom coordinates take precedence, then officeLocation, then fallback)
-      let targetLat = 17.4483;
-      let targetLon = 78.3741;
-      let targetRadius = 200;
-
-      if (profile?.customLatitude != null && profile?.customLongitude != null) {
-        targetLat = profile.customLatitude;
-        targetLon = profile.customLongitude;
-        targetRadius = profile.customRadiusMeters || 200;
-      } else if (officeLocation?.latitude != null && officeLocation?.longitude != null) {
-        targetLat = officeLocation.latitude;
-        targetLon = officeLocation.longitude;
-        targetRadius = officeLocation.radiusMeters || 200;
-      }
-
       const R = 6371e3; // meters
       const lat1 = gps.latitude * Math.PI / 180;
-      const lat2 = targetLat * Math.PI / 180;
-      const deltaLat = (targetLat - gps.latitude) * Math.PI / 180;
-      const deltaLon = (targetLon - gps.longitude) * Math.PI / 180;
+      const lat2 = 17.4483 * Math.PI / 180;
+      const deltaLat = (17.4483 - gps.latitude) * Math.PI / 180;
+      const deltaLon = (78.3741 - gps.longitude) * Math.PI / 180;
 
       const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
         Math.cos(lat1) * Math.cos(lat2) *
@@ -161,12 +76,12 @@ const EmployeeAttendance = () => {
       const distance = R * c;
 
       setDistanceToOffice(distance);
-      setIsInGeofence(distance <= targetRadius);
+      setIsInGeofence(distance <= 200);
     } else {
       setDistanceToOffice(null);
       setIsInGeofence(false);
     }
-  }, [gps.latitude, gps.longitude, simulateLocation, profile, officeLocation]);
+  }, [gps.latitude, gps.longitude, simulateLocation]);
 
   // Live Timer for Checked-In hours
   useEffect(() => {
@@ -196,27 +111,7 @@ const EmployeeAttendance = () => {
     fetchTodayStatus();
     fetchLocation();
     fetchRegisteredFace();
-    fetchProfile();
-    fetchOfficeLocation();
   }, []);
-
-  const fetchOfficeLocation = async () => {
-    try {
-      const res = await API.get('/attendance/office-location');
-      setOfficeLocation(res.data);
-    } catch (err) {
-      console.error("Failed to fetch office location: ", err);
-    }
-  };
-
-  const fetchProfile = async () => {
-    try {
-      const res = await API.get('/employees/me');
-      setProfile(res.data);
-    } catch (err) {
-      console.error("Failed to fetch employee profile: ", err);
-    }
-  };
 
   const fetchRegisteredFace = async () => {
     try {
@@ -232,7 +127,7 @@ const EmployeeAttendance = () => {
   const fetchTodayStatus = async () => {
     try {
       const res = await API.get('/attendance/history');
-      const todayStr = new Date().toLocaleDateString('sv-SE');
+      const todayStr = new Date().toISOString().split('T')[0];
       const todayRecord = res.data.find((r) => r.attendanceDate === todayStr);
       setTodayLog(todayRecord || null);
     } catch (err) {
@@ -270,19 +165,16 @@ const EmployeeAttendance = () => {
     }
   };
 
-  const handleRetakeSelfie = () => {
-    setImgSrc(null);
-    setFaceStatus('idle');
-    setApiError('');
-    setApiSuccess('');
-  };
-
   const handleVerifyAndSubmit = async () => {
     if (!webcamRef.current) return;
     
-    // Preliminary validation — GPS coordinates are required if not simulating
-    if (!simulateLocation && (gps.error || !gps.latitude)) {
-      setApiError('Valid GPS coordinates are required for verification.');
+    // Preliminary validation
+    if (gps.error || !gps.latitude) {
+      setApiError('Valid GPS coordinates are required to verify geofence.');
+      return;
+    }
+    if (!isInGeofence) {
+      setApiError('You are outside the permitted office geofence range.');
       return;
     }
     if (attendanceType === 'qr' && !qrToken) {
@@ -317,7 +209,7 @@ const EmployeeAttendance = () => {
           sum += diff * diff;
         }
         const distance = Math.sqrt(sum);
-        if (distance > 0.45) {
+        if (distance > 0.6) {
           setFaceStatus('failed');
           setApiError('Face does not match registered profile. Verification failed.');
           setSubmitting(false);
@@ -331,26 +223,13 @@ const EmployeeAttendance = () => {
       // 3. Submit check-in or check-out to backend
       const isCheckOut = todayLog && !todayLog.checkOut;
       const endpoint = isCheckOut ? '/attendance/checkout' : '/attendance/checkin';
-
-      // Resolve target coordinates dynamically for simulation
-      let targetLat = 17.4483;
-      let targetLon = 78.3741;
-      if (profile?.customLatitude != null && profile?.customLongitude != null) {
-        targetLat = profile.customLatitude;
-        targetLon = profile.customLongitude;
-      } else if (officeLocation?.latitude != null && officeLocation?.longitude != null) {
-        targetLat = officeLocation.latitude;
-        targetLon = officeLocation.longitude;
-      }
-
       const payload = {
-        latitude: simulateLocation ? targetLat : gps.latitude,
-        longitude: simulateLocation ? targetLon : gps.longitude,
+        latitude: gps.latitude,
+        longitude: gps.longitude,
         qrToken: (!isCheckOut && attendanceType === 'qr') ? qrToken : null,
         faceDescriptor: JSON.stringify(descriptor),
-        selfieBase64: screenshot,
+        selfie: screenshot,
         address: 'C9WH+W92, HUDA Techno Enclave, HITEC City, Hyderabad',
-        simulatedLocation: !isCheckOut ? simulateLocation : false,
       };
 
       const res = await API.post(endpoint, payload);
@@ -358,7 +237,7 @@ const EmployeeAttendance = () => {
       if (isCheckOut) {
         setApiSuccess(`Successfully checked out at ${new Date(res.data.checkOut).toLocaleTimeString()}`);
       } else {
-        setApiSuccess(`Attendance submitted — awaiting admin approval. Check-in time: ${new Date(res.data.checkIn).toLocaleTimeString()}`);
+        setApiSuccess(`Successfully checked in today at ${new Date(res.data.checkIn).toLocaleTimeString()}`);
       }
       setTodayLog(res.data);
       
@@ -405,22 +284,11 @@ const EmployeeAttendance = () => {
           </Alert>
         )}
 
-        {/* PENDING approval banner */}
-        {todayLog && todayLog.status === 'PENDING' && (
-          <Alert
-            severity="warning"
-            sx={{ mb: 2, borderRadius: 2, fontSize: '12px', fontFamily: 'Inter' }}
-            icon={<span style={{ fontSize: 18 }}>⏳</span>}
-          >
-            <strong>Attendance Pending Admin Approval</strong> — Your check-in was recorded and is awaiting admin review. It will appear as Present or Late once approved.
-          </Alert>
-        )}
-
         <Grid container spacing={2}>
           
           {/* CAMERA SCANNER PANEL */}
           <Grid item xs={12} md={7}>
-            {(!isShiftOver || (todayLog && !todayLog.checkOut)) ? (
+            {(!todayLog || (todayLog && !todayLog.checkOut)) ? (
               <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', boxShadow: 'none' }}>
                 <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
                   <Typography sx={{ fontWeight: 'bold', mb: 1.5, color: '#1e293b', fontSize: '13px', fontFamily: 'Outfit' }}>
@@ -447,26 +315,6 @@ const EmployeeAttendance = () => {
                           alt="Captured Frame"
                           sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
-                      ) : !isInGeofence ? (
-                        <Box sx={{
-                          width: '100%',
-                          height: '100%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          bgcolor: '#0f172a',
-                          p: 3,
-                          textAlign: 'center'
-                        }}>
-                          <Typography sx={{ fontSize: 24, mb: 1 }}>📍</Typography>
-                          <Typography sx={{ color: '#fca5a5', fontWeight: 'bold', fontSize: '12px', mb: 1, fontFamily: 'Outfit' }}>
-                            Out of Geofence Range
-                          </Typography>
-                          <Typography sx={{ color: '#94a3b8', fontSize: '10.5px', fontFamily: 'Inter', maxWidth: '80%', lineHeight: 1.4 }}>
-                            Please simulate location inside range to enable webcam biometric scanning.
-                          </Typography>
-                        </Box>
                       ) : (
                         <Webcam
                           audio={false}
@@ -478,7 +326,7 @@ const EmployeeAttendance = () => {
                       )}
 
                       {/* Align Face target frame overlay */}
-                      {!imgSrc && isInGeofence && (
+                      {!imgSrc && (
                         <Box sx={{
                           position: 'absolute',
                           top: '50%',
@@ -534,91 +382,44 @@ const EmployeeAttendance = () => {
                           </Typography>
                         </Box>
                       )}
-
-                      {faceStatus === 'failed' && (
-                        <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(239,68,68,0.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 20, p: 2, textAlign: 'center' }}>
-                          <Typography sx={{ color: '#fff', fontSize: 32, mb: 1 }}>⚠️</Typography>
-                          <Typography sx={{ color: '#fff', fontSize: '12px', fontWeight: 'bold', fontFamily: 'Outfit', mb: 2 }}>
-                            {apiError || 'Face Verification Failed'}
-                          </Typography>
-                          <Button
-                            variant="contained"
-                            size="small"
-                            onClick={handleRetakeSelfie}
-                            sx={{
-                              bgcolor: '#fff',
-                              color: '#ef4444',
-                              fontWeight: 'bold',
-                              fontFamily: 'Outfit',
-                              textTransform: 'none',
-                              borderRadius: 2,
-                              px: 3,
-                              py: 0.8,
-                              '&:hover': { bgcolor: '#f8fafc' }
-                            }}
-                          >
-                            Retake Selfie
-                          </Button>
-                        </Box>
-                      )}
                     </Box>
 
                     {/* Integrated Action Button */}
-                    {faceStatus === 'failed' ? (
-                      <Button
-                        fullWidth
-                        variant="contained"
-                        onClick={handleRetakeSelfie}
-                        sx={{
-                          py: 1.2,
-                          borderRadius: 2.5,
-                          textTransform: 'none',
-                          fontWeight: 'bold',
-                          fontSize: '12.5px',
-                          backgroundColor: '#ef4444',
-                          '&:hover': { backgroundColor: '#dc2626' },
-                          boxShadow: 'none'
-                        }}
-                      >
-                        Retake Selfie
-                      </Button>
-                    ) : (
-                      <Button
-                        fullWidth
-                        variant="contained"
-                        disabled={submitting || !isInGeofence}
-                        onClick={handleVerifyAndSubmit}
-                        sx={{
-                          py: 1.2,
-                          borderRadius: 2.5,
-                          textTransform: 'none',
-                          fontWeight: 'bold',
-                          fontSize: '12.5px',
-                          backgroundColor: (todayLog && !todayLog.checkOut) ? '#f59e0b' : '#10b981',
-                          '&:hover': { backgroundColor: (todayLog && !todayLog.checkOut) ? '#d97706' : '#059669' },
-                          boxShadow: 'none'
-                        }}
-                      >
-                        {submitting ? (
-                          <CircularProgress size={16} color="inherit" />
-                        ) : (todayLog && !todayLog.checkOut) ? (
-                          'Scan & Confirm Check-Out'
-                        ) : (
-                          'Scan & Confirm Check-In'
-                        )}
-                      </Button>
-                    )}
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      disabled={submitting}
+                      onClick={handleVerifyAndSubmit}
+                      sx={{
+                        py: 1.2,
+                        borderRadius: 2.5,
+                        textTransform: 'none',
+                        fontWeight: 'bold',
+                        fontSize: '12.5px',
+                        backgroundColor: (todayLog && !todayLog.checkOut) ? '#f59e0b' : '#10b981',
+                        '&:hover': { backgroundColor: (todayLog && !todayLog.checkOut) ? '#d97706' : '#059669' },
+                        boxShadow: 'none'
+                      }}
+                    >
+                      {submitting ? (
+                        <CircularProgress size={16} color="inherit" />
+                      ) : (todayLog && !todayLog.checkOut) ? (
+                        'Scan & Confirm Check-Out'
+                      ) : (
+                        'Scan & Confirm Check-In'
+                      )}
+                    </Button>
                   </Box>
                 </CardContent>
               </Card>
             ) : (
               <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', p: 4, textAlign: 'center', bgcolor: '#fff', boxShadow: 'none' }}>
-                <TimeIcon color="warning" sx={{ fontSize: 50, mb: 1 }} />
+                <SuccessIcon color="success" sx={{ fontSize: 50, mb: 1 }} />
                 <Typography sx={{ fontWeight: 'bold', color: '#1e293b', mb: 0.5, fontSize: '14px', fontFamily: 'Outfit' }}>
-                  Shift Period Ended
+                  Biometric Terminal Blocked
                 </Typography>
                 <Typography sx={{ fontSize: '11.5px', color: '#64748b', fontFamily: 'Inter' }}>
-                  Your shift time has ended. Check-in is no longer allowed for today.
+                  Your shift logs are completed for today. Webcam scanning is disabled.
                 </Typography>
               </Card>
             )}
@@ -723,19 +524,16 @@ const EmployeeAttendance = () => {
                     </Typography>
                     
                     {/* Simulated location checkbox */}
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mt: 0.5, gap: 0.8 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
                       <input
                         type="checkbox"
                         id="sim-loc-check"
                         checked={simulateLocation}
                         onChange={(e) => setSimulateLocation(e.target.checked)}
-                        style={{ marginTop: '2px', cursor: 'pointer', transform: 'scale(0.9)', accentColor: '#f59e0b' }}
+                        style={{ marginRight: '6px', cursor: 'pointer', transform: 'scale(0.9)' }}
                       />
-                      <label htmlFor="sim-loc-check" style={{ fontSize: '9px', color: '#b45309', fontWeight: 'bold', cursor: 'pointer', lineHeight: 1.4 }}>
+                      <label htmlFor="sim-loc-check" style={{ fontSize: '9px', color: '#0284c7', fontWeight: 'bold', cursor: 'pointer' }}>
                         Simulate Location (Inside Range)
-                        <span style={{ display: 'block', fontWeight: 'normal', color: '#92400e', marginTop: '1px' }}>
-                          ⚠️ Attendance will be marked PENDING — requires admin approval
-                        </span>
                       </label>
                     </Box>
                   </Box>

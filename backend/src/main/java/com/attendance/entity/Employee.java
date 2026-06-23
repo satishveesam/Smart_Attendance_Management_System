@@ -52,34 +52,4 @@ public class Employee {
 
     @Column(name = "custom_radius_meters")
     private Double customRadiusMeters;
-
-    @Column(name = "bank_name", length = 100)
-    private String bankName;
-
-    @Column(name = "account_number", length = 50)
-    private String accountNumber;
-
-    @Column(name = "ifsc_code", length = 20)
-    private String ifscCode;
-
-    @Column(name = "branch_name", length = 100)
-    private String branchName;
-
-    @Column(name = "basic_pay")
-    private Double basicPay;
-
-    @Column(name = "hra")
-    private Double hra;
-
-    @Column(name = "special_allowance")
-    private Double specialAllowance;
-
-    @Column(name = "deductions")
-    private Double deductions;
-
-    @Column(name = "net_take_home")
-    private Double netTakeHome;
-
-    @Column(name = "roster_schedule", length = 255)
-    private String rosterSchedule;
 }

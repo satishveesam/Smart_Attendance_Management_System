@@ -57,50 +57,33 @@ const AdminLeaves = () => {
 
   return (
     <AdminLayout>
-      {/* Page Header Welcome Banner */}
-      <Paper 
-        elevation={0}
-        sx={{ 
-          p: { xs: 2, sm: 3 }, 
-          mb: 3, 
-          borderRadius: 4, 
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-          color: '#fff',
-          boxShadow: '0 8px 24px -4px rgba(15, 23, 42, 0.12)',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        <Box sx={{ position: 'absolute', top: '-50%', right: '-20%', width: '300px', height: '300px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, rgba(56, 189, 248, 0) 70%)', zIndex: 0 }} />
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, position: 'relative', zIndex: 1 }}>
-          <Typography variant="h4" sx={{ fontWeight: 800, fontFamily: 'Outfit', letterSpacing: '-0.5px', fontSize: { xs: '20px', sm: '28px' } }}>
-            Leave & WFH Approvals
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#94a3b8', fontFamily: 'Inter', fontSize: { xs: '11px', sm: '13px' }, maxWidth: '600px', display: { xs: 'none', sm: 'block' } }}>
-            Verify, approve, or reject employee leave request applications and remote Work-From-Home registries.
-          </Typography>
-        </Box>
-      </Paper>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1e293b', fontFamily: 'Outfit', fontSize: { xs: '22px', sm: '28px' } }}>
+          Leave & WFH Approvals
+        </Typography>
+        <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter', fontSize: '13px' }}>
+          Approve or reject employee leaves and remote work requests.
+        </Typography>
+      </Box>
 
-      {error && <Alert severity="error" sx={{ mb: 3, borderRadius: 2, fontFamily: 'Inter', fontSize: '13px' }}>{error}</Alert>}
-      {success && <Alert severity="success" sx={{ mb: 3, borderRadius: 2, fontFamily: 'Inter', fontSize: '13px' }}>{success}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 3, borderRadius: 2.5, fontFamily: 'Inter', fontSize: '13px' }}>{error}</Alert>}
+      {success && <Alert severity="success" sx={{ mb: 3, borderRadius: 2.5, fontFamily: 'Inter', fontSize: '13px' }}>{success}</Alert>}
 
-      <Paper sx={{ p: { xs: 2, sm: 2.5 }, borderRadius: 3, boxShadow: '0 2px 12px rgba(0, 0, 0, 0.01)', border: '1px solid #e2e8f0', bgcolor: '#fff' }}>
-        <Typography variant="h6" sx={{ fontWeight: 800, mb: 2, color: '#0f172a', fontFamily: 'Outfit', fontSize: { xs: '15px', sm: '17px' } }}>
-          Pending Approvals Queue
+      <Paper sx={{ p: 3, borderRadius: 3.5, boxShadow: '0 4px 12px rgba(50, 50, 93, 0.02)', border: '1px solid #f1f5f9' }}>
+        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3, color: '#0f172a', fontFamily: 'Outfit', fontSize: '17px' }}>
+          Pending Requests
         </Typography>
 
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-            <CircularProgress size={24} color="primary" />
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress color="primary" />
           </Box>
         ) : requests.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 5, color: '#64748b' }}>
-            <Typography sx={{ fontSize: '24px', mb: 0.5 }}>🎉</Typography>
-            <Typography variant="body1" sx={{ fontWeight: 700, fontFamily: 'Outfit', fontSize: '14.5px', color: '#1e293b' }}>
-              All caught up!
+          <Box sx={{ textAlign: 'center', py: 8, color: '#64748b' }}>
+            <Typography variant="body1" sx={{ fontWeight: 600, fontFamily: 'Outfit', fontSize: '15px', color: '#475569' }}>
+              All caught up! 🎉
             </Typography>
-            <Typography variant="body2" sx={{ color: '#64748b', mt: 0.5, fontFamily: 'Inter', fontSize: '12px' }}>
+            <Typography variant="body2" sx={{ color: '#94a3b8', mt: 0.5, fontFamily: 'Inter', fontSize: '12.5px' }}>
               There are no pending leave or WFH requests to process.
             </Typography>
           </Box>
@@ -113,66 +96,64 @@ const AdminLeaves = () => {
                 display: { xs: 'none', sm: 'block' }, 
                 boxShadow: 'none', 
                 border: '1px solid #f1f5f9', 
-                borderRadius: 2,
+                borderRadius: 2.5,
                 overflow: 'hidden' 
               }}
             >
-              <Table size="small">
+              <Table>
                 <TableHead sx={{ bgcolor: '#f8fafc' }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12px', py: 1.5 }}>Employee</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12px', py: 1.5 }}>Code</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12px', py: 1.5 }}>Type</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12px', py: 1.5 }}>Start Date</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12px', py: 1.5 }}>End Date</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12px', py: 1.5 }}>Reason</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12px', py: 1.5 }} align="right">Actions</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '13px' }}>Employee</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '13px' }}>Code</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '13px' }}>Type</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '13px' }}>Start Date</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '13px' }}>End Date</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '13px' }}>Reason</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '13px' }} align="right">Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {requests.map((item) => (
                     <TableRow key={item.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                      <TableCell sx={{ fontWeight: 700, color: '#1e293b', fontFamily: 'Outfit', fontSize: '13px' }}>{item.employeeName}</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#0284c7', fontFamily: 'Inter', fontSize: '12px' }}>{item.employeeCode}</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: '#1e293b', fontFamily: 'Outfit', fontSize: '13.5px' }}>{item.employeeName}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: '#0284c7', fontFamily: 'Inter', fontSize: '13px' }}>{item.employeeCode}</TableCell>
                       <TableCell sx={{ fontFamily: 'Inter' }}>
                         <Chip
                           label={item.leaveType === 'WFH' ? 'WFH' : item.leaveType.replace('_', ' ')}
                           variant="outlined"
                           size="small"
                           sx={{ 
-                            fontWeight: 800, 
-                            fontSize: '10px',
+                            fontWeight: 'bold', 
+                            fontSize: '11px',
                             color: item.leaveType === 'WFH' ? '#0284c7' : '#475569', 
-                            borderColor: item.leaveType === 'WFH' ? 'rgba(2, 132, 199, 0.3)' : '#cbd5e1',
-                            bgcolor: item.leaveType === 'WFH' ? '#f0f9ff' : '#f8fafc',
-                            height: 20
+                            borderColor: item.leaveType === 'WFH' ? '#0284c7' : '#cbd5e1',
+                            bgcolor: item.leaveType === 'WFH' ? '#f0f9ff' : '#f8fafc'
                           }}
                         />
                       </TableCell>
-                      <TableCell sx={{ fontFamily: 'Inter', fontSize: '12.5px', color: '#475569' }}>{item.startDate}</TableCell>
-                      <TableCell sx={{ fontFamily: 'Inter', fontSize: '12.5px', color: '#475569' }}>{item.endDate}</TableCell>
-                      <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Inter', fontSize: '12.5px', color: '#475569' }}>
+                      <TableCell sx={{ fontFamily: 'Inter', fontSize: '13px', color: '#475569' }}>{item.startDate}</TableCell>
+                      <TableCell sx={{ fontFamily: 'Inter', fontSize: '13px', color: '#475569' }}>{item.endDate}</TableCell>
+                      <TableCell sx={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Inter', fontSize: '13px', color: '#475569' }}>
                         {item.reason}
                       </TableCell>
-                      <TableCell align="right" sx={{ py: 0.5 }}>
+                      <TableCell align="right">
                         <Button
                           size="small"
                           variant="contained"
                           color="success"
-                          startIcon={<ApproveIcon sx={{ fontSize: 13 }} />}
+                          startIcon={<ApproveIcon sx={{ fontSize: 14 }} />}
                           onClick={() => handleProcess(item.id, 'approve')}
                           sx={{ 
                             mr: 1, 
                             textTransform: 'none', 
-                            borderRadius: 1.5,
+                            borderRadius: 2,
                             fontFamily: 'Outfit',
-                            fontWeight: 700,
-                            fontSize: '11.5px',
+                            fontWeight: 600,
+                            fontSize: '12px',
                             background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                            boxShadow: 'none',
+                            boxShadow: '0 2px 6px rgba(16, 185, 129, 0.15)',
                             '&:hover': {
                               background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                              boxShadow: 'none'
                             }
                           }}
                         >
@@ -182,22 +163,20 @@ const AdminLeaves = () => {
                           size="small"
                           variant="outlined"
                           color="error"
-                          startIcon={<RejectIcon sx={{ fontSize: 13 }} />}
+                          startIcon={<RejectIcon sx={{ fontSize: 14 }} />}
                           onClick={() => handleProcess(item.id, 'reject')}
                           sx={{ 
                             textTransform: 'none', 
-                            borderRadius: 1.5,
+                            borderRadius: 2,
                             fontFamily: 'Outfit',
-                            fontWeight: 700,
-                            fontSize: '11.5px',
-                            borderColor: '#fca5a5',
+                            fontWeight: 600,
+                            fontSize: '12px',
+                            borderColor: '#fee2e2',
                             color: '#ef4444',
                             bgcolor: '#fef2f2',
-                            boxShadow: 'none',
                             '&:hover': {
-                              borderColor: '#f87171',
-                              bgcolor: '#fee2e2',
-                              boxShadow: 'none'
+                              borderColor: '#fca5a5',
+                              bgcolor: '#fee2e2'
                             }
                           }}
                         >
@@ -211,20 +190,20 @@ const AdminLeaves = () => {
             </TableContainer>
 
             {/* Mobile Cards List View (xs only) */}
-            <Box sx={{ display: { xs: 'flex', sm: 'none' }, flexDirection: 'column', gap: 1.5 }}>
+            <Box sx={{ display: { xs: 'flex', sm: 'none' }, flexDirection: 'column', gap: 2.5 }}>
               {requests.map((item) => (
                 <Card 
                   key={item.id} 
                   sx={{ 
-                    borderRadius: 2.5, 
-                    border: '1px solid #e2e8f0',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.01)',
+                    borderRadius: 3.5, 
+                    border: '1px solid #f1f5f9',
+                    boxShadow: '0 4px 12px rgba(50, 50, 93, 0.02)',
                     bgcolor: '#fff',
-                    p: 1.5
+                    p: 2.2
                   }}
                 >
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Typography sx={{ fontWeight: 700, color: '#0284c7', fontSize: '10.5px', fontFamily: 'Inter' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                    <Typography sx={{ fontWeight: 600, color: '#0284c7', fontSize: '11px', fontFamily: 'Inter' }}>
                       {item.employeeCode}
                     </Typography>
                     <Chip
@@ -232,57 +211,54 @@ const AdminLeaves = () => {
                       variant="outlined"
                       size="small"
                       sx={{ 
-                        fontWeight: 800, 
-                        fontSize: '9px', 
+                        fontWeight: 'bold', 
+                        fontSize: '10.5px', 
                         fontFamily: 'Inter', 
                         color: item.leaveType === 'WFH' ? '#0284c7' : '#475569', 
-                        borderColor: item.leaveType === 'WFH' ? 'rgba(2, 132, 199, 0.25)' : '#cbd5e1',
-                        bgcolor: item.leaveType === 'WFH' ? '#f0f9ff' : '#f8fafc',
-                        height: 18
+                        borderColor: item.leaveType === 'WFH' ? '#0284c7' : '#cbd5e1',
+                        bgcolor: item.leaveType === 'WFH' ? '#f0f9ff' : '#f8fafc'
                       }}
                     />
                   </Box>
                   
-                  <Typography sx={{ fontWeight: 800, fontSize: '13.5px', color: '#1e293b', fontFamily: 'Outfit' }}>
+                  <Typography sx={{ fontWeight: 'bold', fontSize: '15px', color: '#1e293b', fontFamily: 'Outfit' }}>
                     {item.employeeName}
                   </Typography>
                   
-                  <Box sx={{ display: 'flex', gap: 2, mt: 0.5 }}>
-                    <Typography variant="body2" sx={{ color: '#64748b', fontSize: '11px', fontFamily: 'Inter' }}>
-                      Start: <strong>{item.startDate}</strong>
+                  <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+                    <Typography variant="body2" sx={{ color: '#64748b', fontSize: '12px', fontFamily: 'Inter' }}>
+                      📅 From: {item.startDate}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: '#64748b', fontSize: '11px', fontFamily: 'Inter' }}>
-                      End: <strong>{item.endDate}</strong>
+                    <Typography variant="body2" sx={{ color: '#64748b', fontSize: '12px', fontFamily: 'Inter' }}>
+                      📅 To: {item.endDate}
                     </Typography>
                   </Box>
 
-                  <Box sx={{ mt: 1, p: 1, bgcolor: '#f8fafc', borderRadius: 1.5, border: '1px solid #e2e8f0' }}>
-                    <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block', fontFamily: 'Inter', fontSize: '8px', textTransform: 'uppercase', fontWeight: 800 }}>Reason</Typography>
-                    <Typography variant="body2" sx={{ color: '#475569', fontFamily: 'Inter', fontSize: '11.5px', mt: 0.2, lineHeight: 1.4 }}>
+                  <Box sx={{ mt: 1.5, p: 1.5, bgcolor: '#f8fafc', borderRadius: 2, border: '1px solid #e2e8f0' }}>
+                    <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block', fontFamily: 'Inter', fontSize: '9px', textTransform: 'uppercase', fontWeight: 'bold' }}>Reason</Typography>
+                    <Typography variant="body2" sx={{ color: '#475569', fontFamily: 'Inter', fontSize: '12px', mt: 0.5 }}>
                       {item.reason}
                     </Typography>
                   </Box>
 
-                  <Box sx={{ display: 'flex', gap: 1, mt: 1.5, pt: 1.5, borderTop: '1px solid #f1f5f9' }}>
+                  <Box sx={{ display: 'flex', gap: 1.5, mt: 2, pt: 2, borderTop: '1px solid #f1f5f9' }}>
                     <Button
                       fullWidth
                       size="small"
                       variant="contained"
                       color="success"
-                      startIcon={<ApproveIcon sx={{ fontSize: 13 }} />}
+                      startIcon={<ApproveIcon />}
                       onClick={() => handleProcess(item.id, 'approve')}
                       sx={{ 
                         textTransform: 'none', 
-                        borderRadius: 1.5,
+                        borderRadius: 2,
                         fontFamily: 'Outfit',
-                        fontWeight: 700,
-                        fontSize: '11px',
-                        py: 0.5,
+                        fontWeight: 600,
+                        fontSize: '12px',
                         background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                         boxShadow: 'none',
                         '&:hover': {
                           background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                          boxShadow: 'none'
                         }
                       }}
                     >
@@ -293,20 +269,19 @@ const AdminLeaves = () => {
                       size="small"
                       variant="outlined"
                       color="error"
-                      startIcon={<RejectIcon sx={{ fontSize: 13 }} />}
+                      startIcon={<RejectIcon />}
                       onClick={() => handleProcess(item.id, 'reject')}
                       sx={{ 
                         textTransform: 'none', 
-                        borderRadius: 1.5,
+                        borderRadius: 2,
                         fontFamily: 'Outfit',
-                        fontWeight: 700,
-                        fontSize: '11px',
-                        py: 0.5,
-                        borderColor: '#fca5a5',
+                        fontWeight: 600,
+                        fontSize: '12px',
+                        borderColor: '#fee2e2',
                         color: '#ef4444',
                         bgcolor: '#fef2f2',
                         '&:hover': {
-                          borderColor: '#f87171',
+                          borderColor: '#fca5a5',
                           bgcolor: '#fee2e2'
                         }
                       }}

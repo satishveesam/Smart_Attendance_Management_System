@@ -87,16 +87,6 @@ public class EmployeeService {
                 .customLatitude(dto.getCustomLatitude())
                 .customLongitude(dto.getCustomLongitude())
                 .customRadiusMeters(dto.getCustomRadiusMeters())
-                .bankName(dto.getBankName())
-                .accountNumber(dto.getAccountNumber())
-                .ifscCode(dto.getIfscCode())
-                .branchName(dto.getBranchName())
-                .basicPay(dto.getBasicPay())
-                .hra(dto.getHra())
-                .specialAllowance(dto.getSpecialAllowance())
-                .deductions(dto.getDeductions())
-                .netTakeHome(dto.getNetTakeHome())
-                .rosterSchedule(dto.getRosterSchedule())
                 .build();
 
         Employee savedEmployee = employeeRepository.save(employee);
@@ -129,16 +119,6 @@ public class EmployeeService {
         employee.setCustomLatitude(dto.getCustomLatitude());
         employee.setCustomLongitude(dto.getCustomLongitude());
         employee.setCustomRadiusMeters(dto.getCustomRadiusMeters());
-        employee.setBankName(dto.getBankName());
-        employee.setAccountNumber(dto.getAccountNumber());
-        employee.setIfscCode(dto.getIfscCode());
-        employee.setBranchName(dto.getBranchName());
-        employee.setBasicPay(dto.getBasicPay());
-        employee.setHra(dto.getHra());
-        employee.setSpecialAllowance(dto.getSpecialAllowance());
-        employee.setDeductions(dto.getDeductions());
-        employee.setNetTakeHome(dto.getNetTakeHome());
-        employee.setRosterSchedule(dto.getRosterSchedule());
 
         // Update corresponding user email
         if (employee.getUser() != null) {
@@ -170,35 +150,6 @@ public class EmployeeService {
         return mapToDto(employee);
     }
 
-    @Transactional
-    public void changePassword(Long userId, String currentPassword, String newPassword) {
-        if (currentPassword == null || currentPassword.isEmpty() || newPassword == null || newPassword.isEmpty()) {
-            throw new BadRequestException("Current password and new password are required");
-        }
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
-            throw new BadRequestException("Incorrect current password");
-        }
-        user.setPassword(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
-    }
-
-    @Transactional
-    public void resetPassword(Long employeeId, String newPassword) {
-        if (newPassword == null || newPassword.isEmpty()) {
-            throw new BadRequestException("New password is required");
-        }
-        Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + employeeId));
-        if (employee.getUser() == null) {
-            throw new BadRequestException("Employee does not have an associated user account");
-        }
-        User user = employee.getUser();
-        user.setPassword(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
-    }
-
     private EmployeeDto mapToDto(Employee employee) {
         EmployeeDto.EmployeeDtoBuilder builder = EmployeeDto.builder()
                 .id(employee.getId())
@@ -212,17 +163,7 @@ public class EmployeeService {
                 .joiningDate(employee.getJoiningDate())
                 .customLatitude(employee.getCustomLatitude())
                 .customLongitude(employee.getCustomLongitude())
-                .customRadiusMeters(employee.getCustomRadiusMeters())
-                .bankName(employee.getBankName())
-                .accountNumber(employee.getAccountNumber())
-                .ifscCode(employee.getIfscCode())
-                .branchName(employee.getBranchName())
-                .basicPay(employee.getBasicPay())
-                .hra(employee.getHra())
-                .specialAllowance(employee.getSpecialAllowance())
-                .deductions(employee.getDeductions())
-                .netTakeHome(employee.getNetTakeHome())
-                .rosterSchedule(employee.getRosterSchedule());
+                .customRadiusMeters(employee.getCustomRadiusMeters());
 
         if (employee.getUser() != null) {
             builder.userId(employee.getUser().getId())

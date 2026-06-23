@@ -145,7 +145,7 @@ const EmployeeAttendanceSummary = () => {
     setSubmittingTask(true);
     try {
       await API.post('/work-entries/submit', {
-        entryDate: new Date().toLocaleDateString('sv-SE'),
+        entryDate: new Date().toISOString().split('T')[0],
         taskDescription: taskDescription,
         hoursSpent: Number(hoursSpent)
       });
@@ -176,7 +176,7 @@ const EmployeeAttendanceSummary = () => {
 
     for (let day = maxDay; day >= 1; day--) {
       const dateObj = new Date(year, month, day);
-      const dateStr = dateObj.toLocaleDateString('sv-SE');
+      const dateStr = dateObj.toISOString().split('T')[0];
 
       const log = history.find(l => l.attendanceDate === dateStr);
       dates.push({
@@ -191,17 +191,6 @@ const EmployeeAttendanceSummary = () => {
   const formatTime = (timeStr) => {
     if (!timeStr) return '';
     return new Date(timeStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const formatDuration = (totalHours) => {
-    if (totalHours === null || totalHours === undefined) return '';
-    const totalMinutes = Math.round(totalHours * 60);
-    const hrs = Math.floor(totalMinutes / 60);
-    const mins = totalMinutes % 60;
-    if (hrs > 0) {
-      return `${hrs}h ${mins}m`;
-    }
-    return `${mins}m`;
   };
 
   return (
@@ -320,15 +309,10 @@ const EmployeeAttendanceSummary = () => {
                       statusColor = '#f59e0b';
                     } else if (item.log.status === 'HALF_DAY') {
                       statusColor = '#3b82f6';
-                    } else if (item.log.status === 'EXTRA_SHIFT') {
-                      statusColor = '#8b5cf6';
                     }
 
                     if (item.log.checkIn) {
                       timingText = `${formatTime(item.log.checkIn)} - ${item.log.checkOut ? formatTime(item.log.checkOut) : 'Active'}`;
-                      if (item.log.totalHours) {
-                        timingText += ` (${formatDuration(item.log.totalHours)})`;
-                      }
                     }
                   } else if (isWeekend) {
                     statusText = 'Weekend';

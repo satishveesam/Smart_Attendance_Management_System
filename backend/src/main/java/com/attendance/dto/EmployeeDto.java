@@ -23,14 +23,4 @@ public class EmployeeDto {
     private Double customLatitude;
     private Double customLongitude;
     private Double customRadiusMeters;
-    private String bankName;
-    private String accountNumber;
-    private String ifscCode;
-    private String branchName;
-    private Double basicPay;
-    private Double hra;
-    private Double specialAllowance;
-    private Double deductions;
-    private Double netTakeHome;
-    private String rosterSchedule;
 }

@@ -34,12 +34,6 @@ public class CheckInRequest {
     /** Resolved human-readable address from browser Geocoding API (optional). */
     private String address;
 
-    /**
-     * True when the employee used "Simulate Location (Inside Range)" to bypass GPS.
-     * Attendance will be saved with status PENDING and requires admin approval.
-     */
-    private boolean simulatedLocation;
-
     public CheckInRequest() {}
 
     public Double getLatitude() { return latitude; }
@@ -60,9 +54,6 @@ public class CheckInRequest {
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
 
-    public boolean isSimulatedLocation() { return simulatedLocation; }
-    public void setSimulatedLocation(boolean simulatedLocation) { this.simulatedLocation = simulatedLocation; }
-
     @Override
     public String toString() {
         return "CheckInRequest{" +
@@ -72,7 +63,6 @@ public class CheckInRequest {
                 ", faceDescriptor='[DESCRIPTOR]'" +
                 ", selfieBase64='[BASE64_IMAGE]'" +
                 ", address='" + address + '\'' +
-                ", simulatedLocation=" + simulatedLocation +
                 '}';
     }
 }

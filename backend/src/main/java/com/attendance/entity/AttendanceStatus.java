@@ -6,7 +6,5 @@ public enum AttendanceStatus {
     LATE,
     HALF_DAY,
     LEAVE,
-    WFH,
-    PENDING,
-    EXTRA_SHIFT
+    WFH
 }
