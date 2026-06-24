@@ -274,50 +274,58 @@ const EmployeeDashboard = () => {
             Core Actions & Services
           </Typography>
           
-          <Grid container spacing={1} justifyContent="center" sx={{ mb: 2.5 }}>
+          <Box sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: 'repeat(4, 1fr)',
+              sm: 'repeat(5, 1fr)',
+              md: 'repeat(6, 1fr)',
+            },
+            gap: 1,
+            mb: 2.5,
+            width: '100%',
+          }}>
             {primaryActions.map((action) => (
-              <Grid item xs={3} sm={2.4} md={2} key={action.title}>
-                <Paper
-                  onClick={() => handleCardClick(action.title, action.path, action.action)}
-                  sx={{
-                    p: { xs: 0.8, sm: 1 },
-                    width: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: 2,
-                    cursor: 'pointer',
-                    bgcolor: '#fff',
-                    textAlign: 'center',
-                    height: { xs: 70, sm: 95 },
-                    border: '1px solid #e2e8f0',
-                    boxShadow: 'none',
-                    transition: 'all 0.2s',
-                    '&:hover': {
-                      borderColor: '#cbd5e1',
-                      transform: 'translateY(-2px)'
-                    }
-                  }}
-                >
-                  <Box sx={{ 
-                    p: { xs: 0.5, sm: 0.8 }, 
-                    borderRadius: 1.5, 
-                    bgcolor: action.bg, 
-                    mb: { xs: 0.5, sm: 0.8 }, 
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    {action.icon}
-                  </Box>
-                  <Typography sx={{ fontWeight: '700', color: '#334155', fontFamily: 'Outfit', fontSize: { xs: '8px', sm: '11px' }, lineHeight: 1.1 }}>
-                    {action.title}
-                  </Typography>
-                </Paper>
-              </Grid>
+              <Paper
+                key={action.title}
+                onClick={() => handleCardClick(action.title, action.path, action.action)}
+                sx={{
+                  p: { xs: 0.8, sm: 1 },
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 2,
+                  cursor: 'pointer',
+                  bgcolor: '#fff',
+                  textAlign: 'center',
+                  height: { xs: 70, sm: 95 },
+                  border: '1px solid #e2e8f0',
+                  boxShadow: 'none',
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    borderColor: '#cbd5e1',
+                    transform: 'translateY(-2px)'
+                  }
+                }}
+              >
+                <Box sx={{ 
+                  p: { xs: 0.5, sm: 0.8 }, 
+                  borderRadius: 1.5, 
+                  bgcolor: action.bg, 
+                  mb: { xs: 0.5, sm: 0.8 }, 
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {action.icon}
+                </Box>
+                <Typography sx={{ fontWeight: '700', color: '#334155', fontFamily: 'Outfit', fontSize: { xs: '8px', sm: '11px' }, lineHeight: 1.1 }}>
+                  {action.title}
+                </Typography>
+              </Paper>
             ))}
-          </Grid>
+          </Box>
 
           {/* 4. Recent Logs / Feed */}
           {attendanceHistory.length > 0 && (
