@@ -17,6 +17,7 @@ import {
   Alert,
   Divider,
   IconButton,
+  Chip,
 } from '@mui/material';
 import {
   PeopleAlt as PeopleIcon,
@@ -92,13 +93,19 @@ const AdminDashboard = () => {
     }
   };
 
-  // Fetch office location on load to display immediately on the Radar card
+  // Fetch office location on load to display immediately on the Radar card (Null-Safe!)
   const fetchOfficeLocationOnMount = async () => {
     try {
       const res = await API.get('/attendance/office-location');
-      setLocLatitude(res.data.latitude || '');
-      setLocLongitude(res.data.longitude || '');
-      setLocRadius(res.data.radiusMeters || '');
+      if (res.data) {
+        setLocLatitude(res.data.latitude || '');
+        setLocLongitude(res.data.longitude || '');
+        setLocRadius(res.data.radiusMeters || '');
+      } else {
+        setLocLatitude('');
+        setLocLongitude('');
+        setLocRadius('');
+      }
     } catch (err) {
       console.error("Failed to load geofence on mount", err);
     }
@@ -110,9 +117,15 @@ const AdminDashboard = () => {
     setLocationOpen(true);
     try {
       const res = await API.get('/attendance/office-location');
-      setLocLatitude(res.data.latitude || '');
-      setLocLongitude(res.data.longitude || '');
-      setLocRadius(res.data.radiusMeters || '');
+      if (res.data) {
+        setLocLatitude(res.data.latitude || '');
+        setLocLongitude(res.data.longitude || '');
+        setLocRadius(res.data.radiusMeters || '');
+      } else {
+        setLocLatitude('');
+        setLocLongitude('');
+        setLocRadius('');
+      }
     } catch (err) {
       console.error("Failed to load office geofence location settings", err);
       setLocError("Failed to fetch current geofencing settings.");
@@ -156,9 +169,11 @@ const AdminDashboard = () => {
       }
       const res = await API.post('/attendance/office-location', payload);
       setLocSuccess("Office geofence work location updated successfully!");
-      setLocLatitude(res.data.latitude);
-      setLocLongitude(res.data.longitude);
-      setLocRadius(res.data.radiusMeters);
+      if (res.data) {
+        setLocLatitude(res.data.latitude || '');
+        setLocLongitude(res.data.longitude || '');
+        setLocRadius(res.data.radiusMeters || '');
+      }
       
       // Refresh stats
       const statsRes = await API.get('/dashboard/admin/stats');
