@@ -74,11 +74,10 @@ const Login = () => {
       minHeight: '100vh', 
       width: '100%',
       overflowX: 'hidden',
-      display: 'flex', 
       bgcolor: '#f8fafc',
       fontFamily: 'Inter'
     }}>
-      <Grid container sx={{ width: '100%', m: 0 }}>
+      <Grid container sx={{ width: '100%', minHeight: '100vh', m: 0 }}>
         
         {/* Left Side: Product Branding / Features Info (hidden on mobile) */}
         <Grid 
