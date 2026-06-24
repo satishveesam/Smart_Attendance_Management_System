@@ -31,7 +31,6 @@ import {
   Wifi as LiveIcon,
   Map as MapIcon,
   Close as CloseIcon,
-  TrendingUp as UpIcon,
 } from '@mui/icons-material';
 import {
   ResponsiveContainer,
@@ -55,6 +54,7 @@ const AdminDashboard = () => {
   // QR Dialog state
   const [qrOpen, setQrOpen] = useState(false);
   const [qrToken, setQrToken] = useState('');
+  const [qrCodeUrl, setQrCodeUrl] = useState(''); // Holds secure local object URL for QR image
   const [qrLoading, setQrLoading] = useState(false);
 
   // Geofence Location Settings state
@@ -146,7 +146,7 @@ const AdminDashboard = () => {
       setLocLongitude(res.data.longitude);
       setLocRadius(res.data.radiusMeters);
       
-      // Refresh stats in case location updates affect live tracking
+      // Refresh stats
       const statsRes = await API.get('/dashboard/admin/stats');
       setStats(statsRes.data);
     } catch (err) {
@@ -157,16 +157,32 @@ const AdminDashboard = () => {
     }
   };
 
+  // ADVANCED SECURE QR GENERATION: Fetch image as Blob using authenticated Axios
   const handleGenerateQr = async () => {
     setQrLoading(true);
     setQrOpen(true);
+    setQrCodeUrl('');
     try {
       const res = await API.get('/attendance/generate-qr');
-      setQrToken(res.data.token);
+      const token = res.data.token;
+      setQrToken(token);
+      
+      // Fetch the QR image using authenticated API instance to send the JWT token
+      const imgRes = await API.get(`/attendance/qr-code/${token}`, { responseType: 'blob' });
+      const blobUrl = URL.createObjectURL(imgRes.data);
+      setQrCodeUrl(blobUrl);
     } catch (err) {
-      console.error("Failed to generate QR token", err);
+      console.error("Failed to generate secure QR token or image", err);
     } finally {
       setQrLoading(false);
+    }
+  };
+
+  const handleCloseQr = () => {
+    setQrOpen(false);
+    if (qrCodeUrl) {
+      URL.revokeObjectURL(qrCodeUrl); // Clean up browser memory
+      setQrCodeUrl('');
     }
   };
 
@@ -221,41 +237,36 @@ const AdminDashboard = () => {
           title: 'Total Employees',
           value: stats.totalEmployees,
           indicator: 'Registered staff',
-          icon: <PeopleIcon sx={{ fontSize: 20, color: '#2563eb' }} />,
-          bg: '#eff6ff',
-          borderColor: '#2563eb',
+          icon: <PeopleIcon sx={{ fontSize: 18, color: '#3b82f6' }} />,
+          badge: { label: 'Staff', color: '#2563eb', bg: '#eff6ff' }
         },
         {
           title: 'Present Today',
           value: stats.presentToday,
-          indicator: `${stats.attendancePercentage > 0 ? '+' : ''}${(stats.attendancePercentage).toFixed(0)}% checked-in`,
-          icon: <PresentIcon sx={{ fontSize: 20, color: '#16a34a' }} />,
-          bg: '#f0fdf4',
-          borderColor: '#16a34a',
+          indicator: `${(stats.attendancePercentage).toFixed(0)}% presence rate`,
+          icon: <PresentIcon sx={{ fontSize: 18, color: '#10b981' }} />,
+          badge: { label: 'Live', color: '#16a34a', bg: '#f0fdf4' }
         },
         {
           title: 'Absent Today',
           value: stats.absentToday,
-          indicator: 'Awaiting punch-in',
-          icon: <AbsentIcon sx={{ fontSize: 20, color: '#dc2626' }} />,
-          bg: '#fef2f2',
-          borderColor: '#dc2626',
+          indicator: 'Pending check-in',
+          icon: <AbsentIcon sx={{ fontSize: 18, color: '#ef4444' }} />,
+          badge: { label: 'Absent', color: '#dc2626', bg: '#fef2f2' }
         },
         {
           title: 'Late Arrivals',
           value: stats.lateArrivals,
-          indicator: 'Punched after 9:15 AM',
-          icon: <LateIcon sx={{ fontSize: 20, color: '#d97706' }} />,
-          bg: '#fffbeb',
-          borderColor: '#d97706',
+          indicator: 'After 9:15 AM',
+          icon: <LateIcon sx={{ fontSize: 18, color: '#f59e0b' }} />,
+          badge: { label: 'Late', color: '#d97706', bg: '#fffbeb' }
         },
         {
           title: 'Attendance %',
           value: `${stats.attendancePercentage.toFixed(1)}%`,
-          indicator: 'Daily presence rate',
-          icon: <PercentIcon sx={{ fontSize: 20, color: '#7e22ce' }} />,
-          bg: '#faf5ff',
-          borderColor: '#7e22ce',
+          indicator: 'Today\'s score',
+          icon: <PercentIcon sx={{ fontSize: 18, color: '#8b5cf6' }} />,
+          badge: { label: 'Rate', color: '#7e22ce', bg: '#faf5ff' }
         },
       ]
     : [];
@@ -274,11 +285,11 @@ const AdminDashboard = () => {
         {/* Welcome Text with Live Time */}
         <Box sx={{ width: { xs: '100%', md: 'auto' } }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
-            <Box sx={{ p: 0.6, borderRadius: 2, bgcolor: '#e0e7ff', color: '#4f46e5', display: 'flex' }}>
+            <Box sx={{ p: 0.6, borderRadius: 2, bgcolor: '#eff6ff', color: '#2563eb', display: 'flex' }}>
               <ShieldIcon sx={{ fontSize: 22 }} />
             </Box>
-            <Typography variant="h4" sx={{ fontWeight: '800', color: '#1e293b', fontFamily: 'Outfit', letterSpacing: '0.2px', fontSize: { xs: '20px', sm: '26px' } }}>
-              Operations Control Center
+            <Typography variant="h4" sx={{ fontWeight: '900', color: '#0f172a', fontFamily: 'Outfit', letterSpacing: '-0.3px', fontSize: { xs: '20px', sm: '26px' } }}>
+              Operations Dashboard
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.8, flexWrap: 'wrap' }}>
@@ -286,7 +297,7 @@ const AdminDashboard = () => {
               {formattedDateString}
             </Typography>
             <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: '#cbd5e1', display: { xs: 'none', sm: 'block' } }} />
-            <Typography variant="body2" sx={{ color: '#4f46e5', fontFamily: 'Outfit', fontSize: '13.5px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 0.8 }}>
+            <Typography variant="body2" sx={{ color: '#2563eb', fontFamily: 'Outfit', fontSize: '13.5px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 0.8 }}>
               <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', bgcolor: '#10b981', animation: 'pulse 1.8s infinite' }} />
               {formattedTimeString}
             </Typography>
@@ -303,16 +314,15 @@ const AdminDashboard = () => {
             sx={{
               width: { sm: 'auto' },
               textTransform: 'none',
-              borderRadius: 3,
+              borderRadius: 2.5,
               px: 3,
-              py: 1.2,
+              py: 1.1,
               fontFamily: 'Outfit',
               fontSize: '12.5px',
               borderColor: '#cbd5e1',
               color: '#334155',
               fontWeight: 700,
               backgroundColor: '#fff',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
               '&:hover': {
                 borderColor: '#94a3b8',
                 backgroundColor: '#f8fafc',
@@ -328,18 +338,18 @@ const AdminDashboard = () => {
             fullWidth
             sx={{
               width: { sm: 'auto' },
-              background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
+              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
               textTransform: 'none',
-              borderRadius: 3,
+              borderRadius: 2.5,
               px: 3,
-              py: 1.2,
+              py: 1.1,
               fontFamily: 'Outfit',
               fontSize: '12.5px',
               fontWeight: 700,
-              boxShadow: '0 4px 14px 0 rgba(79, 70, 229, 0.25)',
+              boxShadow: 'none',
               '&:hover': {
-                background: 'linear-gradient(135deg, #3730a3 0%, #312e81 100%)',
-                boxShadow: '0 6px 20px 0 rgba(79, 70, 229, 0.35)',
+                background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
+                boxShadow: 'none',
               },
             }}
           >
@@ -353,13 +363,13 @@ const AdminDashboard = () => {
         mb: 4, 
         borderRadius: 3, 
         bgcolor: '#f8fafc', 
-        border: '1px solid #e2e8f0', 
+        border: '1px solid #f1f5f9', 
         p: '10px 20px', 
         boxShadow: 'none'
       }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <LiveIcon sx={{ color: '#10b981', fontSize: 16, animation: 'pulse-slow 2s infinite' }} />
+            <LiveIcon sx={{ color: '#10b981', fontSize: 16 }} />
             <Typography sx={{ fontSize: '11.5px', color: '#475569', fontFamily: 'Inter', fontWeight: 600 }}>
               System Status: <span style={{ color: '#16a34a' }}>OPERATIONAL</span>
             </Typography>
@@ -381,7 +391,7 @@ const AdminDashboard = () => {
         </Box>
       ) : (
         <>
-          {/* 3. Executive KPI Stats Cards Grid (Responsive reflow) */}
+          {/* 3. Executive KPI Stats Cards Grid (Premium Stripe/SaaS Design) */}
           <Box sx={{ 
             display: 'grid', 
             gridTemplateColumns: {
@@ -398,34 +408,47 @@ const AdminDashboard = () => {
                 sx={{ 
                   borderRadius: 3.5, 
                   bgcolor: '#fff',
-                  border: '1px solid #e2e8f0',
-                  borderTop: `4px solid ${card.borderColor}`,
-                  boxShadow: '0 4px 12px rgba(148, 163, 184, 0.03)',
-                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                  // Make the 5th card (Attendance %) span full row on mobile if it wraps
+                  border: '1px solid #f1f5f9',
+                  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px 0 rgba(0, 0, 0, 0.01)',
+                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   gridColumn: { 
                     xs: index === 4 ? 'span 2' : 'span 1', 
                     sm: 'span 1' 
                   },
                   '&:hover': {
-                    transform: 'translateY(-3px)',
-                    boxShadow: '0 10px 24px rgba(148, 163, 184, 0.12)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 12px 0 rgba(0,0,0,0.04), 0 2px 4px 0 rgba(0,0,0,0.02)',
                   }
                 }}
               >
                 <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                    <Typography sx={{ color: '#64748b', fontWeight: '700', fontSize: '12px', fontFamily: 'Outfit', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      {card.title}
-                    </Typography>
-                    <Box sx={{ p: 0.8, borderRadius: 2, bgcolor: card.bg, display: 'flex' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.8 }}>
+                    <Box sx={{ p: 0.6, borderRadius: 2, bgcolor: card.badge.bg, display: 'flex', color: card.badge.color }}>
                       {card.icon}
                     </Box>
+                    <Chip 
+                      label={card.badge.label} 
+                      size="small" 
+                      sx={{ 
+                        bgcolor: card.badge.bg, 
+                        color: card.badge.color, 
+                        fontSize: '9.5px', 
+                        fontWeight: 'bold', 
+                        height: 18,
+                        fontFamily: 'Outfit'
+                      }} 
+                    />
                   </Box>
-                  <Typography variant="h4" sx={{ fontWeight: '800', color: '#1e293b', fontSize: { xs: '22px', sm: '28px' }, fontFamily: 'Outfit', lineHeight: 1.1 }}>
+                  <Typography variant="h4" sx={{ fontWeight: '800', color: '#0f172a', fontSize: { xs: '22px', sm: '30px' }, fontFamily: 'Outfit', lineHeight: 1.1 }}>
                     {card.value}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: '#94a3b8', fontFamily: 'Inter', fontSize: '11px', mt: 0.8, display: 'block', fontWeight: 500 }}>
+                  
+                  <Divider sx={{ my: 1.5, borderColor: '#f8fafc' }} />
+                  
+                  <Typography sx={{ color: '#475569', fontWeight: '700', fontSize: '11.5px', fontFamily: 'Outfit' }}>
+                    {card.title}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: '#94a3b8', fontFamily: 'Inter', fontSize: '10.5px', mt: 0.2, display: 'block' }}>
                     {card.indicator}
                   </Typography>
                 </CardContent>
@@ -442,17 +465,17 @@ const AdminDashboard = () => {
                 borderRadius: 4, 
                 p: { xs: 2.5, sm: 3.5 }, 
                 bgcolor: '#fff', 
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 4px 12px rgba(148, 163, 184, 0.03)',
+                border: '1px solid #f1f5f9',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px 0 rgba(0, 0, 0, 0.01)',
                 height: '100%'
               }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Box sx={{ p: 0.8, borderRadius: 2, bgcolor: '#e0e7ff', color: '#4f46e5', display: 'flex' }}>
+                    <Box sx={{ p: 0.8, borderRadius: 2, bgcolor: '#eff6ff', color: '#2563eb', display: 'flex' }}>
                       <TrendsIcon sx={{ fontSize: 20 }} />
                     </Box>
                     <Box>
-                      <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1e293b', fontFamily: 'Outfit', fontSize: '16.5px' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#0f172a', fontFamily: 'Outfit', fontSize: '16px' }}>
                         Weekly Attendance Analytics
                       </Typography>
                       <Typography variant="caption" sx={{ color: '#94a3b8', fontFamily: 'Inter', display: 'block' }}>
@@ -488,7 +511,7 @@ const AdminDashboard = () => {
               </Card>
             </Grid>
 
-            {/* Right Column: Quick Action Radar Control Center */}
+            {/* Right Column: Quick Action Radar Control Center (Professional Cards) */}
             <Grid item xs={12} lg={4}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, height: '100%' }}>
                 
@@ -497,31 +520,34 @@ const AdminDashboard = () => {
                   borderRadius: 4, 
                   p: 3, 
                   bgcolor: '#fff', 
-                  border: '1px solid #e2e8f0',
-                  boxShadow: '0 4px 12px rgba(148, 163, 184, 0.03)',
+                  border: '1px solid #f1f5f9',
+                  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px 0 rgba(0, 0, 0, 0.01)',
                   flex: 1
                 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#1e293b', fontFamily: 'Outfit', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <MapIcon sx={{ color: '#2563eb', fontSize: 18 }} /> Active Geofence Radar
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#0f172a', fontFamily: 'Outfit', display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <MapIcon sx={{ color: '#2563eb', fontSize: 18 }} /> Active Geofence Radar
+                    </Typography>
+                    <Chip label="Guarded" size="small" sx={{ bgcolor: '#ecfdf5', color: '#047857', fontSize: '9px', fontWeight: 'bold', height: 18, fontFamily: 'Outfit' }} />
+                  </Box>
+                  <Divider sx={{ mb: 2, borderColor: '#f8fafc' }} />
                   
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 2.5 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography sx={{ fontSize: '12.5px', color: '#64748b', fontFamily: 'Inter' }}>Latitude</Typography>
-                      <Typography sx={{ fontSize: '13px', fontWeight: 700, color: '#334155', fontFamily: 'Outfit' }}>
-                        {locLatitude ? Number(locLatitude).toFixed(6) : '40.712800'}
+                      <Typography sx={{ fontSize: '12px', color: '#64748b', fontFamily: 'Inter' }}>Latitude</Typography>
+                      <Typography sx={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', fontFamily: 'Outfit' }}>
+                        {locLatitude ? Number(locLatitude).toFixed(6) : '0.000000'}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography sx={{ fontSize: '12.5px', color: '#64748b', fontFamily: 'Inter' }}>Longitude</Typography>
-                      <Typography sx={{ fontSize: '13px', fontWeight: 700, color: '#334155', fontFamily: 'Outfit' }}>
-                        {locLongitude ? Number(locLongitude).toFixed(6) : '-74.006000'}
+                      <Typography sx={{ fontSize: '12px', color: '#64748b', fontFamily: 'Inter' }}>Longitude</Typography>
+                      <Typography sx={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', fontFamily: 'Outfit' }}>
+                        {locLongitude ? Number(locLongitude).toFixed(6) : '0.000000'}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography sx={{ fontSize: '12.5px', color: '#64748b', fontFamily: 'Inter' }}>Radius Boundary</Typography>
-                      <Typography sx={{ fontSize: '13px', fontWeight: 700, color: '#15803d', fontFamily: 'Outfit', bgcolor: '#dcfce7', px: 1.2, py: 0.3, borderRadius: '8px' }}>
+                      <Typography sx={{ fontSize: '12px', color: '#64748b', fontFamily: 'Inter' }}>Allowed Radius</Typography>
+                      <Typography sx={{ fontSize: '12px', fontWeight: 700, color: '#166534', fontFamily: 'Outfit', bgcolor: '#dcfce7', px: 1, py: 0.2, borderRadius: '6px' }}>
                         {locRadius ? `${locRadius} meters` : '200 meters'}
                       </Typography>
                     </Box>
@@ -530,7 +556,7 @@ const AdminDashboard = () => {
                   <Button
                     fullWidth
                     variant="outlined"
-                    startIcon={<DetectIcon sx={{ fontSize: 15 }} />}
+                    startIcon={<PinIcon sx={{ fontSize: 15 }} />}
                     onClick={handleOpenLocationSettings}
                     sx={{
                       py: 1,
@@ -553,16 +579,19 @@ const AdminDashboard = () => {
                   borderRadius: 4, 
                   p: 3, 
                   bgcolor: '#fff', 
-                  border: '1px solid #e2e8f0',
-                  boxShadow: '0 4px 12px rgba(148, 163, 184, 0.03)',
+                  border: '1px solid #f1f5f9',
+                  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px 0 rgba(0, 0, 0, 0.01)',
                   flex: 1
                 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#1e293b', fontFamily: 'Outfit', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <QrCodeIcon sx={{ color: '#7e22ce', fontSize: 18 }} /> QR Check-In Terminal
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#0f172a', fontFamily: 'Outfit', display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <QrCodeIcon sx={{ color: '#7e22ce', fontSize: 18 }} /> QR Check-In Terminal
+                    </Typography>
+                    <Chip label="Encrypted" size="small" sx={{ bgcolor: '#faf5ff', color: '#701a75', fontSize: '9px', fontWeight: 'bold', height: 18, fontFamily: 'Outfit' }} />
+                  </Box>
+                  <Divider sx={{ mb: 2, borderColor: '#f8fafc' }} />
                   
-                  <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter', fontSize: '12.5px', mb: 3, lineHeight: 1.5 }}>
+                  <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter', fontSize: '12px', mb: 2.5, lineHeight: 1.5 }}>
                     Generate a secure, single-day biometric QR code that employees scan using their mobile dashboards to verify their office check-ins.
                   </Typography>
 
@@ -572,17 +601,17 @@ const AdminDashboard = () => {
                     startIcon={<QrCodeIcon sx={{ fontSize: 15 }} />}
                     onClick={handleGenerateQr}
                     sx={{
-                      py: 1.2,
+                      py: 1,
                       borderRadius: 2.5,
                       textTransform: 'none',
                       fontFamily: 'Outfit',
                       fontWeight: 700,
                       fontSize: '12px',
                       background: 'linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%)',
-                      boxShadow: '0 4px 12px 0 rgba(126, 34, 206, 0.2)',
+                      boxShadow: 'none',
                       '&:hover': {
                         background: 'linear-gradient(135deg, #6b21a8 0%, #581c87 100%)',
-                        boxShadow: '0 6px 16px 0 rgba(126, 34, 206, 0.3)',
+                        boxShadow: 'none',
                       }
                     }}
                   >
@@ -597,54 +626,72 @@ const AdminDashboard = () => {
         </>
       )}
 
-      {/* 5. QR Code Dialog */}
+      {/* 5. SECURE QR CODE TERMINAL DIALOG (Redesigned & Working!) */}
       <Dialog 
         open={qrOpen} 
-        onClose={() => setQrOpen(false)} 
+        onClose={handleCloseQr} 
         maxWidth="xs" 
         fullWidth 
-        sx={{ '& .MuiDialog-paper': { borderRadius: 4, p: 1 } }}
+        sx={{ '& .MuiDialog-paper': { borderRadius: 4, p: 1.5 } }}
       >
-        <DialogTitle sx={{ fontWeight: 'bold', textAlign: 'center', pb: 1, fontFamily: 'Outfit', fontSize: '18px' }}>
-          Daily Attendance QR Terminal
+        <DialogTitle sx={{ fontWeight: 'bold', textAlign: 'center', pb: 1, fontFamily: 'Outfit', fontSize: '18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6" sx={{ fontWeight: '800', fontFamily: 'Outfit', fontSize: '17px', color: '#0f172a' }}>
+            Daily Attendance Terminal
+          </Typography>
+          <IconButton onClick={handleCloseQr} size="small" sx={{ color: '#94a3b8' }}>
+            <CloseIcon sx={{ fontSize: 20 }} />
+          </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 3 }}>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 3, borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9' }}>
           {qrLoading ? (
-            <CircularProgress color="primary" />
-          ) : qrToken ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 4 }}>
+              <CircularProgress size={36} color="secondary" />
+              <Typography sx={{ fontSize: '12px', color: '#64748b', fontFamily: 'Inter', fontWeight: 500 }}>
+                Generating secure attendance token...
+              </Typography>
+            </Box>
+          ) : qrCodeUrl ? (
             <>
+              {/* Secure QR Frame */}
               <Box
                 component="img"
-                src={`${API.defaults.baseURL || ''}/attendance/qr-code/${qrToken}`}
+                src={qrCodeUrl}
                 alt="Daily QR Code"
                 sx={{ 
                   width: 240, 
                   height: 240, 
                   borderRadius: 3, 
-                  border: '1px solid #cbd5e1', 
-                  p: 1.5, 
+                  border: '1px solid #e2e8f0', 
+                  p: 2, 
                   bgcolor: '#fff',
-                  boxShadow: '0 8px 24px rgba(148, 163, 184, 0.1)' 
+                  boxShadow: '0 8px 30px rgba(148, 163, 184, 0.08)' 
                 }}
               />
-              <Typography variant="body2" sx={{ color: '#64748b', mt: 2.5, textAlign: 'center', fontFamily: 'Inter', fontSize: '12.5px', px: 1, lineHeight: 1.5 }}>
-                Have employees scan this token from their mobile dashboards to record instant geofenced check-ins.
-              </Typography>
-              <Box sx={{ mt: 2, bgcolor: '#fef2f2', border: '1px solid #fee2e2', borderRadius: 2.5, px: 2, py: 1 }}>
-                <Typography variant="caption" sx={{ color: '#dc2626', fontWeight: 'bold', fontFamily: 'Inter', display: 'block', textAlign: 'center' }}>
-                  ⚠️ Session valid for today only
+              
+              <Box sx={{ mt: 3, display: 'flex', alignItems: 'center', gap: 1, bgcolor: '#ecfdf5', border: '1px solid #d1fae5', borderRadius: 2, px: 1.8, py: 0.6 }}>
+                <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', bgcolor: '#10b981', animation: 'pulse 1.5s infinite' }} />
+                <Typography sx={{ fontSize: '11px', fontWeight: 'bold', color: '#065f46', fontFamily: 'Outfit', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Secure Session Active
                 </Typography>
               </Box>
+
+              <Typography variant="body2" sx={{ color: '#64748b', mt: 2, textAlign: 'center', fontFamily: 'Inter', fontSize: '12px', px: 1, lineHeight: 1.5 }}>
+                Employees can scan this code from their mobile dashboards to record instant geofenced check-ins.
+              </Typography>
+              
+              <Typography variant="caption" sx={{ color: '#b91c1c', mt: 2, fontWeight: 700, fontFamily: 'Inter', display: 'block', textAlign: 'center', bgcolor: '#fef2f2', px: 1.5, py: 0.4, borderRadius: '6px' }}>
+                ⚠️ Session automatically invalidates at midnight
+              </Typography>
             </>
           ) : (
-            <Typography variant="body2" color="error" sx={{ fontFamily: 'Inter' }}>
-              Failed to generate QR Code.
+            <Typography variant="body2" color="error" sx={{ fontFamily: 'Inter', py: 4 }}>
+              Failed to acquire secure session token. Please verify backend connection.
             </Typography>
           )}
         </DialogContent>
-        <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+        <DialogActions sx={{ justifyContent: 'center', pt: 2, pb: 1 }}>
           <Button 
-            onClick={() => setQrOpen(false)} 
+            onClick={handleCloseQr} 
             variant="outlined" 
             sx={{ 
               borderRadius: 2.5, 
@@ -663,19 +710,25 @@ const AdminDashboard = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 6. Geofence Location Settings Dialog */}
+      {/* 6. OFFICE GEOFENCE SETTINGS DIALOG (Redesigned & Beautiful!) */}
       <Dialog 
         open={locationOpen} 
         onClose={() => setLocationOpen(false)} 
         maxWidth="sm" 
         fullWidth 
-        sx={{ '& .MuiDialog-paper': { borderRadius: 4, p: 1 } }}
+        sx={{ '& .MuiDialog-paper': { borderRadius: 4, p: 1.5 } }}
       >
         <form onSubmit={handleSaveLocationSettings}>
-          <DialogTitle sx={{ fontWeight: 'bold', pb: 1, fontFamily: 'Outfit', fontSize: '18px' }}>
-            Office Geofencing Coordinates
+          <DialogTitle sx={{ fontWeight: 'bold', pb: 1, fontFamily: 'Outfit', fontSize: '18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6" sx={{ fontWeight: '800', fontFamily: 'Outfit', fontSize: '17px', color: '#0f172a' }}>
+              Configure Geofence Boundary
+            </Typography>
+            <IconButton onClick={() => setLocationOpen(false)} size="small" sx={{ color: '#94a3b8' }}>
+              <CloseIcon sx={{ fontSize: 20 }} />
+            </IconButton>
           </DialogTitle>
-          <DialogContent sx={{ py: 2 }}>
+          
+          <DialogContent sx={{ py: 2.5, borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9' }}>
             <Typography variant="body2" sx={{ color: '#64748b', mb: 3, fontFamily: 'Inter', fontSize: '12.5px', lineHeight: 1.5 }}>
               Set the precise center latitude, longitude, and allowed radius boundary (in meters) for employee clock-ins.
             </Typography>
@@ -692,6 +745,53 @@ const AdminDashboard = () => {
               </Alert>
             )}
 
+            {/* Futuristic Geofence Summary Visualizer */}
+            <Box sx={{ 
+              mb: 3, 
+              p: 2.2, 
+              borderRadius: 3, 
+              bgcolor: '#0f172a', 
+              color: '#fff', 
+              border: '1px solid rgba(255,255,255,0.1)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <Box sx={{
+                position: 'absolute',
+                width: 150,
+                height: 150,
+                borderRadius: '50%',
+                border: '1px dashed rgba(16, 185, 129, 0.3)',
+                top: -40,
+                right: -40,
+                animation: 'pulse-slow 4s infinite'
+              }} />
+              <Typography variant="caption" sx={{ color: '#10b981', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', mb: 1, fontFamily: 'Outfit' }}>
+                📡 Active Radar Coordinates
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography sx={{ color: '#94a3b8', fontSize: '11px', fontFamily: 'Inter' }}>Latitude</Typography>
+                  <Typography sx={{ fontSize: '14px', fontWeight: 'bold', fontFamily: 'Outfit', color: '#f8fafc' }}>
+                    {locLatitude ? Number(locLatitude).toFixed(6) : 'Not Configured'}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography sx={{ color: '#94a3b8', fontSize: '11px', fontFamily: 'Inter' }}>Longitude</Typography>
+                  <Typography sx={{ fontSize: '14px', fontWeight: 'bold', fontFamily: 'Outfit', color: '#f8fafc' }}>
+                    {locLongitude ? Number(locLongitude).toFixed(6) : 'Not Configured'}
+                  </Typography>
+                </Grid>
+              </Grid>
+              <Divider sx={{ my: 1.5, borderColor: 'rgba(255,255,255,0.08)' }} />
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography sx={{ color: '#94a3b8', fontSize: '11px', fontFamily: 'Inter' }}>Allowed Boundary Radius</Typography>
+                <Typography sx={{ fontSize: '12px', fontWeight: 'bold', fontFamily: 'Outfit', color: '#10b981', bgcolor: 'rgba(16, 185, 129, 0.15)', px: 1.2, py: 0.3, borderRadius: '8px' }}>
+                  {locRadius ? `${locRadius} meters` : '200 meters'}
+                </Typography>
+              </Box>
+            </Box>
+
             <Grid container spacing={2.5}>
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -702,7 +802,7 @@ const AdminDashboard = () => {
                   inputProps={{ step: "any" }}
                   value={locLatitude}
                   onChange={(e) => setLocLatitude(e.target.value)}
-                  InputProps={{ style: { fontSize: '13px', fontFamily: 'Inter' } }}
+                  InputProps={{ style: { fontSize: '13px', fontFamily: 'Inter', borderRadius: '10px' } }}
                   InputLabelProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter' } }}
                 />
               </Grid>
@@ -715,7 +815,7 @@ const AdminDashboard = () => {
                   inputProps={{ step: "any" }}
                   value={locLongitude}
                   onChange={(e) => setLocLongitude(e.target.value)}
-                  InputProps={{ style: { fontSize: '13px', fontFamily: 'Inter' } }}
+                  InputProps={{ style: { fontSize: '13px', fontFamily: 'Inter', borderRadius: '10px' } }}
                   InputLabelProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter' } }}
                 />
               </Grid>
@@ -728,7 +828,7 @@ const AdminDashboard = () => {
                   inputProps={{ min: 1 }}
                   value={locRadius}
                   onChange={(e) => setLocRadius(e.target.value)}
-                  InputProps={{ style: { fontSize: '13px', fontFamily: 'Inter' } }}
+                  InputProps={{ style: { fontSize: '13px', fontFamily: 'Inter', borderRadius: '10px' } }}
                   InputLabelProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter' } }}
                 />
               </Grid>
@@ -753,11 +853,12 @@ const AdminDashboard = () => {
                   }
                 }}
               >
-                Use My Current Location
+                Acquire Current GPS Coordinates
               </Button>
             </Box>
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          
+          <DialogActions sx={{ px: 3, pt: 2, pb: 1, gap: 1 }}>
             <Button 
               onClick={() => setLocationOpen(false)} 
               variant="outlined" 
@@ -776,8 +877,8 @@ const AdminDashboard = () => {
             </Button>
             <Button
               type="submit"
-              variant="contained"
               disabled={locSaving}
+              variant="contained"
               sx={{ 
                 borderRadius: 2.5, 
                 textTransform: 'none', 
@@ -785,11 +886,11 @@ const AdminDashboard = () => {
                 fontFamily: 'Outfit',
                 fontWeight: 700,
                 fontSize: '12px',
-                background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
-                boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)',
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                boxShadow: 'none',
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #3730a3 0%, #312e81 100%)',
-                  boxShadow: '0 6px 18px rgba(79, 70, 229, 0.3)',
+                  background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
+                  boxShadow: 'none',
                 }
               }}
             >
