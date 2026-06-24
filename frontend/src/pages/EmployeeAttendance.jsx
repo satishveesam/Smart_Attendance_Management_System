@@ -284,10 +284,18 @@ const EmployeeAttendance = () => {
           </Alert>
         )}
 
-        <Grid container spacing={2} sx={{ width: '100%', m: 0 }}>
+        <Box sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            md: '7fr 5fr',
+          },
+          gap: 2,
+          width: '100%',
+        }}>
           
           {/* CAMERA SCANNER PANEL */}
-          <Grid item xs={12} md={7}>
+          <Box sx={{ width: '100%' }}>
             {(!todayLog || (todayLog && !todayLog.checkOut)) ? (
               <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', boxShadow: 'none' }}>
                 <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
@@ -423,10 +431,10 @@ const EmployeeAttendance = () => {
                 </Typography>
               </Card>
             )}
-          </Grid>
+          </Box>
 
           {/* VERIFICATION & DETAILS PANEL */}
-          <Grid item xs={12} md={5}>
+          <Box sx={{ width: '100%' }}>
             <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', boxShadow: 'none' }}>
               <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
                 <Typography sx={{ fontWeight: 'bold', mb: 1.5, color: '#1e293b', fontSize: '13px', fontFamily: 'Outfit' }}>
@@ -574,9 +582,9 @@ const EmployeeAttendance = () => {
                 )}
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
           
-        </Grid>
+        </Box>
       </Box>
     </EmployeeLayout>
   );

@@ -70,24 +70,24 @@ const Login = () => {
   };
 
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
+    <Box sx={{
+      display: 'grid',
+      gridTemplateColumns: {
+        xs: '1fr',
+        sm: '5fr 7fr',
+        md: '1fr 1fr',
+        lg: '7fr 5fr',
+      },
+      minHeight: '100vh',
       width: '100%',
       overflowX: 'hidden',
       bgcolor: '#f8fafc',
       fontFamily: 'Inter'
     }}>
-      <Grid container sx={{ width: '100%', minHeight: '100vh', m: 0 }}>
-        
-        {/* Left Side: Product Branding / Features Info (hidden on mobile) */}
-        <Grid 
-          item 
-          xs={false} 
-          sm={5} 
-          md={6} 
-          lg={7}
-          sx={{
-            display: { xs: 'none', sm: 'flex' },
+      {/* Left Side: Product Branding / Features Info (hidden on mobile) */}
+      <Box 
+        sx={{
+          display: { xs: 'none', sm: 'flex' },
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'flex-start',
@@ -203,16 +203,10 @@ const Login = () => {
               © {new Date().getFullYear()} SmartAttendance Inc. All rights reserved.
             </Typography>
           </Box>
-        </Grid>
+        </Box>
 
         {/* Right Side: Login Form Card */}
-        <Grid 
-          item 
-          xs={12} 
-          sm={7} 
-          md={6} 
-          lg={5}
-          component={Paper}
+        <Paper 
           elevation={0}
           square
           sx={{
@@ -221,7 +215,9 @@ const Login = () => {
             justifyContent: 'center',
             alignItems: 'center',
             p: { xs: 3, sm: 4, md: 6, lg: 8 },
-            bgcolor: '#fff'
+            bgcolor: '#fff',
+            width: '100%',
+            height: '100%'
           }}
         >
           <Box sx={{ width: '100%', maxWidth: 360 }}>
@@ -347,9 +343,8 @@ const Login = () => {
             </Box>
 
           </Box>
-        </Grid>
-      </Grid>
-    </Box>
+        </Paper>
+      </Box>
   );
 };
 
