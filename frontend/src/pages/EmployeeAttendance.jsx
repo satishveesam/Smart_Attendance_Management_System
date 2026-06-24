@@ -24,11 +24,12 @@ import {
   Chip,
 } from '@mui/material';
 import {
-  CameraAlt as CameraIcon,
   MyLocation as GpsIcon,
   QrCodeScanner as QrIcon,
   CheckCircle as SuccessIcon,
   AccessTime as TimeIcon,
+  Fingerprint as FingerprintIcon,
+  Schedule as ScheduleIcon,
 } from '@mui/icons-material';
 
 const EmployeeAttendance = () => {
@@ -259,50 +260,57 @@ const EmployeeAttendance = () => {
 
   return (
     <EmployeeLayout>
-      <Box className="fade-in" sx={{ pb: { xs: 2, md: 4 } }}>
+      <Box className="fade-in" sx={{ pb: { xs: 3, md: 5 } }}>
         
-        {/* Page Header */}
-        <Box sx={{ mb: { xs: 2.5, md: 3.5 } }}>
-          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1e293b', fontSize: { xs: '1.4rem', md: '2rem' }, fontFamily: 'Outfit' }}>
-            Mark Attendance
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#64748b', fontSize: { xs: '12px', md: '13.5px' }, mt: 0.3, fontFamily: 'Inter' }}>
-            Facial biometrics & geofencing validation kiosk
-          </Typography>
+        {/* 1. Sleek Outside Header Banner */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3.5 }}>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: { xs: 42, md: 50 },
+            height: { xs: 42, md: 50 },
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            color: '#fff',
+            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)'
+          }}>
+            <FingerprintIcon sx={{ fontSize: { xs: 20, md: 24 } }} />
+          </Box>
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', fontSize: { xs: '1.4rem', md: '1.85rem' }, fontFamily: 'Outfit', letterSpacing: '-0.5px' }}>
+              Mark Attendance
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#64748b', fontSize: { xs: '12px', md: '13px' }, mt: 0.2, fontFamily: 'Inter' }}>
+              Verify facial biometrics and geofence coordinates to log your shift
+            </Typography>
+          </Box>
         </Box>
 
         {/* Global Notifications */}
         {apiSuccess && (
-          <Alert severity="success" sx={{ mb: 2, py: 0.5, borderRadius: 2, fontSize: '12px' }} icon={<SuccessIcon sx={{ fontSize: 18 }} />}>
+          <Alert severity="success" sx={{ mb: 3, py: 0.8, px: 2, borderRadius: 3, fontSize: '12.5px', fontFamily: 'Inter', fontWeight: 500 }} icon={<SuccessIcon sx={{ fontSize: 20 }} />}>
             {apiSuccess}
           </Alert>
         )}
 
         {apiError && (
-          <Alert severity="error" sx={{ mb: 2, py: 0.5, borderRadius: 2, fontSize: '12px' }}>
+          <Alert severity="error" sx={{ mb: 3, py: 0.8, px: 2, borderRadius: 3, fontSize: '12.5px', fontFamily: 'Inter', fontWeight: 500 }}>
             {apiError}
           </Alert>
         )}
 
-        <Box sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            md: '7fr 5fr',
-          },
-          gap: 2,
-          width: '100%',
-        }}>
+        <Grid container spacing={3}>
           
           {/* CAMERA SCANNER PANEL */}
-          <Box sx={{ width: '100%' }}>
+          <Grid item xs={12} md={7}>
             {(!todayLog || (todayLog && !todayLog.checkOut)) ? (
-              <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', boxShadow: 'none' }}>
-                <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
-                  <Typography sx={{ fontWeight: 'bold', mb: 1.5, color: '#1e293b', fontSize: '13px', fontFamily: 'Outfit' }}>
-                    1. Biometric Scan Terminal
+              <Card sx={{ borderRadius: 4, border: '1px solid #f1f5f9', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03)', bgcolor: '#fff', overflow: 'hidden' }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Typography sx={{ fontWeight: 'bold', mb: 2, color: '#0f172a', fontSize: '14px', fontFamily: 'Outfit' }}>
+                    1. Biometric Scanner Terminal
                   </Typography>
-                  <Divider sx={{ mb: 1.5 }} />
+                  <Divider sx={{ mb: 2.5, borderColor: '#f1f5f9' }} />
 
                   <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     {/* Camera view container with target square framing */}
@@ -310,11 +318,11 @@ const EmployeeAttendance = () => {
                       position: 'relative',
                       width: '100%',
                       aspectRatio: '4/3',
-                      borderRadius: 2.5,
+                      borderRadius: 3.5,
                       overflow: 'hidden',
-                      border: '2px solid #e2e8f0',
+                      border: '1px solid #e2e8f0',
                       bgcolor: '#0f172a',
-                      mb: 2,
+                      mb: 2.5,
                     }}>
                       {imgSrc ? (
                         <Box
@@ -340,53 +348,53 @@ const EmployeeAttendance = () => {
                           top: '50%',
                           left: '50%',
                           transform: 'translate(-50%, -50%)',
-                          width: { xs: '65%', md: '55%' },
-                          height: { xs: '65%', md: '55%' },
+                          width: { xs: '68%', md: '58%' },
+                          height: { xs: '68%', md: '58%' },
                           border: '2px dashed rgba(16, 185, 129, 0.4)',
-                          borderRadius: '12px',
-                          boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.35)',
+                          borderRadius: '16px',
+                          boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.4)',
                           pointerEvents: 'none',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                         }}>
                           <span style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0 }}>
-                            <span style={{ position: 'absolute', top: -2, left: -2, width: 16, height: 16, borderLeft: '4px solid #10b981', borderTop: '4px solid #10b981', borderTopLeftRadius: '6px' }} />
-                            <span style={{ position: 'absolute', top: -2, right: -2, width: 16, height: 16, borderRight: '4px solid #10b981', borderTop: '4px solid #10b981', borderTopRightRadius: '6px' }} />
-                            <span style={{ position: 'absolute', bottom: -2, left: -2, width: 16, height: 16, borderLeft: '4px solid #10b981', borderBottom: '4px solid #10b981', borderBottomLeftRadius: '6px' }} />
-                            <span style={{ position: 'absolute', bottom: -2, right: -2, width: 16, height: 16, borderRight: '4px solid #10b981', borderBottom: '4px solid #10b981', borderBottomRightRadius: '6px' }} />
+                            <span style={{ position: 'absolute', top: -2, left: -2, width: 20, height: 20, borderLeft: '4px solid #10b981', borderTop: '4px solid #10b981', borderTopLeftRadius: '8px' }} />
+                            <span style={{ position: 'absolute', top: -2, right: -2, width: 20, height: 20, borderRight: '4px solid #10b981', borderTop: '4px solid #10b981', borderTopRightRadius: '8px' }} />
+                            <span style={{ position: 'absolute', bottom: -2, left: -2, width: 20, height: 20, borderLeft: '4px solid #10b981', borderBottom: '4px solid #10b981', borderBottomLeftRadius: '8px' }} />
+                            <span style={{ position: 'absolute', bottom: -2, right: -2, width: 20, height: 20, borderRight: '4px solid #10b981', borderBottom: '4px solid #10b981', borderBottomRightRadius: '8px' }} />
                           </span>
-                          <Typography sx={{ color: '#10b981', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.8 }}>
+                          <Typography sx={{ color: '#10b981', fontSize: '9.5px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.2px', opacity: 0.85, fontFamily: 'Outfit' }}>
                             Align Face
                           </Typography>
                         </Box>
                       )}
 
                       {/* HUD status badges on top of webcam */}
-                      <Box sx={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 1, zIndex: 10 }}>
+                      <Box sx={{ position: 'absolute', top: 14, left: 14, display: 'flex', gap: 1, zIndex: 10 }}>
                         <Chip
-                          label={isInGeofence ? 'Geofence: IN' : 'Geofence: OUT'}
+                          label={isInGeofence ? 'Geofence: IN ZONE' : 'Geofence: OUT OF ZONE'}
                           color={isInGeofence ? 'success' : 'error'}
                           size="small"
-                          sx={{ fontWeight: 'bold', height: 20, fontSize: '9px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
+                          sx={{ fontWeight: 'bold', height: 22, fontSize: '9.5px', fontFamily: 'Outfit', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
                         />
                       </Box>
 
                       {/* Scanning / Processing overlays */}
                       {faceStatus === 'scanning' && (
-                        <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(15,23,42,0.7)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
-                          <CircularProgress size={28} sx={{ color: '#10b981', mb: 1 }} />
-                          <Typography sx={{ color: '#fff', fontSize: '11px', fontWeight: 'bold', fontFamily: 'Inter' }}>
+                        <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(15,23,42,0.75)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
+                          <CircularProgress size={30} sx={{ color: '#10b981', mb: 1.5 }} />
+                          <Typography sx={{ color: '#fff', fontSize: '12px', fontWeight: 'bold', fontFamily: 'Inter' }}>
                             Analyzing biometrics...
                           </Typography>
                         </Box>
                       )}
 
                       {faceStatus === 'success' && (
-                        <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(16,185,129,0.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
-                          <SuccessIcon sx={{ color: '#fff', fontSize: 45, mb: 1 }} />
-                          <Typography sx={{ color: '#fff', fontSize: '13px', fontWeight: 'bold', fontFamily: 'Outfit' }}>
-                            Face Verified Successfully!
+                        <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(16,185,129,0.9)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
+                          <SuccessIcon sx={{ color: '#fff', fontSize: 50, mb: 1.5 }} />
+                          <Typography sx={{ color: '#fff', fontSize: '14.5px', fontWeight: 800, fontFamily: 'Outfit' }}>
+                            Biometrics Matching Success!
                           </Typography>
                         </Box>
                       )}
@@ -399,53 +407,55 @@ const EmployeeAttendance = () => {
                       disabled={submitting}
                       onClick={handleVerifyAndSubmit}
                       sx={{
-                        py: 1.2,
-                        borderRadius: 2.5,
+                        py: 1.5,
+                        borderRadius: 3,
                         textTransform: 'none',
                         fontWeight: 'bold',
-                        fontSize: '12.5px',
+                        fontSize: '13px',
+                        fontFamily: 'Outfit',
                         backgroundColor: (todayLog && !todayLog.checkOut) ? '#f59e0b' : '#10b981',
                         '&:hover': { backgroundColor: (todayLog && !todayLog.checkOut) ? '#d97706' : '#059669' },
-                        boxShadow: 'none'
+                        boxShadow: 'none',
+                        '&:disabled': { backgroundColor: '#e2e8f0', color: '#94a3b8' }
                       }}
                     >
                       {submitting ? (
-                        <CircularProgress size={16} color="inherit" />
+                        <CircularProgress size={18} color="inherit" />
                       ) : (todayLog && !todayLog.checkOut) ? (
-                        'Scan & Confirm Check-Out'
+                        'Verify & Confirm Check-Out'
                       ) : (
-                        'Scan & Confirm Check-In'
+                        'Verify & Confirm Check-In'
                       )}
                     </Button>
                   </Box>
                 </CardContent>
               </Card>
             ) : (
-              <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', p: 4, textAlign: 'center', bgcolor: '#fff', boxShadow: 'none' }}>
-                <SuccessIcon color="success" sx={{ fontSize: 50, mb: 1 }} />
-                <Typography sx={{ fontWeight: 'bold', color: '#1e293b', mb: 0.5, fontSize: '14px', fontFamily: 'Outfit' }}>
-                  Biometric Terminal Blocked
+              <Card sx={{ borderRadius: 4, border: '1px solid #f1f5f9', p: 5, textAlign: 'center', bgcolor: '#fff', boxShadow: 'none' }}>
+                <SuccessIcon color="success" sx={{ fontSize: 56, mb: 2 }} />
+                <Typography sx={{ fontWeight: 800, color: '#0f172a', mb: 1, fontSize: '15px', fontFamily: 'Outfit' }}>
+                  Shift Completed Successfully
                 </Typography>
-                <Typography sx={{ fontSize: '11.5px', color: '#64748b', fontFamily: 'Inter' }}>
-                  Your shift logs are completed for today. Webcam scanning is disabled.
+                <Typography sx={{ fontSize: '12px', color: '#64748b', fontFamily: 'Inter', maxWidth: 380, mx: 'auto', lineHeight: 1.5 }}>
+                  Your check-in and check-out logs are recorded for today. Biometric scanner is locked until your next shift starts.
                 </Typography>
               </Card>
             )}
-          </Box>
+          </Grid>
 
           {/* VERIFICATION & DETAILS PANEL */}
-          <Box sx={{ width: '100%' }}>
-            <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', boxShadow: 'none' }}>
-              <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
-                <Typography sx={{ fontWeight: 'bold', mb: 1.5, color: '#1e293b', fontSize: '13px', fontFamily: 'Outfit' }}>
-                  2. Verification Context
+          <Grid item xs={12} md={5}>
+            <Card sx={{ borderRadius: 4, border: '1px solid #f1f5f9', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03)', bgcolor: '#fff', height: '100%' }}>
+              <CardContent sx={{ p: 3 }}>
+                <Typography sx={{ fontWeight: 'bold', mb: 2, color: '#0f172a', fontSize: '14px', fontFamily: 'Outfit' }}>
+                  2. Verification Parameters
                 </Typography>
-                <Divider sx={{ mb: 1.5 }} />
+                <Divider sx={{ mb: 2.5, borderColor: '#f1f5f9' }} />
 
                 {!registeredDescriptor && (
-                  <Alert severity="warning" sx={{ mb: 2, py: 0.5, fontSize: '11px', borderRadius: 2 }} action={
-                    <Button color="inherit" size="small" onClick={() => navigate('/employee/profile')} sx={{ fontWeight: 'bold', fontSize: '10px', textTransform: 'none' }}>
-                      Register
+                  <Alert severity="warning" sx={{ mb: 2.5, py: 0.5, fontSize: '11.5px', borderRadius: 2.5, fontFamily: 'Inter' }} action={
+                    <Button color="inherit" size="small" onClick={() => navigate('/employee/profile')} sx={{ fontWeight: 800, fontSize: '10px', textTransform: 'none', fontFamily: 'Outfit' }}>
+                      Register Now
                     </Button>
                   }>
                     Biometrics not registered.
@@ -454,52 +464,52 @@ const EmployeeAttendance = () => {
 
                 {/* Active Timer for Checked-In */}
                 {todayLog && !todayLog.checkOut && (
-                  <Box sx={{ mb: 2, p: 1.5, borderRadius: 2.5, bgcolor: '#eff6ff', border: '1px solid #bfdbfe', textAlign: 'center' }}>
-                    <Typography sx={{ color: '#1e40af', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '9px', display: 'block' }}>
+                  <Box sx={{ mb: 2.5, p: 2, borderRadius: 3.5, bgcolor: '#eff6ff', border: '1px solid #bfdbfe', textAlign: 'center' }}>
+                    <Typography sx={{ color: '#1e40af', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px', fontSize: '9px', display: 'block', fontFamily: 'Inter' }}>
                       ⏱️ Active Shift Timer
                     </Typography>
-                    <Typography sx={{ fontWeight: 'bold', color: '#1e3a8a', my: 0.5, fontSize: '20px', fontFamily: 'Outfit' }}>
+                    <Typography sx={{ fontWeight: 800, color: '#1e3a8a', my: 0.6, fontSize: '22px', fontFamily: 'Outfit' }}>
                       {elapsedHours}
                     </Typography>
-                    <Typography sx={{ color: '#64748b', fontSize: '9.5px', fontFamily: 'Inter' }}>
-                      Checked in at: {todayLog.checkIn ? new Date(todayLog.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                    <Typography sx={{ color: '#64748b', fontSize: '10px', fontFamily: 'Inter' }}>
+                      Checked in at: <strong>{todayLog.checkIn ? new Date(todayLog.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</strong>
                     </Typography>
                   </Box>
                 )}
 
                 {/* Shift Details Info Card */}
-                <Box sx={{ mb: 2, p: 1.5, borderRadius: 2.5, bgcolor: '#fff8e1', border: '1px solid #ffe082' }}>
-                  <Typography sx={{ fontWeight: 'bold', color: '#b78103', mb: 0.5, fontSize: '11.5px', fontFamily: 'Outfit' }}>
-                    📅 Shift: General Corporate Shift
+                <Box sx={{ mb: 2.5, p: 2, borderRadius: 3.5, bgcolor: '#fffbeb', border: '1px solid #fde68a' }}>
+                  <Typography sx={{ fontWeight: 'bold', color: '#b45309', mb: 0.8, fontSize: '12px', fontFamily: 'Outfit', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ScheduleIcon sx={{ fontSize: 16 }} /> General Corporate Shift
                   </Typography>
-                  <Typography sx={{ color: '#5d4037', display: 'block', fontSize: '10px', fontFamily: 'Inter' }}>
-                    Timings: <strong>10:00 AM - 06:30 PM</strong>
+                  <Typography sx={{ color: '#78350f', display: 'block', fontSize: '10.5px', fontFamily: 'Inter', lineHeight: 1.4 }}>
+                    Shift Timings: <strong>10:00 AM - 06:30 PM</strong>
                   </Typography>
-                  <Typography sx={{ color: '#5d4037', fontSize: '10px', fontFamily: 'Inter' }}>
+                  <Typography sx={{ color: '#78350f', fontSize: '10.5px', fontFamily: 'Inter', mt: 0.3, lineHeight: 1.4 }}>
                     Grace Period: 15 mins (Late marking active after 10:15 AM).
                   </Typography>
                 </Box>
 
                 {/* GPS Tracking status */}
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, p: 1.2, borderRadius: 2.5, border: '1px solid #f1f5f9', bgcolor: '#f8fafc' }}>
-                  <Box sx={{ p: 0.6, borderRadius: 1.5, bgcolor: gps.error ? '#fef2f2' : '#ecfdf5', mr: 1.5, display: 'flex', alignItems: 'center' }}>
-                    <GpsIcon color={gps.error ? 'error' : 'success'} sx={{ fontSize: 16 }} />
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2.5, p: 1.8, borderRadius: 3, border: '1px solid #f1f5f9', bgcolor: '#f8fafc' }}>
+                  <Box sx={{ p: 0.8, borderRadius: 2, bgcolor: gps.error ? '#fef2f2' : '#ecfdf5', mr: 2, display: 'flex', alignItems: 'center' }}>
+                    <GpsIcon color={gps.error ? 'error' : 'success'} sx={{ fontSize: 18 }} />
                   </Box>
                   <Box sx={{ flexGrow: 1 }}>
-                    <Typography sx={{ fontWeight: 'bold', color: '#475569', fontSize: '11.5px' }}>
+                    <Typography sx={{ fontWeight: 800, color: '#334155', fontSize: '12px', fontFamily: 'Outfit' }}>
                       GPS Tracking Status
                     </Typography>
                     {gps.error ? (
-                      <Typography color="error" sx={{ fontSize: '9.5px', display: 'block' }}>{gps.error}</Typography>
+                      <Typography color="error" sx={{ fontSize: '10px', display: 'block', fontFamily: 'Inter', mt: 0.2 }}>{gps.error}</Typography>
                     ) : gps.latitude ? (
-                      <Typography color="text.secondary" sx={{ fontSize: '9.5px', display: 'block' }}>
+                      <Typography color="text.secondary" sx={{ fontSize: '10px', display: 'block', fontFamily: 'Inter', mt: 0.2 }}>
                         Coords: {gps.latitude.toFixed(4)}, {gps.longitude.toFixed(4)}
                       </Typography>
                     ) : (
-                      <Typography color="text.secondary" sx={{ fontSize: '9.5px', display: 'block' }}>Acquiring coordinates...</Typography>
+                      <Typography color="text.secondary" sx={{ fontSize: '10px', display: 'block', fontFamily: 'Inter', mt: 0.2 }}>Acquiring satellite coordinates...</Typography>
                     )}
                   </Box>
-                  <Button size="small" onClick={fetchLocation} sx={{ textTransform: 'none', fontSize: '9.5px', fontWeight: 'bold' }}>
+                  <Button size="small" onClick={fetchLocation} sx={{ textTransform: 'none', fontSize: '10px', fontWeight: 'bold', fontFamily: 'Outfit' }}>
                     Reload
                   </Button>
                 </Box>
@@ -507,41 +517,41 @@ const EmployeeAttendance = () => {
                 {/* Geofence boundary check */}
                 {gps.latitude && (
                   <Box sx={{
-                    mb: 2,
-                    p: 1.5,
-                    borderRadius: 2.5,
-                    bgcolor: isInGeofence ? '#f0fdf4' : '#fef2f2',
-                    border: `1px dashed ${isInGeofence ? '#bbf7d0' : '#fecaca'}`,
+                    mb: 2.5,
+                    p: 2,
+                    borderRadius: 3.5,
+                    bgcolor: isInGeofence ? '#ecfdf5' : '#fef2f2',
+                    border: `1px dashed ${isInGeofence ? '#a7f3d0' : '#fca5a5'}`,
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 0.5
+                    gap: 0.8
                   }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography sx={{ fontWeight: 'bold', color: isInGeofence ? '#166534' : '#991b1b', fontSize: '11.5px', fontFamily: 'Outfit' }}>
+                      <Typography sx={{ fontWeight: 'bold', color: isInGeofence ? '#065f46' : '#991b1b', fontSize: '12px', fontFamily: 'Outfit' }}>
                         🎯 Geofence Zone
                       </Typography>
                       <Chip
-                        label={isInGeofence ? 'IN ZONE' : 'OUT OF ZONE'}
+                        label={isInGeofence ? 'IN RANGE' : 'OUT OF RANGE'}
                         color={isInGeofence ? 'success' : 'error'}
                         size="small"
-                        sx={{ height: 18, fontSize: '8.5px', fontWeight: 'bold' }}
+                        sx={{ height: 20, fontSize: '9px', fontWeight: 800, fontFamily: 'Outfit' }}
                       />
                     </Box>
-                    <Typography sx={{ color: '#475569', fontSize: '10px' }}>
+                    <Typography sx={{ color: '#475569', fontSize: '10.5px', fontFamily: 'Inter' }}>
                       Distance to Office: <strong>{distanceToOffice !== null ? `${distanceToOffice.toFixed(1)} meters` : 'Calculating...'}</strong>
                     </Typography>
                     
                     {/* Simulated location checkbox */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.8 }}>
                       <input
                         type="checkbox"
                         id="sim-loc-check"
                         checked={simulateLocation}
                         onChange={(e) => setSimulateLocation(e.target.checked)}
-                        style={{ marginRight: '6px', cursor: 'pointer', transform: 'scale(0.9)' }}
+                        style={{ marginRight: '8px', cursor: 'pointer', transform: 'scale(1.05)' }}
                       />
-                      <label htmlFor="sim-loc-check" style={{ fontSize: '9px', color: '#0284c7', fontWeight: 'bold', cursor: 'pointer' }}>
-                        Simulate Location (Inside Range)
+                      <label htmlFor="sim-loc-check" style={{ fontSize: '10px', color: '#0284c7', fontWeight: 800, cursor: 'pointer', fontFamily: 'Outfit' }}>
+                        Simulate Location (Force Inside Office Geofence)
                       </label>
                     </Box>
                   </Box>
@@ -549,17 +559,17 @@ const EmployeeAttendance = () => {
 
                 {/* Method selection */}
                 {!todayLog && (
-                  <FormControl component="fieldset" sx={{ mb: 2, display: 'block' }}>
-                    <FormLabel component="legend" sx={{ fontSize: 11, fontWeight: 'bold', mb: 0.5, color: '#475569' }}>
-                      Check-In Method
+                  <FormControl component="fieldset" sx={{ mb: 2.5, display: 'block' }}>
+                    <FormLabel component="legend" sx={{ fontSize: 11.5, fontWeight: 'bold', mb: 0.8, color: '#475569', fontFamily: 'Outfit' }}>
+                      Verification Payout Method
                     </FormLabel>
                     <RadioGroup
                       row
                       value={attendanceType}
                       onChange={(e) => setAttendanceType(e.target.value)}
                     >
-                      <FormControlLabel value="gps" control={<Radio size="small" />} label={<Typography sx={{ fontSize: '11px' }}>GPS only</Typography>} />
-                      <FormControlLabel value="qr" control={<Radio size="small" />} label={<Typography sx={{ fontSize: '11px' }}>QR Code scan</Typography>} />
+                      <FormControlLabel value="gps" control={<Radio size="small" />} label={<Typography sx={{ fontSize: '11.5px', fontFamily: 'Inter' }}>GPS verification only</Typography>} />
+                      <FormControlLabel value="qr" control={<Radio size="small" />} label={<Typography sx={{ fontSize: '11.5px', fontFamily: 'Inter' }}>QR scanner token</Typography>} />
                     </RadioGroup>
                   </FormControl>
                 )}
@@ -572,19 +582,19 @@ const EmployeeAttendance = () => {
                     label="Enter QR Code Token"
                     value={qrToken}
                     onChange={(e) => setQrToken(e.target.value)}
-                    sx={{ mb: 2 }}
-                    inputProps={{ style: { fontSize: 11.5 } }}
-                    InputLabelProps={{ style: { fontSize: 11.5 } }}
+                    sx={{ mb: 2.5 }}
+                    inputProps={{ style: { fontSize: 12, fontFamily: 'Inter' } }}
+                    InputLabelProps={{ style: { fontSize: 12, fontFamily: 'Inter' } }}
                     InputProps={{
-                      startAdornment: <QrIcon sx={{ mr: 1, color: '#64748b', fontSize: 16 }} />,
+                      startAdornment: <QrIcon sx={{ mr: 1.5, color: '#64748b', fontSize: 18 }} />,
                     }}
                   />
                 )}
               </CardContent>
             </Card>
-          </Box>
+          </Grid>
           
-        </Box>
+        </Grid>
       </Box>
     </EmployeeLayout>
   );
