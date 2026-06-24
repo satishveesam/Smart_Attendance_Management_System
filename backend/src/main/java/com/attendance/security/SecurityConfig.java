@@ -2,6 +2,7 @@ package com.attendance.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -46,14 +47,19 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+
+                // ✅ IMPORTANT: allow preflight requests
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                 .requestMatchers("/api/auth/**").permitAll()
-                // Swagger & API Docs
+
+                // Swagger
                 .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                // Allow own profile fetch
+
+                // Employee rules
                 .requestMatchers("/api/employees/me").authenticated()
-                // Require ADMIN for managing employees
                 .requestMatchers("/api/employees/**").hasRole("ADMIN")
-                // Other api requests require authentication
+
                 .anyRequest().authenticated()
             );
 
@@ -65,14 +71,18 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+
         configuration.setAllowedOrigins(List.of(
-            "http://localhost:5173", 
+            "http://localhost:5173",
             "http://127.0.0.1:5173",
             "http://localhost:5174",
-            "http://127.0.0.1:5174"
+            "http://127.0.0.1:5174",
+            "https://d18qllybmoojox.cloudfront.net",
+            "http://smart-attendance-management-frontend.s3-website-ap-southeast-2.amazonaws.com"
         ));
+
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control"));
+        configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
 
