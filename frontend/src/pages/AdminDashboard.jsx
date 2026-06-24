@@ -16,6 +16,7 @@ import {
   TextField,
   Alert,
   Divider,
+  IconButton,
 } from '@mui/material';
 import {
   PeopleAlt as PeopleIcon,
@@ -74,6 +75,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
+    fetchOfficeLocationOnMount();
   }, []);
 
   const fetchDashboardData = async () => {
@@ -82,11 +84,23 @@ const AdminDashboard = () => {
       const statsRes = await API.get('/dashboard/admin/stats');
       const chartsRes = await API.get('/dashboard/admin/charts');
       setStats(statsRes.data);
-      setChartData(chartsRes.data);
+      setChartData(Array.isArray(chartsRes.data) ? chartsRes.data : []);
     } catch (err) {
       console.error("Failed to load dashboard statistics", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch office location on load to display immediately on the Radar card
+  const fetchOfficeLocationOnMount = async () => {
+    try {
+      const res = await API.get('/attendance/office-location');
+      setLocLatitude(res.data.latitude || '');
+      setLocLongitude(res.data.longitude || '');
+      setLocRadius(res.data.radiusMeters || '');
+    } catch (err) {
+      console.error("Failed to load geofence on mount", err);
     }
   };
 
@@ -186,6 +200,19 @@ const AdminDashboard = () => {
     }
   };
 
+  // Safe Coordinate & Radius formatters to prevent runtime crashes
+  const formatCoordinate = (coord) => {
+    if (coord === null || coord === undefined || coord === '') return 'Not Configured';
+    const num = Number(coord);
+    return isNaN(num) ? 'Invalid' : num.toFixed(6);
+  };
+
+  const formatRadius = (rad) => {
+    if (rad === null || rad === undefined || rad === '') return 'Not Configured';
+    const num = Number(rad);
+    return isNaN(num) ? 'Invalid' : `${num} meters`;
+  };
+
   // Custom Chart Tooltip component (Dark Glassmorphism)
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -231,45 +258,50 @@ const AdminDashboard = () => {
     second: '2-digit'
   });
 
-  const statCards = stats
-    ? [
-        {
-          title: 'Total Employees',
-          value: stats.totalEmployees,
-          indicator: 'Registered staff',
-          icon: <PeopleIcon sx={{ fontSize: 18, color: '#3b82f6' }} />,
-          badge: { label: 'Staff', color: '#2563eb', bg: '#eff6ff' }
-        },
-        {
-          title: 'Present Today',
-          value: stats.presentToday,
-          indicator: `${(stats.attendancePercentage).toFixed(0)}% presence rate`,
-          icon: <PresentIcon sx={{ fontSize: 18, color: '#10b981' }} />,
-          badge: { label: 'Live', color: '#16a34a', bg: '#f0fdf4' }
-        },
-        {
-          title: 'Absent Today',
-          value: stats.absentToday,
-          indicator: 'Pending check-in',
-          icon: <AbsentIcon sx={{ fontSize: 18, color: '#ef4444' }} />,
-          badge: { label: 'Absent', color: '#dc2626', bg: '#fef2f2' }
-        },
-        {
-          title: 'Late Arrivals',
-          value: stats.lateArrivals,
-          indicator: 'After 9:15 AM',
-          icon: <LateIcon sx={{ fontSize: 18, color: '#f59e0b' }} />,
-          badge: { label: 'Late', color: '#d97706', bg: '#fffbeb' }
-        },
-        {
-          title: 'Attendance %',
-          value: `${stats.attendancePercentage.toFixed(1)}%`,
-          indicator: 'Today\'s score',
-          icon: <PercentIcon sx={{ fontSize: 18, color: '#8b5cf6' }} />,
-          badge: { label: 'Rate', color: '#7e22ce', bg: '#faf5ff' }
-        },
-      ]
-    : [];
+  // Extract stats with robust fallbacks to prevent crashes
+  const totalEmployees = stats?.totalEmployees ?? 0;
+  const presentToday = stats?.presentToday ?? 0;
+  const absentToday = stats?.absentToday ?? 0;
+  const lateArrivals = stats?.lateArrivals ?? 0;
+  const attendancePercentage = stats?.attendancePercentage ?? 0;
+
+  const statCards = [
+    {
+      title: 'Total Employees',
+      value: totalEmployees,
+      indicator: 'Registered staff',
+      icon: <PeopleIcon sx={{ fontSize: 18, color: '#3b82f6' }} />,
+      badge: { label: 'Staff', color: '#2563eb', bg: '#eff6ff' }
+    },
+    {
+      title: 'Present Today',
+      value: presentToday,
+      indicator: `${attendancePercentage.toFixed(0)}% presence rate`,
+      icon: <PresentIcon sx={{ fontSize: 18, color: '#10b981' }} />,
+      badge: { label: 'Live', color: '#16a34a', bg: '#f0fdf4' }
+    },
+    {
+      title: 'Absent Today',
+      value: absentToday,
+      indicator: 'Pending check-in',
+      icon: <AbsentIcon sx={{ fontSize: 18, color: '#ef4444' }} />,
+      badge: { label: 'Absent', color: '#dc2626', bg: '#fef2f2' }
+    },
+    {
+      title: 'Late Arrivals',
+      value: lateArrivals,
+      indicator: 'After 9:15 AM',
+      icon: <LateIcon sx={{ fontSize: 18, color: '#f59e0b' }} />,
+      badge: { label: 'Late', color: '#d97706', bg: '#fffbeb' }
+    },
+    {
+      title: 'Attendance %',
+      value: `${attendancePercentage.toFixed(1)}%`,
+      indicator: 'Today\'s score',
+      icon: <PercentIcon sx={{ fontSize: 18, color: '#8b5cf6' }} />,
+      badge: { label: 'Rate', color: '#7e22ce', bg: '#faf5ff' }
+    },
+  ];
 
   return (
     <AdminLayout>
@@ -385,7 +417,7 @@ const AdminDashboard = () => {
         </Box>
       </Card>
 
-      {loading ? (
+      {loading && !stats ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '40vh' }}>
           <CircularProgress color="primary" />
         </Box>
@@ -536,19 +568,19 @@ const AdminDashboard = () => {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Typography sx={{ fontSize: '12px', color: '#64748b', fontFamily: 'Inter' }}>Latitude</Typography>
                       <Typography sx={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', fontFamily: 'Outfit' }}>
-                        {locLatitude ? Number(locLatitude).toFixed(6) : '0.000000'}
+                        {formatCoordinate(locLatitude)}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Typography sx={{ fontSize: '12px', color: '#64748b', fontFamily: 'Inter' }}>Longitude</Typography>
                       <Typography sx={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', fontFamily: 'Outfit' }}>
-                        {locLongitude ? Number(locLongitude).toFixed(6) : '0.000000'}
+                        {formatCoordinate(locLongitude)}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Typography sx={{ fontSize: '12px', color: '#64748b', fontFamily: 'Inter' }}>Allowed Radius</Typography>
                       <Typography sx={{ fontSize: '12px', fontWeight: 700, color: '#166534', fontFamily: 'Outfit', bgcolor: '#dcfce7', px: 1, py: 0.2, borderRadius: '6px' }}>
-                        {locRadius ? `${locRadius} meters` : '200 meters'}
+                        {formatRadius(locRadius)}
                       </Typography>
                     </Box>
                   </Box>
@@ -773,13 +805,13 @@ const AdminDashboard = () => {
                 <Grid item xs={6}>
                   <Typography sx={{ color: '#94a3b8', fontSize: '11px', fontFamily: 'Inter' }}>Latitude</Typography>
                   <Typography sx={{ fontSize: '14px', fontWeight: 'bold', fontFamily: 'Outfit', color: '#f8fafc' }}>
-                    {locLatitude ? Number(locLatitude).toFixed(6) : 'Not Configured'}
+                    {formatCoordinate(locLatitude)}
                   </Typography>
                 </Grid>
                 <Grid item xs={6}>
                   <Typography sx={{ color: '#94a3b8', fontSize: '11px', fontFamily: 'Inter' }}>Longitude</Typography>
                   <Typography sx={{ fontSize: '14px', fontWeight: 'bold', fontFamily: 'Outfit', color: '#f8fafc' }}>
-                    {locLongitude ? Number(locLongitude).toFixed(6) : 'Not Configured'}
+                    {formatCoordinate(locLongitude)}
                   </Typography>
                 </Grid>
               </Grid>
@@ -787,7 +819,7 @@ const AdminDashboard = () => {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography sx={{ color: '#94a3b8', fontSize: '11px', fontFamily: 'Inter' }}>Allowed Boundary Radius</Typography>
                 <Typography sx={{ fontSize: '12px', fontWeight: 'bold', fontFamily: 'Outfit', color: '#10b981', bgcolor: 'rgba(16, 185, 129, 0.15)', px: 1.2, py: 0.3, borderRadius: '8px' }}>
-                  {locRadius ? `${locRadius} meters` : '200 meters'}
+                  {formatRadius(locRadius)}
                 </Typography>
               </Box>
             </Box>
