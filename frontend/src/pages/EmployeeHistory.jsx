@@ -13,11 +13,22 @@ import {
   Paper,
   Chip,
   CircularProgress,
+  Avatar,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
 } from '@mui/material';
+import { Close as CloseIcon } from '@mui/icons-material';
 
 const EmployeeHistory = () => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Preview selfie dialog states
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [previewTitle, setPreviewTitle] = useState('');
 
   useEffect(() => {
     fetchPersonalHistory();
@@ -35,6 +46,12 @@ const EmployeeHistory = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOpenPreview = (url, title) => {
+    setPreviewUrl(url);
+    setPreviewTitle(title);
+    setPreviewOpen(true);
   };
 
   const getStatusChip = (status) => {
@@ -88,7 +105,9 @@ const EmployeeHistory = () => {
               <TableRow>
                 <TableCell sx={{ fontWeight: 'bold', color: '#475569' }}>Date</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', color: '#475569' }}>Check In</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: '#475569' }}>In Selfie</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', color: '#475569' }}>Check Out</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: '#475569' }}>Out Selfie</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', color: '#475569' }}>Working Hours</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', color: '#475569' }}>Status</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', color: '#475569' }}>Locations (Check-In / Out)</TableCell>
@@ -99,7 +118,31 @@ const EmployeeHistory = () => {
                 <TableRow key={log.id} hover>
                   <TableCell sx={{ fontWeight: 'bold' }}>{log.attendanceDate}</TableCell>
                   <TableCell>{formatTime(log.checkIn)}</TableCell>
+                  <TableCell>
+                    {log.checkInSelfie ? (
+                      <Avatar
+                        src={log.checkInSelfie}
+                        variant="rounded"
+                        sx={{ width: 36, height: 36, cursor: 'pointer', border: '1px solid #cbd5e1', '&:hover': { opacity: 0.85 } }}
+                        onClick={() => handleOpenPreview(log.checkInSelfie, `Check-In Selfie - ${log.attendanceDate}`)}
+                      />
+                    ) : (
+                      '-'
+                    )}
+                  </TableCell>
                   <TableCell>{formatTime(log.checkOut)}</TableCell>
+                  <TableCell>
+                    {log.checkOutSelfie ? (
+                      <Avatar
+                        src={log.checkOutSelfie}
+                        variant="rounded"
+                        sx={{ width: 36, height: 36, cursor: 'pointer', border: '1px solid #cbd5e1', '&:hover': { opacity: 0.85 } }}
+                        onClick={() => handleOpenPreview(log.checkOutSelfie, `Check-Out Selfie - ${log.attendanceDate}`)}
+                      />
+                    ) : (
+                      '-'
+                    )}
+                  </TableCell>
                   <TableCell>{log.totalHours != null ? `${log.totalHours.toFixed(2)} hrs` : '-'}</TableCell>
                   <TableCell>{getStatusChip(log.status)}</TableCell>
                   <TableCell sx={{ fontSize: 12, color: '#64748b' }}>
@@ -112,6 +155,37 @@ const EmployeeHistory = () => {
           </Table>
         </TableContainer>
       )}
+
+      {/* Selfie Preview Modal */}
+      <Dialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        sx={{ '& .MuiDialog-paper': { borderRadius: 4 } }}
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1, fontFamily: 'Outfit', fontWeight: 'bold' }}>
+          <Typography variant="h6" sx={{ fontFamily: 'Outfit', fontWeight: 'bold' }}>{previewTitle}</Typography>
+          <IconButton onClick={() => setPreviewOpen(false)} size="small" sx={{ color: '#94a3b8' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ display: 'flex', justifyContent: 'center', pb: 3, pt: 1, borderTop: '1px solid #f1f5f9' }}>
+          <Box
+            component="img"
+            src={previewUrl}
+            alt="Preview Selfie"
+            sx={{
+              maxWidth: '100%',
+              maxHeight: '70vh',
+              borderRadius: 3,
+              border: '1px solid #cbd5e1',
+              objectFit: 'contain',
+              mt: 2
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </EmployeeLayout>
   );
 };

@@ -19,6 +19,8 @@ import {
   Divider,
   IconButton,
   Chip,
+  Avatar,
+  Tooltip,
 } from '@mui/material';
 import {
   PeopleAlt as PeopleIcon,
@@ -50,7 +52,19 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [chartData, setChartData] = useState([]);
+  const [todayLogs, setTodayLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Selfie Preview Dialog States
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [previewTitle, setPreviewTitle] = useState('');
+
+  const handleOpenPreview = (url, title) => {
+    setPreviewUrl(url);
+    setPreviewTitle(title);
+    setPreviewOpen(true);
+  };
   
   // Real-time clock state
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -81,6 +95,14 @@ const AdminDashboard = () => {
     fetchOfficeLocationOnMount();
   }, []);
 
+  const getTodayStr = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
@@ -88,6 +110,11 @@ const AdminDashboard = () => {
       const chartsRes = await API.get('/dashboard/admin/charts');
       setStats(statsRes.data);
       setChartData(Array.isArray(chartsRes.data) ? chartsRes.data : []);
+
+      // Fetch today's logs for late entry tracking
+      const todayStr = getTodayStr();
+      const logsRes = await API.get(`/reports?startDate=${todayStr}&endDate=${todayStr}`);
+      setTodayLogs(Array.isArray(logsRes.data) ? logsRes.data : []);
     } catch (err) {
       console.error("Failed to load dashboard statistics", err);
     } finally {
@@ -680,6 +707,120 @@ const AdminDashboard = () => {
             </Grid>
 
           </Grid>
+
+          {/* 4.5 Real-Time Late Entry Monitoring Terminal */}
+          <Card sx={{ 
+            borderRadius: 4, 
+            p: { xs: 2.5, sm: 3.5 }, 
+            mb: 4, 
+            bgcolor: '#fff', 
+            border: '1px solid #f1f5f9',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px 0 rgba(0, 0, 0, 0.01)'
+          }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ p: 0.8, borderRadius: 2, bgcolor: '#fef2f2', color: '#ef4444', display: 'flex' }}>
+                  <LateIcon sx={{ fontSize: 20 }} />
+                </Box>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#0f172a', fontFamily: 'Outfit', fontSize: '16px' }}>
+                    Real-Time Late Entry Monitoring Terminal
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: '#94a3b8', fontFamily: 'Inter', display: 'block' }}>
+                    Live monitoring of employee arrivals registered after 09:15 AM check-in threshold today
+                  </Typography>
+                </Box>
+              </Box>
+              <Chip 
+                label={`${todayLogs.filter(log => log.status === 'LATE').length} Flagged Today`} 
+                color="error" 
+                size="small" 
+                sx={{ fontWeight: 'bold', fontFamily: 'Outfit' }} 
+              />
+            </Box>
+
+            <Divider sx={{ mb: 3, borderColor: '#f1f5f9' }} />
+
+            {todayLogs.filter(log => log.status === 'LATE').length === 0 ? (
+              <Box sx={{ py: 4, textAlign: 'center', bgcolor: '#f0fdf4', borderRadius: 3, border: '1px dashed #bbf7d0' }}>
+                <Typography sx={{ fontWeight: 'bold', color: '#166534', fontSize: '14px', fontFamily: 'Outfit', mb: 0.5 }}>
+                  🎉 Punctual Operations Status
+                </Typography>
+                <Typography sx={{ color: '#166534', fontSize: '12px', fontFamily: 'Inter' }}>
+                  No late arrivals flagged on this shift today. All active employees checked in on time!
+                </Typography>
+              </Box>
+            ) : (
+              <Box sx={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Inter', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #f1f5f9', textAlign: 'left', color: '#64748b' }}>
+                      <th style={{ padding: '12px 8px', fontWeight: 'bold', fontFamily: 'Outfit' }}>Employee</th>
+                      <th style={{ padding: '12px 8px', fontWeight: 'bold', fontFamily: 'Outfit' }}>Check-In Time</th>
+                      <th style={{ padding: '12px 8px', fontWeight: 'bold', fontFamily: 'Outfit' }}>Selfie Capture</th>
+                      <th style={{ padding: '12px 8px', fontWeight: 'bold', fontFamily: 'Outfit' }}>GPS Coordinates</th>
+                      <th style={{ padding: '12px 8px', fontWeight: 'bold', fontFamily: 'Outfit' }}>Resolved Location</th>
+                      <th style={{ padding: '12px 8px', fontWeight: 'bold', fontFamily: 'Outfit' }} align="right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {todayLogs.filter(log => log.status === 'LATE').map((log) => {
+                      const checkInTime = log.checkIn ? new Date(log.checkIn) : null;
+                      const minutesLate = checkInTime ? Math.max(0, (checkInTime.getHours() * 60 + checkInTime.getMinutes()) - (9 * 60 + 15)) : 0;
+
+                      return (
+                        <tr key={log.id} style={{ borderBottom: '1px solid #f8fafc' }}>
+                          <td style={{ padding: '12px 8px' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Avatar sx={{ width: 28, height: 28, fontSize: '11px', fontWeight: 'bold', fontFamily: 'Outfit', bgcolor: '#3b82f6' }}>
+                                {log.employeeName ? log.employeeName[0].toUpperCase() : 'E'}
+                              </Avatar>
+                              <Box>
+                                <Typography sx={{ fontWeight: 'bold', color: '#1e293b', fontSize: '13px', fontFamily: 'Outfit' }}>
+                                  {log.employeeName}
+                                </Typography>
+                                <Typography sx={{ fontSize: '10px', color: '#94a3b8' }}>
+                                  {log.employeeCode}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </td>
+                          <td style={{ padding: '12px 8px', fontWeight: 600, color: '#dc2626', fontFamily: 'Outfit' }}>
+                            {checkInTime ? checkInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '-'}
+                          </td>
+                          <td style={{ padding: '12px 8px' }}>
+                            {log.checkInSelfie ? (
+                              <Avatar 
+                                src={log.checkInSelfie} 
+                                variant="rounded" 
+                                sx={{ width: 32, height: 32, border: '1px solid #cbd5e1', cursor: 'pointer', '&:hover': { opacity: 0.8 } }}
+                                onClick={() => handleOpenPreview(log.checkInSelfie, `Late Check-In Selfie - ${log.employeeName}`)}
+                              />
+                            ) : (
+                              '-'
+                            )}
+                          </td>
+                          <td style={{ padding: '12px 8px', color: '#64748b', fontSize: '11.5px', fontFamily: 'Inter' }}>
+                            {log.checkInLatitude ? `${log.checkInLatitude.toFixed(6)}, ${log.checkInLongitude.toFixed(6)}` : '-'}
+                          </td>
+                          <td style={{ padding: '12px 8px', color: '#64748b', fontSize: '11.5px', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Inter' }}>
+                            {log.checkInAddress || 'No Address Logged'}
+                          </td>
+                          <td style={{ padding: '12px 8px' }} align="right">
+                            <Chip 
+                              label={`+${minutesLate} min late`} 
+                              size="small" 
+                              sx={{ bgcolor: '#fef2f2', color: '#dc2626', fontWeight: 800, fontSize: '10px', border: '1px solid #fee2e2', fontFamily: 'Outfit' }} 
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </Box>
+            )}
+          </Card>
         </>
       )}
 
@@ -956,6 +1097,38 @@ const AdminDashboard = () => {
           </DialogActions>
         </form>
       </Dialog>
+
+      {/* Selfie Preview Modal */}
+      <Dialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        sx={{ '& .MuiDialog-paper': { borderRadius: 4 } }}
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1, fontFamily: 'Outfit', fontWeight: 'bold' }}>
+          <Typography variant="h6" sx={{ fontFamily: 'Outfit', fontWeight: 'bold' }}>{previewTitle}</Typography>
+          <IconButton onClick={() => setPreviewOpen(false)} size="small" sx={{ color: '#94a3b8' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ display: 'flex', justifyContent: 'center', pb: 3, pt: 1, borderTop: '1px solid #f1f5f9' }}>
+          <Box
+            component="img"
+            src={previewUrl}
+            alt="Preview Selfie"
+            sx={{
+              maxWidth: '100%',
+              maxHeight: '70vh',
+              borderRadius: 3,
+              border: '1px solid #cbd5e1',
+              objectFit: 'contain',
+              mt: 2
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
     </AdminLayout>
   );
 };

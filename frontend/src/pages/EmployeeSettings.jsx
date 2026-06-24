@@ -557,7 +557,7 @@ const EmployeeSettings = () => {
                       Salary Deposit Card
                     </Typography>
                     <Typography sx={{ fontSize: '18px', fontWeight: 'bold', fontFamily: 'Outfit', mb: 3.5 }}>
-                      State Bank of India
+                      {profile?.bankName || 'Bank Account'}
                     </Typography>
 
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
@@ -574,7 +574,7 @@ const EmployeeSettings = () => {
                           Account Number
                         </Typography>
                         <Typography sx={{ fontSize: '12.5px', fontWeight: 'bold', fontFamily: 'Outfit', mt: 0.2 }}>
-                          •••• •••• 5690
+                          {profile?.accountNumber ? (profile.accountNumber.length > 4 ? `•••• •••• ${profile.accountNumber.slice(-4)}` : profile.accountNumber) : 'Not Configured'}
                         </Typography>
                       </Box>
                     </Box>
@@ -585,15 +585,15 @@ const EmployeeSettings = () => {
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.8 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f8fafc', pb: 1.2 }}>
                       <Typography sx={{ color: '#64748b', fontSize: '11.5px', fontFamily: 'Inter' }}>Bank Name</Typography>
-                      <Typography sx={{ color: '#0f172a', fontSize: '11.5px', fontWeight: 'bold', fontFamily: 'Outfit' }}>State Bank of India</Typography>
+                      <Typography sx={{ color: '#0f172a', fontSize: '11.5px', fontWeight: 'bold', fontFamily: 'Outfit' }}>{profile?.bankName || 'Not Configured'}</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f8fafc', pb: 1.2 }}>
                       <Typography sx={{ color: '#64748b', fontSize: '11.5px', fontFamily: 'Inter' }}>IFSC Code</Typography>
-                      <Typography sx={{ color: '#0f172a', fontSize: '11.5px', fontWeight: 'bold', fontFamily: 'Outfit' }}>SBIN0004561</Typography>
+                      <Typography sx={{ color: '#0f172a', fontSize: '11.5px', fontWeight: 'bold', fontFamily: 'Outfit' }}>{profile?.ifscCode || 'Not Configured'}</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', pb: 0.5 }}>
                       <Typography sx={{ color: '#64748b', fontSize: '11.5px', fontFamily: 'Inter' }}>Branch Location</Typography>
-                      <Typography sx={{ color: '#0f172a', fontSize: '11.5px', fontWeight: 'bold', fontFamily: 'Outfit' }}>HITEC City, Hyderabad</Typography>
+                      <Typography sx={{ color: '#0f172a', fontSize: '11.5px', fontWeight: 'bold', fontFamily: 'Outfit' }}>{profile?.branchName || 'Not Configured'}</Typography>
                     </Box>
                   </Box>
                 </Grid>

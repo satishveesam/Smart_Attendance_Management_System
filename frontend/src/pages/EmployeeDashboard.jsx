@@ -37,6 +37,7 @@ import {
   Umbrella as LeaveIcon,
   AssignmentTurnedIn as TasksIcon,
   Fingerprint as CheckInIcon,
+  CheckCircle as SuccessIcon,
   History as HistoryIcon,
   Face as ProfileIcon,
   AccessTime as TimeIcon,
@@ -327,49 +328,166 @@ const EmployeeDashboard = () => {
             ))}
           </Box>
 
-          {/* 4. Recent Logs / Feed */}
-          {attendanceHistory.length > 0 && (
-            <Box sx={{ mt: 2 }}>
-              <Typography sx={{ fontWeight: 'bold', color: '#1e293b', mb: 1, fontFamily: 'Outfit', fontSize: { xs: '12px', sm: '14px' } }}>
-                Recent Attendance Activities
+          {/* 4. Recent Logs & Late Entry Tracking Grid */}
+          <Grid container spacing={3} sx={{ mt: 1 }}>
+            {/* Left Column: Recent Activity Feed */}
+            <Grid item xs={12} md={7}>
+              <Typography sx={{ fontWeight: 'bold', color: '#1e293b', mb: 1.5, fontFamily: 'Outfit', fontSize: { xs: '13px', sm: '15px' }, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <HistoryIcon sx={{ color: '#3b82f6', fontSize: 18 }} /> Recent Attendance Activities
               </Typography>
-              <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', boxShadow: 'none' }}>
-                <CardContent sx={{ p: 0.5 }}>
-                  <List sx={{ py: 0 }}>
-                    {attendanceHistory.slice(0, 3).map((log, index) => (
-                      <React.Fragment key={log.id || index}>
-                        {index > 0 && <Divider />}
-                        <ListItem sx={{ py: 0.8, px: { xs: 1, sm: 2 } }}>
-                          <ListItemIcon sx={{ minWidth: 28 }}>
-                            <TimeIcon sx={{ color: log.status === 'LATE' ? '#f59e0b' : '#10b981', fontSize: 15 }} />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={
-                              <Typography sx={{ fontWeight: 'bold', fontSize: { xs: '11px', sm: '12px' }, color: '#1e293b' }}>
-                                {new Date(log.attendanceDate).toLocaleDateString([], { weekday: 'short', day: '2-digit', month: 'short' })}
+              
+              {attendanceHistory.length === 0 ? (
+                <Paper sx={{ p: 3, textAlign: 'center', color: '#64748b', borderRadius: 3, border: '1px dashed #e2e8f0' }}>
+                  No recent activities recorded.
+                </Paper>
+              ) : (
+                <Card sx={{ borderRadius: 4, border: '1px solid #e2e8f0', boxShadow: 'none', bgcolor: '#fff' }}>
+                  <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                    <List sx={{ py: 0 }}>
+                      {attendanceHistory.slice(0, 4).map((log, index) => (
+                        <React.Fragment key={log.id || index}>
+                          {index > 0 && <Divider sx={{ my: 1, borderColor: '#f1f5f9' }} />}
+                          <ListItem sx={{ py: 0.8, px: { xs: 1, sm: 1.5 }, display: 'flex', alignItems: 'center', gap: 2 }}>
+                            
+                            {/* Check-In Selfie Thumbnail */}
+                            <Box sx={{ position: 'relative' }}>
+                              {log.checkInSelfie ? (
+                                <Avatar
+                                  src={log.checkInSelfie}
+                                  variant="rounded"
+                                  sx={{ width: 42, height: 42, border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.04)' }}
+                                />
+                              ) : (
+                                <Avatar variant="rounded" sx={{ width: 42, height: 42, bgcolor: '#f1f5f9', color: '#94a3b8' }}>
+                                  <ProfileIcon sx={{ fontSize: 18 }} />
+                                </Avatar>
+                              )}
+                              {/* Status dot */}
+                              <Box sx={{
+                                position: 'absolute',
+                                bottom: -2,
+                                right: -2,
+                                width: 12,
+                                height: 12,
+                                borderRadius: '50%',
+                                border: '2px solid #fff',
+                                bgcolor: log.status === 'PRESENT' ? '#10b981' : log.status === 'LATE' ? '#f59e0b' : '#ef4444',
+                              }} />
+                            </Box>
+
+                            <ListItemText
+                              primary={
+                                <Typography sx={{ fontWeight: 'bold', fontSize: { xs: '12px', sm: '13px' }, color: '#1e293b', fontFamily: 'Outfit' }}>
+                                  {new Date(log.attendanceDate).toLocaleDateString([], { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                                </Typography>
+                              }
+                              secondary={
+                                <Typography variant="caption" sx={{ color: '#64748b', fontSize: '10px', fontFamily: 'Inter', mt: 0.2, display: 'block' }}>
+                                  📥 In: <strong>{log.checkIn ? new Date(log.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</strong>
+                                  {log.checkOut ? `  |  📤 Out: ` : ''}
+                                  {log.checkOut ? <strong>{new Date(log.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong> : ''}
+                                </Typography>
+                              }
+                            />
+                            
+                            <Box sx={{ textAlign: 'right' }}>
+                              <Chip
+                                label={log.status}
+                                size="small"
+                                color={log.status === 'PRESENT' ? 'success' : log.status === 'LATE' ? 'warning' : log.status === 'HALF_DAY' ? 'primary' : 'error'}
+                                sx={{ height: 18, fontSize: '8.5px', fontWeight: 'bold', fontFamily: 'Outfit', borderRadius: '5px' }}
+                              />
+                              {log.totalHours && (
+                                <Typography sx={{ display: 'block', fontSize: '9px', color: '#94a3b8', mt: 0.4, fontFamily: 'Inter' }}>
+                                  ⏱️ {log.totalHours.toFixed(1)} hrs
+                                </Typography>
+                              )}
+                            </Box>
+
+                          </ListItem>
+                        </React.Fragment>
+                      ))}
+                    </List>
+                  </CardContent>
+                </Card>
+              )}
+            </Grid>
+
+            {/* Right Column: Late Entry Tracker */}
+            <Grid item xs={12} md={5}>
+              <Typography sx={{ fontWeight: 'bold', color: '#1e293b', mb: 1.5, fontFamily: 'Outfit', fontSize: { xs: '13px', sm: '15px' }, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <TimeIcon sx={{ color: '#f59e0b', fontSize: 18 }} /> Late Entry Tracking
+              </Typography>
+
+              {attendanceHistory.filter(r => r.status === 'LATE').length === 0 ? (
+                <Card sx={{ borderRadius: 4, border: '1px solid #bbf7d0', bgcolor: '#f0fdf4', p: 3, textAlign: 'center', boxShadow: 'none' }}>
+                  <SuccessIcon sx={{ color: '#166534', fontSize: 32, mb: 1 }} />
+                  <Typography sx={{ fontWeight: 'bold', color: '#166534', fontSize: '13.5px', fontFamily: 'Outfit' }}>
+                    Perfect Timing Streak!
+                  </Typography>
+                  <Typography sx={{ color: '#166534', fontSize: '11px', mt: 0.5, fontFamily: 'Inter', lineHeight: 1.4 }}>
+                    You have no late entries recorded. Keep up the excellent punctuality!
+                  </Typography>
+                </Card>
+              ) : (
+                <Card sx={{ borderRadius: 4, border: '1px solid #fde68a', bgcolor: '#fffdf5', boxShadow: 'none', height: '100%' }}>
+                  <CardContent sx={{ p: 2.5 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Box>
+                        <Typography sx={{ fontSize: '10px', color: '#b45309', fontWeight: 'bold', letterSpacing: '0.8px', textTransform: 'uppercase', fontFamily: 'Inter' }}>
+                          Warning Metrics
+                        </Typography>
+                        <Typography sx={{ fontWeight: 'bold', color: '#78350f', fontSize: '16px', fontFamily: 'Outfit', mt: 0.2 }}>
+                          {attendanceHistory.filter(r => r.status === 'LATE').length} Late Arrivals
+                        </Typography>
+                      </Box>
+                      <Chip
+                        label="Grace Limit Alert"
+                        color="warning"
+                        size="small"
+                        sx={{ height: 18, fontSize: '9px', fontWeight: 'bold', fontFamily: 'Outfit' }}
+                      />
+                    </Box>
+                    
+                    <Typography sx={{ color: '#b45309', fontSize: '11px', fontFamily: 'Inter', mb: 2.5, lineHeight: 1.4 }}>
+                      Corporate check-ins after <strong>10:15 AM</strong> trigger a late flag. Consistent tardiness may affect attendance performance scores.
+                    </Typography>
+
+                    <Divider sx={{ my: 1.5, borderColor: '#fef3c7' }} />
+                    
+                    <Typography sx={{ fontWeight: 'bold', color: '#78350f', fontSize: '11.5px', fontFamily: 'Outfit', mb: 1 }}>
+                      Detailed Log of Late Entries
+                    </Typography>
+                    
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.2, maxHeight: 150, overflowY: 'auto' }}>
+                      {attendanceHistory.filter(r => r.status === 'LATE').slice(0, 3).map((log, i) => {
+                        const checkInTime = log.checkIn ? new Date(log.checkIn) : null;
+                        const minutesLate = checkInTime ? Math.max(0, (checkInTime.getHours() * 60 + checkInTime.getMinutes()) - (9 * 60 + 15)) : 0;
+                        
+                        return (
+                          <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1, bgcolor: '#fff', borderRadius: 2, border: '1px solid #fef3c7' }}>
+                            <Box>
+                              <Typography sx={{ fontSize: '11px', fontWeight: 'bold', color: '#1e293b', fontFamily: 'Outfit' }}>
+                                {log.attendanceDate}
                               </Typography>
-                            }
-                            secondary={
-                              <Typography variant="caption" sx={{ color: '#64748b', fontSize: '9px' }}>
-                                In: {log.checkIn ? new Date(log.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
-                                {log.checkOut ? ` | Out: ${new Date(log.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
+                              <Typography sx={{ fontSize: '9.5px', color: '#64748b', fontFamily: 'Inter', mt: 0.1 }}>
+                                Checked In: {checkInTime ? checkInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
                               </Typography>
-                            }
-                          />
-                          <Chip
-                            label={log.status}
-                            size="small"
-                            color={log.status === 'PRESENT' ? 'success' : log.status === 'LATE' ? 'warning' : 'error'}
-                            sx={{ height: 16, fontSize: '8px', fontWeight: 'bold' }}
-                          />
-                        </ListItem>
-                      </React.Fragment>
-                    ))}
-                  </List>
-                </CardContent>
-              </Card>
-            </Box>
-          )}
+                            </Box>
+                            <Chip
+                              label={`+${minutesLate} min late`}
+                              size="small"
+                              sx={{ height: 16, fontSize: '8.5px', fontWeight: 800, bgcolor: '#fef2f2', color: '#dc2626', border: '1px solid #fee2e2' }}
+                            />
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  </CardContent>
+                </Card>
+              )}
+            </Grid>
+          </Grid>
 
         </Box>
       )}

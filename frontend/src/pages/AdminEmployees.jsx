@@ -37,6 +37,7 @@ import {
   PinDrop as PinIcon,
   Close as CloseIcon,
   Badge as BadgeIcon,
+  AccountBalance as BankIcon,
 } from '@mui/icons-material';
 
 const AdminEmployees = () => {
@@ -65,6 +66,10 @@ const AdminEmployees = () => {
     customLatitude: '',
     customLongitude: '',
     customRadiusMeters: '',
+    bankName: '',
+    accountNumber: '',
+    ifscCode: '',
+    branchName: '',
   });
 
   useEffect(() => {
@@ -109,6 +114,10 @@ const AdminEmployees = () => {
       customLatitude: '',
       customLongitude: '',
       customRadiusMeters: '',
+      bankName: '',
+      accountNumber: '',
+      ifscCode: '',
+      branchName: '',
     });
     setError('');
     setOpen(true);
@@ -131,6 +140,10 @@ const AdminEmployees = () => {
       customLatitude: emp.customLatitude !== null && emp.customLatitude !== undefined ? emp.customLatitude : '',
       customLongitude: emp.customLongitude !== null && emp.customLongitude !== undefined ? emp.customLongitude : '',
       customRadiusMeters: emp.customRadiusMeters !== null && emp.customRadiusMeters !== undefined ? emp.customRadiusMeters : '',
+      bankName: emp.bankName || '',
+      accountNumber: emp.accountNumber || '',
+      ifscCode: emp.ifscCode || '',
+      branchName: emp.branchName || '',
     });
     setError('');
     setOpen(true);
@@ -725,6 +738,65 @@ const AdminEmployees = () => {
                         type="number"
                         inputProps={{ min: 1 }}
                         value={form.customRadiusMeters}
+                        onChange={handleInputChange}
+                        InputProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter', borderRadius: '8px', backgroundColor: '#fff' } }}
+                        InputLabelProps={{ style: { fontSize: '12px', fontFamily: 'Inter' } }}
+                      />
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Grid>
+
+              {/* Salary & Bank Details Section */}
+              <Grid item xs={12}>
+                <Box sx={{ mt: 1.5, p: 2, bgcolor: '#f0fdfa', borderRadius: 3, border: '1px solid #ccfbf1' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#0d9488', display: 'flex', alignItems: 'center', gap: 0.8, fontFamily: 'Outfit', fontSize: '13.5px' }}>
+                    <BankIcon sx={{ fontSize: 18 }} /> Salary & Bank Account Details
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: '#0f766e', display: 'block', mt: 0.5, mb: 2, fontFamily: 'Inter', fontSize: '11px', lineHeight: 1.4 }}>
+                    Enter official payroll deposit account details for the monthly salary disbursement.
+                  </Typography>
+                  
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        name="bankName"
+                        label="Bank Name"
+                        value={form.bankName}
+                        onChange={handleInputChange}
+                        InputProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter', borderRadius: '8px', backgroundColor: '#fff' } }}
+                        InputLabelProps={{ style: { fontSize: '12px', fontFamily: 'Inter' } }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        name="accountNumber"
+                        label="Account Number"
+                        value={form.accountNumber}
+                        onChange={handleInputChange}
+                        InputProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter', borderRadius: '8px', backgroundColor: '#fff' } }}
+                        InputLabelProps={{ style: { fontSize: '12px', fontFamily: 'Inter' } }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        name="ifscCode"
+                        label="IFSC Code"
+                        value={form.ifscCode}
+                        onChange={handleInputChange}
+                        InputProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter', borderRadius: '8px', backgroundColor: '#fff' } }}
+                        InputLabelProps={{ style: { fontSize: '12px', fontFamily: 'Inter' } }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        name="branchName"
+                        label="Branch Name"
+                        value={form.branchName}
                         onChange={handleInputChange}
                         InputProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter', borderRadius: '8px', backgroundColor: '#fff' } }}
                         InputLabelProps={{ style: { fontSize: '12px', fontFamily: 'Inter' } }}

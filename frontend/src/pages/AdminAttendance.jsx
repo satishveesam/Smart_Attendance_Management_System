@@ -777,7 +777,9 @@ const AdminAttendance = () => {
                   <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '13px' }}>Name</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '13px' }}>Date</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '13px' }}>Check In</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '13px' }}>In Selfie</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '13px' }}>Check Out</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '13px' }}>Out Selfie</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '13px' }}>Total Hours</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '13px' }}>Status</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '13px' }}>Check-In GPS</TableCell>
@@ -792,7 +794,37 @@ const AdminAttendance = () => {
                     <TableCell sx={{ fontWeight: 'bold', color: '#1e293b', fontFamily: 'Outfit', fontSize: '13.5px' }}>{log.employeeName}</TableCell>
                     <TableCell sx={{ fontFamily: 'Inter', fontSize: '13px', color: '#475569' }}>{log.attendanceDate}</TableCell>
                     <TableCell sx={{ fontFamily: 'Inter', fontSize: '13px', color: '#16a34a', fontWeight: 500 }}>{formatTime(log.checkIn)}</TableCell>
+                    <TableCell>
+                      {log.checkInSelfie ? (
+                        <Avatar
+                          src={log.checkInSelfie}
+                          variant="rounded"
+                          sx={{ width: 32, height: 32, cursor: 'pointer', border: '1px solid #cbd5e1', '&:hover': { opacity: 0.8 } }}
+                          onClick={() => {
+                            setSelectedLog(log);
+                            setAuditOpen(true);
+                          }}
+                        />
+                      ) : (
+                        '-'
+                      )}
+                    </TableCell>
                     <TableCell sx={{ fontFamily: 'Inter', fontSize: '13px', color: '#2563eb', fontWeight: 500 }}>{formatTime(log.checkOut)}</TableCell>
+                    <TableCell>
+                      {log.checkOutSelfie ? (
+                        <Avatar
+                          src={log.checkOutSelfie}
+                          variant="rounded"
+                          sx={{ width: 32, height: 32, cursor: 'pointer', border: '1px solid #cbd5e1', '&:hover': { opacity: 0.8 } }}
+                          onClick={() => {
+                            setSelectedLog(log);
+                            setAuditOpen(true);
+                          }}
+                        />
+                      ) : (
+                        '-'
+                      )}
+                    </TableCell>
                     <TableCell sx={{ fontFamily: 'Inter', fontSize: '13px', color: '#475569' }}>{log.totalHours != null ? `${log.totalHours.toFixed(2)} hrs` : '-'}</TableCell>
                     <TableCell sx={{ fontFamily: 'Inter' }}>{getStatusChip(log.status)}</TableCell>
                     <TableCell sx={{ fontSize: '11px', color: '#64748b', fontFamily: 'Inter' }}>

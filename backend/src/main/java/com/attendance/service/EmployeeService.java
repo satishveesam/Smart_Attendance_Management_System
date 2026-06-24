@@ -87,6 +87,10 @@ public class EmployeeService {
                 .customLatitude(dto.getCustomLatitude())
                 .customLongitude(dto.getCustomLongitude())
                 .customRadiusMeters(dto.getCustomRadiusMeters())
+                .bankName(dto.getBankName())
+                .accountNumber(dto.getAccountNumber())
+                .ifscCode(dto.getIfscCode())
+                .branchName(dto.getBranchName())
                 .build();
 
         Employee savedEmployee = employeeRepository.save(employee);
@@ -119,6 +123,10 @@ public class EmployeeService {
         employee.setCustomLatitude(dto.getCustomLatitude());
         employee.setCustomLongitude(dto.getCustomLongitude());
         employee.setCustomRadiusMeters(dto.getCustomRadiusMeters());
+        employee.setBankName(dto.getBankName());
+        employee.setAccountNumber(dto.getAccountNumber());
+        employee.setIfscCode(dto.getIfscCode());
+        employee.setBranchName(dto.getBranchName());
 
         // Update corresponding user email
         if (employee.getUser() != null) {
@@ -163,7 +171,11 @@ public class EmployeeService {
                 .joiningDate(employee.getJoiningDate())
                 .customLatitude(employee.getCustomLatitude())
                 .customLongitude(employee.getCustomLongitude())
-                .customRadiusMeters(employee.getCustomRadiusMeters());
+                .customRadiusMeters(employee.getCustomRadiusMeters())
+                .bankName(employee.getBankName())
+                .accountNumber(employee.getAccountNumber())
+                .ifscCode(employee.getIfscCode())
+                .branchName(employee.getBranchName());
 
         if (employee.getUser() != null) {
             builder.userId(employee.getUser().getId())

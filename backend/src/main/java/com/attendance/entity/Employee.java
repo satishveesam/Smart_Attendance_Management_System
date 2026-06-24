@@ -52,4 +52,16 @@ public class Employee {
 
     @Column(name = "custom_radius_meters")
     private Double customRadiusMeters;
+
+    @Column(name = "bank_name", length = 100)
+    private String bankName;
+
+    @Column(name = "account_number", length = 50)
+    private String accountNumber;
+
+    @Column(name = "ifsc_code", length = 50)
+    private String ifscCode;
+
+    @Column(name = "branch_name", length = 100)
+    private String branchName;
 }
