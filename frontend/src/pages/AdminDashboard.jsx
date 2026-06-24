@@ -374,7 +374,7 @@ const AdminDashboard = () => {
             <>
               <Box
                 component="img"
-                src={`http://localhost:8080/api/attendance/qr-code/${qrToken}`}
+                src={`${API.defaults.baseURL || ''}/attendance/qr-code/${qrToken}`}
                 alt="Daily QR Code"
                 sx={{ 
                   width: 250, 
