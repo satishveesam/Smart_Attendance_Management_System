@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../layouts/AdminLayout';
 import API from '../api';
 import {
@@ -46,6 +47,7 @@ import {
 } from 'recharts';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -286,35 +288,40 @@ const AdminDashboard = () => {
       value: totalEmployees,
       indicator: 'Registered staff',
       icon: <PeopleIcon sx={{ fontSize: 18, color: '#3b82f6' }} />,
-      badge: { label: 'Staff', color: '#2563eb', bg: '#eff6ff' }
+      badge: { label: 'Staff', color: '#2563eb', bg: '#eff6ff' },
+      path: '/admin/employees'
     },
     {
       title: 'Present Today',
       value: presentToday,
       indicator: `${attendancePercentage.toFixed(0)}% presence rate`,
       icon: <PresentIcon sx={{ fontSize: 18, color: '#10b981' }} />,
-      badge: { label: 'Live', color: '#16a34a', bg: '#f0fdf4' }
+      badge: { label: 'Live', color: '#16a34a', bg: '#f0fdf4' },
+      path: '/admin/attendance'
     },
     {
       title: 'Absent Today',
       value: absentToday,
       indicator: 'Pending check-in',
       icon: <AbsentIcon sx={{ fontSize: 18, color: '#ef4444' }} />,
-      badge: { label: 'Absent', color: '#dc2626', bg: '#fef2f2' }
+      badge: { label: 'Absent', color: '#dc2626', bg: '#fef2f2' },
+      path: '/admin/attendance'
     },
     {
       title: 'Late Arrivals',
       value: lateArrivals,
       indicator: 'After 9:15 AM',
       icon: <LateIcon sx={{ fontSize: 18, color: '#f59e0b' }} />,
-      badge: { label: 'Late', color: '#d97706', bg: '#fffbeb' }
+      badge: { label: 'Late', color: '#d97706', bg: '#fffbeb' },
+      path: '/admin/attendance'
     },
     {
       title: 'Attendance %',
       value: `${attendancePercentage.toFixed(1)}%`,
       indicator: 'Today\'s score',
       icon: <PercentIcon sx={{ fontSize: 18, color: '#8b5cf6' }} />,
-      badge: { label: 'Rate', color: '#7e22ce', bg: '#faf5ff' }
+      badge: { label: 'Rate', color: '#7e22ce', bg: '#faf5ff' },
+      path: '/admin/attendance'
     },
   ];
 
@@ -452,19 +459,22 @@ const AdminDashboard = () => {
             {statCards.map((card, index) => (
               <Card 
                 key={card.title}
+                onClick={() => card.path && navigate(card.path)}
                 sx={{ 
                   borderRadius: 3.5, 
                   bgcolor: '#fff',
                   border: '1px solid #f1f5f9',
                   boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px 0 rgba(0, 0, 0, 0.01)',
                   transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  cursor: card.path ? 'pointer' : 'default',
                   gridColumn: { 
                     xs: index === 4 ? 'span 2' : 'span 1', 
                     sm: 'span 1' 
                   },
                   '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 12px 0 rgba(0,0,0,0.04), 0 2px 4px 0 rgba(0,0,0,0.02)',
+                    transform: 'translateY(-2.5px)',
+                    borderColor: '#cbd5e1',
+                    boxShadow: '0 8px 24px -4px rgba(0,0,0,0.06), 0 4px 12px -2px rgba(0,0,0,0.03)',
                   }
                 }}
               >

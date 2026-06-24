@@ -321,65 +321,98 @@ const AdminAttendance = () => {
 
   return (
     <AdminLayout>
-      {/* 1. Header Card (Premium Layout matching the screenshot) */}
+      {/* 1. Sleek Outside Header Banner */}
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2.5 }}>
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
+            <Box sx={{ p: 0.6, borderRadius: 2, bgcolor: '#e0e7ff', color: '#4f46e5', display: 'flex' }}>
+              <CalendarIcon sx={{ fontSize: 22 }} />
+            </Box>
+            <Typography variant="h4" sx={{ fontWeight: '900', color: '#0f172a', fontFamily: 'Outfit', letterSpacing: '-0.3px', fontSize: { xs: '20px', sm: '26px' } }}>
+              Attendance & Activity Logs
+            </Typography>
+          </Box>
+          <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter', fontSize: '13px', mt: 0.8 }}>
+            Track real-time check-ins, monthly attendance grids, selfie biometrics, and GPS coordinates.
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* 2. Operations & Controls Card */}
       <Card sx={{ 
-        p: { xs: 2, sm: 3 }, 
+        p: { xs: 2.5, sm: 3.5 }, 
         mb: 4, 
         borderRadius: 4, 
-        boxShadow: '0 4px 20px -2px rgba(148, 163, 184, 0.08), 0 2px 8px -1px rgba(148, 163, 184, 0.04)',
-        border: '1px solid #e2e8f0',
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px 0 rgba(0, 0, 0, 0.01)', 
+        border: '1px solid #f1f5f9',
         bgcolor: '#fff'
       }}>
-        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
-          
-          {/* Title and Icon */}
-          <Grid item xs={12} md={6} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box sx={{ 
-              p: 1.5, 
-              borderRadius: 3.5, 
-              bgcolor: '#e0e7ff', 
-              color: '#4f46e5', 
-              display: 'flex', 
-              alignItems: 'center',
-              boxShadow: '0 4px 12px 0 rgba(79, 70, 229, 0.1)'
-            }}>
-              <CalendarIcon sx={{ fontSize: 32 }} />
-            </Box>
-            <Box>
-              <Typography variant="h5" sx={{ fontWeight: '800', color: '#1e293b', fontFamily: 'Outfit', letterSpacing: '0.2px', fontSize: { xs: '18px', sm: '22px' } }}>
-                Monthly Attendance Report
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter', fontSize: '12.5px', mt: 0.2 }}>
-                Comprehensive monthly attendance tracking and analysis
-              </Typography>
+        <Grid container spacing={2.5} alignItems="center" justifyContent="space-between">
+          <Grid item xs={12} sm={6}>
+            {/* Segmented Summary/Detail Tabs */}
+            <Box sx={{ display: 'flex', bgcolor: '#f1f5f9', p: 0.5, borderRadius: 2.5, width: 'fit-content' }}>
+              <Button
+                onClick={() => { setViewTab('summary'); fetchAttendanceLogs(); }}
+                sx={{
+                  px: 3,
+                  py: 0.8,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  fontSize: '12px',
+                  fontFamily: 'Outfit',
+                  bgcolor: viewTab === 'summary' ? '#fff' : 'transparent',
+                  color: viewTab === 'summary' ? '#1e293b' : '#64748b',
+                  boxShadow: viewTab === 'summary' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none',
+                  '&:hover': { bgcolor: viewTab === 'summary' ? '#fff' : 'rgba(0,0,0,0.02)' }
+                }}
+              >
+                Summary Grid
+              </Button>
+              <Button
+                onClick={() => { setViewTab('detail'); fetchAttendanceLogs(); }}
+                sx={{
+                  px: 3,
+                  py: 0.8,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  fontSize: '12px',
+                  fontFamily: 'Outfit',
+                  bgcolor: viewTab === 'detail' ? '#fff' : 'transparent',
+                  color: viewTab === 'detail' ? '#1e293b' : '#64748b',
+                  boxShadow: viewTab === 'detail' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none',
+                  '&:hover': { bgcolor: viewTab === 'detail' ? '#fff' : 'rgba(0,0,0,0.02)' }
+                }}
+              >
+                Detailed Logs
+              </Button>
             </Box>
           </Grid>
 
-          {/* Month Dropdown Selector */}
-          <Grid item xs={12} md={4} sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, border: '1px solid #cbd5e1', borderRadius: 3, p: '4px 12px', bgcolor: '#f8fafc' }}>
-              <CalendarIcon sx={{ color: '#64748b', fontSize: 18 }} />
+          <Grid item xs={12} sm={6} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', sm: 'flex-end' } }}>
+            {/* Month Dropdown Selector */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, border: '1px solid #e2e8f0', borderRadius: 2.5, p: '6px 14px', bgcolor: '#f8fafc' }}>
+              <CalendarIcon sx={{ color: '#64748b', fontSize: 16 }} />
               
-              {/* Month Dropdown */}
               <TextField
                 select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(Number(e.target.value))}
                 variant="standard"
-                InputProps={{ disableUnderline: true, style: { fontSize: '13px', fontWeight: 600, fontFamily: 'Outfit', color: '#1e293b' } }}
+                InputProps={{ disableUnderline: true, style: { fontSize: '13px', fontWeight: 700, fontFamily: 'Outfit', color: '#1e293b' } }}
               >
                 {months.map(m => (
                   <MenuItem key={m.value} value={m.value} style={{ fontSize: '13px', fontFamily: 'Inter' }}>{m.label}</MenuItem>
                 ))}
               </TextField>
 
-              {/* Year Dropdown */}
               <TextField
                 select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
                 variant="standard"
-                InputProps={{ disableUnderline: true, style: { fontSize: '13px', fontWeight: 600, fontFamily: 'Outfit', color: '#1e293b' } }}
+                InputProps={{ disableUnderline: true, style: { fontSize: '13px', fontWeight: 700, fontFamily: 'Outfit', color: '#1e293b' } }}
               >
                 {years.map(y => (
                   <MenuItem key={y} value={y} style={{ fontSize: '13px', fontFamily: 'Inter' }}>{y}</MenuItem>
@@ -391,134 +424,76 @@ const AdminAttendance = () => {
 
         <Divider sx={{ my: 2.5, borderColor: '#f1f5f9' }} />
 
-        {/* View Toggle tabs + Action Buttons */}
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { sm: 'center' }, gap: 2 }}>
-          
-          {/* Segmented Summary/Detail Tabs */}
-          <Box sx={{ display: 'flex', bgcolor: '#f1f5f9', p: 0.5, borderRadius: 2.5, width: 'fit-content' }}>
-            <Button
-              onClick={() => { setViewTab('summary'); fetchAttendanceLogs(); }}
-              sx={{
-                px: 3,
-                py: 0.8,
-                borderRadius: 2,
-                textTransform: 'none',
-                fontWeight: 700,
-                fontSize: '12px',
-                fontFamily: 'Outfit',
-                bgcolor: viewTab === 'summary' ? '#fff' : 'transparent',
-                color: viewTab === 'summary' ? '#1e293b' : '#64748b',
-                boxShadow: viewTab === 'summary' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none',
-                '&:hover': { bgcolor: viewTab === 'summary' ? '#fff' : 'rgba(0,0,0,0.02)' }
-              }}
-            >
-              Summary
-            </Button>
-            <Button
-              onClick={() => { setViewTab('detail'); fetchAttendanceLogs(); }}
-              sx={{
-                px: 3,
-                py: 0.8,
-                borderRadius: 2,
-                textTransform: 'none',
-                fontWeight: 700,
-                fontSize: '12px',
-                fontFamily: 'Outfit',
-                bgcolor: viewTab === 'detail' ? '#fff' : 'transparent',
-                color: viewTab === 'detail' ? '#1e293b' : '#64748b',
-                boxShadow: viewTab === 'detail' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none',
-                '&:hover': { bgcolor: viewTab === 'detail' ? '#fff' : 'rgba(0,0,0,0.02)' }
-              }}
-            >
-              Detail
-            </Button>
-          </Box>
-
-          {/* Action Buttons: Filter, Export, Import, Template */}
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            
-            <Button
-              variant="outlined"
-              startIcon={<FilterIcon sx={{ fontSize: 16 }} />}
-              sx={{
-                borderColor: '#cbd5e1',
-                color: '#334155',
-                bgcolor: '#fff',
-                borderRadius: 2.5,
-                textTransform: 'none',
-                fontWeight: '700',
-                fontSize: '12px',
-                fontFamily: 'Outfit',
-                px: 2,
-                height: 38,
-                '&:hover': { borderColor: '#94a3b8', bgcolor: '#f8fafc' }
-              }}
-            >
-              Filter
-            </Button>
-            
+        {/* Action Buttons: Filter, Export, Import, Template */}
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+          <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter', fontSize: '12.5px' }}>
+            Actions & Export Options
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.2 }}>
             <Button
               variant="outlined"
               onClick={handleExportExcel}
               disabled={exportingExcel || logs.length === 0}
-              startIcon={<ExportIcon sx={{ fontSize: 16 }} />}
+              startIcon={<ExportIcon sx={{ fontSize: 15 }} />}
               sx={{
                 borderColor: '#bfdbfe',
                 color: '#2563eb',
                 bgcolor: '#eff6ff',
-                borderRadius: 2.5,
+                borderRadius: 2.2,
                 textTransform: 'none',
-                fontWeight: '700',
+                fontWeight: 700,
                 fontSize: '12px',
                 fontFamily: 'Outfit',
-                px: 2,
-                height: 38,
-                '&:hover': { borderColor: '#93c5fd', bgcolor: '#dbeafe' }
+                px: 2.5,
+                height: 36,
+                boxShadow: 'none',
+                '&:hover': { borderColor: '#93c5fd', bgcolor: '#dbeafe', boxShadow: 'none' }
               }}
             >
-              {exportingExcel ? <CircularProgress size={14} color="inherit" /> : 'Attendance Export'}
+              {exportingExcel ? <CircularProgress size={14} color="inherit" /> : 'Export Excel'}
             </Button>
-
+            
             <Button
               variant="outlined"
-              startIcon={<ImportIcon sx={{ fontSize: 16 }} />}
+              startIcon={<ImportIcon sx={{ fontSize: 15 }} />}
               sx={{
                 borderColor: '#bbf7d0',
                 color: '#16a34a',
                 bgcolor: '#f0fdf4',
-                borderRadius: 2.5,
+                borderRadius: 2.2,
                 textTransform: 'none',
-                fontWeight: '700',
+                fontWeight: 700,
                 fontSize: '12px',
                 fontFamily: 'Outfit',
-                px: 2,
-                height: 38,
-                '&:hover': { borderColor: '#86efac', bgcolor: '#dcfce7' }
+                px: 2.5,
+                height: 36,
+                boxShadow: 'none',
+                '&:hover': { borderColor: '#86efac', bgcolor: '#dcfce7', boxShadow: 'none' }
               }}
             >
-              Import
+              Import CSV
             </Button>
 
             <Button
               variant="outlined"
-              startIcon={<TemplateIcon sx={{ fontSize: 16 }} />}
+              startIcon={<TemplateIcon sx={{ fontSize: 15 }} />}
               sx={{
                 borderColor: '#e9d5ff',
                 color: '#7e22ce',
                 bgcolor: '#faf5ff',
-                borderRadius: 2.5,
+                borderRadius: 2.2,
                 textTransform: 'none',
-                fontWeight: '700',
+                fontWeight: 700,
                 fontSize: '12px',
                 fontFamily: 'Outfit',
-                px: 2,
-                height: 38,
-                '&:hover': { borderColor: '#d8b4fe', bgcolor: '#f3e8ff' }
+                px: 2.5,
+                height: 36,
+                boxShadow: 'none',
+                '&:hover': { borderColor: '#d8b4fe', bgcolor: '#f3e8ff', boxShadow: 'none' }
               }}
             >
-              Template
+              Get Template
             </Button>
-
           </Box>
         </Box>
       </Card>
