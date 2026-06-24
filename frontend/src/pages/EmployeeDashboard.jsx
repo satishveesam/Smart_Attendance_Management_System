@@ -274,7 +274,7 @@ const EmployeeDashboard = () => {
             Core Actions & Services
           </Typography>
           
-          <Grid container spacing={1} sx={{ mb: 2.5 }}>
+          <Grid container spacing={1} justifyContent="center" sx={{ mb: 2.5, width: '100%', m: 0 }}>
             {primaryActions.map((action) => (
               <Grid item xs={3} sm={2.4} md={2} key={action.title}>
                 <Paper

@@ -284,7 +284,7 @@ const EmployeeAttendance = () => {
           </Alert>
         )}
 
-        <Grid container spacing={2}>
+        <Grid container spacing={2} sx={{ width: '100%', m: 0 }}>
           
           {/* CAMERA SCANNER PANEL */}
           <Grid item xs={12} md={7}>
