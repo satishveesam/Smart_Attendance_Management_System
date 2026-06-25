@@ -154,6 +154,11 @@ public class EmployeeService {
 
         Long userId = (employee.getUser() != null) ? employee.getUser().getId() : null;
 
+        // 0. Delete associated attendance locations
+        entityManager.createQuery("DELETE FROM AttendanceLocation al WHERE al.attendance.id IN (SELECT a.id FROM Attendance a WHERE a.employee.id = :empId)")
+                .setParameter("empId", id)
+                .executeUpdate();
+
         // 1. Delete associated attendance requests
         entityManager.createQuery("DELETE FROM AttendanceRequest r WHERE r.employee.id = :empId")
                 .setParameter("empId", id)

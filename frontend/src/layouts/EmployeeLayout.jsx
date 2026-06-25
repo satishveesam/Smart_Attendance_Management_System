@@ -156,8 +156,6 @@ const EmployeeLayout = ({ children }) => {
             <IconButton
               size="large"
               aria-label="account of current user"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
               onClick={handleMenu}
               color="inherit"
               sx={{ p: 0.5 }}
@@ -166,26 +164,56 @@ const EmployeeLayout = ({ children }) => {
                 {user?.username ? user.username[0].toUpperCase() : 'E'}
               </Avatar>
             </IconButton>
-            <Menu
-              id="menu-appbar"
-              anchorEl={anchorEl}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
+            <Drawer
+              anchor="right"
               open={Boolean(anchorEl)}
               onClose={handleClose}
-              PaperProps={{ sx: { borderRadius: 2.5, minWidth: 140, boxShadow: '0 4px 20px rgba(0,0,0,0.08)', mt: 1 } }}
+              transitionDuration={{ enter: 600, exit: 400 }}
+              PaperProps={{
+                sx: {
+                  width: 260,
+                  bgcolor: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(20px)',
+                  borderLeft: '1px solid rgba(226, 232, 240, 0.8)',
+                  boxShadow: '-10px 0 40px rgba(0,0,0,0.04)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  p: 3,
+                }
+              }}
             >
-              <MenuItem disabled sx={{ fontSize: '12px', fontFamily: 'Outfit', fontWeight: 800, color: '#0f172a !important', opacity: '1 !important' }}>
-                ID: {user?.employeeCode || 'N/A'}
-              </MenuItem>
-            </Menu>
+              <Box sx={{ textAlign: 'center', width: '100%' }}>
+                <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', fontSize: '9px', display: 'block', mb: 2, fontFamily: 'Inter' }}>
+                  🔑 Verified Profile
+                </Typography>
+                <Avatar sx={{ width: 64, height: 64, bgcolor: '#10b981', fontSize: '22px', fontWeight: 'bold', mx: 'auto', mb: 2, boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)' }}>
+                  {user?.username ? user.username[0].toUpperCase() : 'E'}
+                </Avatar>
+                <Typography sx={{ fontWeight: 800, color: '#1e293b', fontSize: '16px', fontFamily: 'Outfit', mb: 0.5 }}>
+                  {user?.username}
+                </Typography>
+                <Typography sx={{ fontSize: '11px', color: '#64748b', fontFamily: 'Inter', mb: 4 }}>
+                  {user?.email}
+                </Typography>
+                
+                <Box sx={{ 
+                  p: 2.5, 
+                  borderRadius: 4, 
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
+                  color: '#fff',
+                  boxShadow: '0 8px 20px -6px rgba(16, 185, 129, 0.4)'
+                }}>
+                  <Typography sx={{ fontSize: '9.5px', fontWeight: 800, textTransform: 'uppercase', opacity: 0.85, letterSpacing: '0.5px', fontFamily: 'Inter' }}>
+                    Employee Code
+                  </Typography>
+                  <Typography sx={{ fontSize: '20px', fontWeight: 900, mt: 0.8, fontFamily: 'Outfit', letterSpacing: '0.5px' }}>
+                    {user?.employeeCode || 'N/A'}
+                  </Typography>
+                </Box>
+              </Box>
+            </Drawer>
           </Box>
         </Toolbar>
       </AppBar>
