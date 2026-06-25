@@ -182,9 +182,9 @@ const EmployeeLayout = ({ children }) => {
               onClose={handleClose}
               PaperProps={{ sx: { borderRadius: 2.5, minWidth: 140, boxShadow: '0 4px 20px rgba(0,0,0,0.08)', mt: 1 } }}
             >
-              <MenuItem disabled sx={{ fontSize: '11px', fontFamily: 'Inter' }}>{user?.email}</MenuItem>
-              <Divider />
-              <MenuItem onClick={handleLogout} sx={{ fontSize: '12px', color: '#e11d48', fontWeight: 'bold', fontFamily: 'Inter' }}>Sign Out</MenuItem>
+              <MenuItem disabled sx={{ fontSize: '12px', fontFamily: 'Outfit', fontWeight: 800, color: '#0f172a !important', opacity: '1 !important' }}>
+                ID: {user?.employeeCode || 'N/A'}
+              </MenuItem>
             </Menu>
           </Box>
         </Toolbar>

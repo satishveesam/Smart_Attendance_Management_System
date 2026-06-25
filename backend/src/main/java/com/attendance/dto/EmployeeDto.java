@@ -27,4 +27,5 @@ public class EmployeeDto {
     private String accountNumber;
     private String ifscCode;
     private String branchName;
+    private String assignedShift;
 }

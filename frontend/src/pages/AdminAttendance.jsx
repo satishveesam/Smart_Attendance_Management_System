@@ -1004,9 +1004,19 @@ const AdminAttendance = () => {
                     <TableCell sx={{ fontFamily: 'Inter' }}>{getStatusChip(log.status)}</TableCell>
                     <TableCell sx={{ fontSize: '11px', color: '#64748b', fontFamily: 'Inter' }}>
                       {log.checkInLatitude ? `${log.checkInLatitude.toFixed(4)}, ${log.checkInLongitude.toFixed(4)}` : '-'}
+                      {log.checkInLocationSimulated && (
+                        <Box sx={{ mt: 0.5, display: 'flex', alignItems: 'center', bgcolor: '#fff7ed', color: '#ea580c', px: 1, py: 0.2, borderRadius: 1, border: '1px solid #ffedd5', fontSize: '9px', fontWeight: 'bold', width: 'fit-content' }}>
+                          ⚠️ SIMULATED ({log.checkInActualDistance ? `${log.checkInActualDistance.toFixed(0)}m` : '?'})
+                        </Box>
+                      )}
                     </TableCell>
                     <TableCell sx={{ fontSize: '11px', color: '#64748b', fontFamily: 'Inter' }}>
                       {log.checkOutLatitude ? `${log.checkOutLatitude.toFixed(4)}, ${log.checkOutLongitude.toFixed(4)}` : '-'}
+                      {log.checkOutLocationSimulated && (
+                        <Box sx={{ mt: 0.5, display: 'flex', alignItems: 'center', bgcolor: '#fff7ed', color: '#ea580c', px: 1, py: 0.2, borderRadius: 1, border: '1px solid #ffedd5', fontSize: '9px', fontWeight: 'bold', width: 'fit-content' }}>
+                          ⚠️ SIMULATED ({log.checkOutActualDistance ? `${log.checkOutActualDistance.toFixed(0)}m` : '?'})
+                        </Box>
+                      )}
                     </TableCell>
                     <TableCell align="right">
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1 }}>
@@ -1286,6 +1296,16 @@ const AdminAttendance = () => {
                           {selectedLog.checkInAddress || 'No Address Logged'}
                         </Typography>
                       </Box>
+                      {selectedLog.checkInLocationSimulated && (
+                        <Box sx={{ mt: 1.5, p: 1.2, bgcolor: '#fff7ed', border: '1px solid #ffedd5', borderRadius: 2 }}>
+                          <Typography variant="caption" sx={{ color: '#ea580c', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 0.5, fontFamily: 'Outfit' }}>
+                            ⚠️ GPS Simulation Detected
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontSize: '11px', color: '#c2410c', mt: 0.2, fontWeight: 500 }}>
+                            This check-in location was simulated! Actual distance from office: <strong>{selectedLog.checkInActualDistance ? `${selectedLog.checkInActualDistance.toFixed(1)} meters` : 'Unknown'}</strong>.
+                          </Typography>
+                        </Box>
+                      )}
                     </Box>
                   </Paper>
                 </Grid>
@@ -1340,6 +1360,16 @@ const AdminAttendance = () => {
                           {selectedLog.checkOutAddress || 'No Address Logged'}
                         </Typography>
                       </Box>
+                      {selectedLog.checkOutLocationSimulated && (
+                        <Box sx={{ mt: 1.5, p: 1.2, bgcolor: '#fff7ed', border: '1px solid #ffedd5', borderRadius: 2 }}>
+                          <Typography variant="caption" sx={{ color: '#ea580c', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 0.5, fontFamily: 'Outfit' }}>
+                            ⚠️ GPS Simulation Detected
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontSize: '11px', color: '#c2410c', mt: 0.2, fontWeight: 500 }}>
+                            This check-out location was simulated! Actual distance from office: <strong>{selectedLog.checkOutActualDistance ? `${selectedLog.checkOutActualDistance.toFixed(1)} meters` : 'Unknown'}</strong>.
+                          </Typography>
+                        </Box>
+                      )}
                     </Box>
                   </Paper>
                 </Grid>

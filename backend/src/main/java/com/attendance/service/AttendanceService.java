@@ -171,6 +171,8 @@ public class AttendanceService {
             throw new BadRequestException("Selfie biometric face scan is required for check-in");
         }
 
+        attendance.setCheckInLocationSimulated(request.getLocationSimulated() != null ? request.getLocationSimulated() : false);
+        attendance.setCheckInActualDistance(request.getActualDistance());
         Attendance savedAttendance = attendanceRepository.save(attendance);
 
         // 6. Save Location Details
@@ -261,6 +263,8 @@ public class AttendanceService {
         attendance.setCheckOut(now);
         attendance.setCheckOutSelfie(request.getSelfie());
         attendance.setCheckOutAddress(request.getAddress());
+        attendance.setCheckOutLocationSimulated(request.getLocationSimulated() != null ? request.getLocationSimulated() : false);
+        attendance.setCheckOutActualDistance(request.getActualDistance());
         
         // Calculate and accumulate Total Working Hours
         double sessionHours = Duration.between(attendance.getCheckIn(), now).toMinutes() / 60.0;
@@ -372,6 +376,10 @@ public class AttendanceService {
                 .checkOutSelfie(attendance.getCheckOutSelfie())
                 .checkInAddress(attendance.getCheckInAddress())
                 .checkOutAddress(attendance.getCheckOutAddress())
+                .checkInLocationSimulated(attendance.getCheckInLocationSimulated())
+                .checkInActualDistance(attendance.getCheckInActualDistance())
+                .checkOutLocationSimulated(attendance.getCheckOutLocationSimulated())
+                .checkOutActualDistance(attendance.getCheckOutActualDistance())
                 .build();
     }
 

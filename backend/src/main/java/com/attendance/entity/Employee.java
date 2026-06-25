@@ -64,4 +64,7 @@ public class Employee {
 
     @Column(name = "branch_name", length = 100)
     private String branchName;
+
+    @Column(name = "assigned_shift", length = 100)
+    private String assignedShift;
 }

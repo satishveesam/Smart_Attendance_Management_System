@@ -34,6 +34,9 @@ public class CheckInRequest {
     /** Resolved human-readable address from browser Geocoding API (optional). */
     private String address;
 
+    private Boolean locationSimulated;
+    private Double actualDistance;
+
     public CheckInRequest() {}
 
     public Double getLatitude() { return latitude; }
@@ -53,6 +56,12 @@ public class CheckInRequest {
 
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
+
+    public Boolean getLocationSimulated() { return locationSimulated; }
+    public void setLocationSimulated(Boolean locationSimulated) { this.locationSimulated = locationSimulated; }
+
+    public Double getActualDistance() { return actualDistance; }
+    public void setActualDistance(Double actualDistance) { this.actualDistance = actualDistance; }
 
     @Override
     public String toString() {

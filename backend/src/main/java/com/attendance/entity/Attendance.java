@@ -50,4 +50,16 @@ public class Attendance {
 
     @Column(name = "check_out_address", length = 255)
     private String checkOutAddress;
+
+    @Column(name = "check_in_location_simulated")
+    private Boolean checkInLocationSimulated;
+
+    @Column(name = "check_in_actual_distance")
+    private Double checkInActualDistance;
+
+    @Column(name = "check_out_location_simulated")
+    private Boolean checkOutLocationSimulated;
+
+    @Column(name = "check_out_actual_distance")
+    private Double checkOutActualDistance;
 }

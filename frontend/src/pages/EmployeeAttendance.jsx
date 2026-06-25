@@ -37,6 +37,54 @@ const EmployeeAttendance = () => {
   const navigate = useNavigate();
 
   const [attendanceType, setAttendanceType] = useState('gps'); // 'gps' or 'qr'
+  const [employeeProfile, setEmployeeProfile] = useState(null);
+
+  const fetchEmployeeProfile = async () => {
+    try {
+      const res = await API.get('/employees/me');
+      setEmployeeProfile(res.data);
+    } catch (err) {
+      console.error("Failed to fetch employee profile: ", err);
+    }
+  };
+
+  const getShiftTimings = () => {
+    const shiftStr = employeeProfile?.assignedShift || 'General Shift (10:00 AM - 06:30 PM)';
+    const match = shiftStr.match(/\(([^)]+)\)/);
+    return match ? match[1] : "10:00 AM - 06:30 PM";
+  };
+
+  const getShiftEndHourAndMinute = () => {
+    const range = getShiftTimings();
+    const parts = range.split(' - ');
+    if (parts.length < 2) return { hour: 18, minute: 30 };
+    const endStr = parts[1].trim();
+    const timeParts = endStr.split(' ');
+    if (timeParts.length < 2) return { hour: 18, minute: 30 };
+    const hm = timeParts[0].split(':');
+    let hour = parseInt(hm[0], 10);
+    const minute = hm.length > 1 ? parseInt(hm[1], 10) : 0;
+    const ampm = timeParts[1].toUpperCase();
+    if (ampm === 'PM' && hour < 12) hour += 12;
+    if (ampm === 'AM' && hour === 12) hour = 0;
+    return { hour, minute };
+  };
+
+  const getLateMarkingTimeString = () => {
+    const range = getShiftTimings();
+    const startStr = range.split(' - ')[0].trim();
+    const parts = startStr.split(' ');
+    if (parts.length < 2) return "10:15 AM";
+    const hm = parts[0].split(':');
+    let h = parseInt(hm[0], 10);
+    let m = parseInt(hm[1], 10) + 15;
+    if (m >= 60) {
+      m -= 60;
+      h += 1;
+    }
+    const ampm = parts[1];
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
+  };
   const [qrToken, setQrToken] = useState('');
   const [gps, setGps] = useState({ latitude: null, longitude: null, error: null });
 
@@ -153,6 +201,7 @@ const EmployeeAttendance = () => {
     fetchLocation();
     fetchRegisteredFace();
     fetchOfficeLocation();
+    fetchEmployeeProfile();
   }, []);
 
   const fetchRegisteredFace = async () => {
@@ -283,6 +332,22 @@ const EmployeeAttendance = () => {
       // 4. Submit check-in or check-out to backend
       const isCheckOut = todayLog && !todayLog.checkOut;
       const endpoint = isCheckOut ? '/attendance/checkout' : '/attendance/checkin';
+
+      // Compute actual physical distance before sending (independent of simulation mode)
+      let actualDistanceMeters = null;
+      if (gps.latitude && gps.longitude) {
+        const R = 6371e3; // meters
+        const lat1 = gps.latitude * Math.PI / 180;
+        const lat2 = officeCoordinates.latitude * Math.PI / 180;
+        const deltaLat = (officeCoordinates.latitude - gps.latitude) * Math.PI / 180;
+        const deltaLon = (officeCoordinates.longitude - gps.longitude) * Math.PI / 180;
+        const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+          Math.cos(lat1) * Math.cos(lat2) *
+          Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        actualDistanceMeters = R * c;
+      }
+
       const payload = {
         // Send simulated office coordinates to backend if simulation is active
         latitude: simulateLocation ? officeCoordinates.latitude : gps.latitude,
@@ -292,6 +357,8 @@ const EmployeeAttendance = () => {
         selfie: screenshot,          // Handled by CheckOutRequest DTO
         selfieBase64: screenshot,    // Handled by CheckInRequest DTO
         address: 'C9WH+W92, HUDA Techno Enclave, HITEC City, Hyderabad',
+        locationSimulated: simulateLocation,
+        actualDistance: actualDistanceMeters
       };
 
       const res = await API.post(endpoint, payload);
@@ -321,7 +388,8 @@ const EmployeeAttendance = () => {
   };
 
   const nowTime = new Date();
-  const isAfterShiftEnd = nowTime.getHours() > 18 || (nowTime.getHours() === 18 && nowTime.getMinutes() >= 30);
+  const shiftEnd = getShiftEndHourAndMinute();
+  const isAfterShiftEnd = nowTime.getHours() > shiftEnd.hour || (nowTime.getHours() === shiftEnd.hour && nowTime.getMinutes() >= shiftEnd.minute);
   const showScanner = (todayLog && !todayLog.checkOut) || (!isAfterShiftEnd && (!todayLog || allowReCheckIn));
 
   return (
@@ -566,7 +634,7 @@ const EmployeeAttendance = () => {
                       Check-In Closed
                     </Typography>
                     <Typography sx={{ fontSize: '12px', color: '#64748b', fontFamily: 'Inter', maxWidth: 360, mx: 'auto', lineHeight: 1.5 }}>
-                      Today's shift time has ended (6:30 PM). Biometric check-in is locked until your next shift.
+                      Today's shift time has ended ({getShiftTimings().split(' - ')[1] || '6:30 PM'}). Biometric check-in is locked until your next shift.
                     </Typography>
                   </>
                 )}
@@ -611,13 +679,13 @@ const EmployeeAttendance = () => {
                 {/* Shift Details Info Card */}
                 <Box sx={{ mb: 2.5, p: 2, borderRadius: 3.5, bgcolor: '#fffbeb', border: '1px solid #fde68a' }}>
                   <Typography sx={{ fontWeight: 'bold', color: '#b45309', mb: 0.8, fontSize: '12px', fontFamily: 'Outfit', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ScheduleIcon sx={{ fontSize: 16 }} /> General Corporate Shift
+                    <ScheduleIcon sx={{ fontSize: 16 }} /> {employeeProfile?.assignedShift ? employeeProfile.assignedShift.split(' (')[0] : 'General Corporate Shift'}
                   </Typography>
                   <Typography sx={{ color: '#78350f', display: 'block', fontSize: '10.5px', fontFamily: 'Inter', lineHeight: 1.4 }}>
-                    Shift Timings: <strong>10:00 AM - 06:30 PM</strong>
+                    Shift Timings: <strong>{getShiftTimings()}</strong>
                   </Typography>
                   <Typography sx={{ color: '#78350f', fontSize: '10.5px', fontFamily: 'Inter', mt: 0.3, lineHeight: 1.4 }}>
-                    Grace Period: 15 mins (Late marking active after 10:15 AM).
+                    Grace Period: 15 mins (Late marking active after {getLateMarkingTimeString()}).
                   </Typography>
                 </Box>
 

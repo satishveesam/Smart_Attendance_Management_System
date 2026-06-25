@@ -26,4 +26,8 @@ public class AttendanceDto {
     private String checkOutSelfie;
     private String checkInAddress;
     private String checkOutAddress;
+    private Boolean checkInLocationSimulated;
+    private Double checkInActualDistance;
+    private Boolean checkOutLocationSimulated;
+    private Double checkOutActualDistance;
 }

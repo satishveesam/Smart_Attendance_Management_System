@@ -91,6 +91,7 @@ public class EmployeeService {
                 .accountNumber(dto.getAccountNumber())
                 .ifscCode(dto.getIfscCode())
                 .branchName(dto.getBranchName())
+                .assignedShift(dto.getAssignedShift() != null ? dto.getAssignedShift() : "General Shift (10:00 AM - 06:30 PM)")
                 .build();
 
         Employee savedEmployee = employeeRepository.save(employee);
@@ -127,6 +128,7 @@ public class EmployeeService {
         employee.setAccountNumber(dto.getAccountNumber());
         employee.setIfscCode(dto.getIfscCode());
         employee.setBranchName(dto.getBranchName());
+        employee.setAssignedShift(dto.getAssignedShift() != null ? dto.getAssignedShift() : "General Shift (10:00 AM - 06:30 PM)");
 
         // Update corresponding user email
         if (employee.getUser() != null) {
@@ -210,7 +212,8 @@ public class EmployeeService {
                 .bankName(employee.getBankName())
                 .accountNumber(employee.getAccountNumber())
                 .ifscCode(employee.getIfscCode())
-                .branchName(employee.getBranchName());
+                .branchName(employee.getBranchName())
+                .assignedShift(employee.getAssignedShift());
 
         if (employee.getUser() != null) {
             builder.userId(employee.getUser().getId())

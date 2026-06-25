@@ -167,6 +167,7 @@ const AdminEmployees = () => {
       accountNumber: '',
       ifscCode: '',
       branchName: '',
+      assignedShift: 'General Shift (10:00 AM - 06:30 PM)',
     });
     setError('');
     setOpen(true);
@@ -193,6 +194,7 @@ const AdminEmployees = () => {
       accountNumber: emp.accountNumber || '',
       ifscCode: emp.ifscCode || '',
       branchName: emp.branchName || '',
+      assignedShift: emp.assignedShift || 'General Shift (10:00 AM - 06:30 PM)',
     });
     setError('');
     setOpen(true);
@@ -392,6 +394,7 @@ const AdminEmployees = () => {
                   <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12.5px' }}>Department</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12.5px' }}>Designation</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12.5px' }}>Custom Geofence</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12.5px' }}>Shift</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12.5px', pr: 3 }} align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -462,6 +465,11 @@ const AdminEmployees = () => {
                             border: hasCustomGeofence ? '1px solid #fbcfe8' : '1px solid #e2e8f0',
                           }}
                         />
+                      </TableCell>
+                      
+                      {/* Shift Timing */}
+                      <TableCell sx={{ fontFamily: 'Inter', fontSize: '12.5px', color: '#6366f1', fontWeight: 600 }}>
+                        {emp.assignedShift || 'General Shift (10:00 AM - 06:30 PM)'}
                       </TableCell>
                       
                       {/* Actions */}
@@ -591,6 +599,12 @@ const AdminEmployees = () => {
                           border: hasCustomGeofence ? '1px solid #fbcfe8' : '1px solid #e2e8f0'
                         }}
                       />
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block', fontFamily: 'Inter', fontSize: '9px', fontWeight: 600 }}>Shift</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '11.5px', color: '#6366f1', fontFamily: 'Outfit', mt: 0.2 }}>
+                        {emp.assignedShift ? emp.assignedShift.split(' (')[0] : 'General Shift'}
+                      </Typography>
                     </Box>
                   </Box>
                 </Card>
@@ -751,6 +765,23 @@ const AdminEmployees = () => {
                 >
                   <MenuItem value="ROLE_EMPLOYEE" style={{ fontSize: '13px', fontFamily: 'Inter' }}>Employee (Standard)</MenuItem>
                   <MenuItem value="ROLE_ADMIN" style={{ fontSize: '13px', fontFamily: 'Inter' }}>Admin (Manager)</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select
+                  fullWidth
+                  name="assignedShift"
+                  label="Assigned Work Shift"
+                  value={form.assignedShift || 'General Shift (10:00 AM - 06:30 PM)'}
+                  onChange={handleInputChange}
+                  InputProps={{ style: { fontSize: '13px', fontFamily: 'Inter', borderRadius: '10px' } }}
+                  InputLabelProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter' } }}
+                >
+                  <MenuItem value="General Shift (10:00 AM - 06:30 PM)" style={{ fontSize: '13px', fontFamily: 'Inter' }}>General Shift (10:00 AM - 06:30 PM)</MenuItem>
+                  <MenuItem value="Morning Shift (08:00 AM - 04:30 PM)" style={{ fontSize: '13px', fontFamily: 'Inter' }}>Morning Shift (08:00 AM - 04:30 PM)</MenuItem>
+                  <MenuItem value="Evening Shift (02:00 PM - 10:30 PM)" style={{ fontSize: '13px', fontFamily: 'Inter' }}>Evening Shift (02:00 PM - 10:30 PM)</MenuItem>
+                  <MenuItem value="Night Shift (10:00 PM - 06:30 AM)" style={{ fontSize: '13px', fontFamily: 'Inter' }}>Night Shift (10:00 PM - 06:30 AM)</MenuItem>
                 </TextField>
               </Grid>
 

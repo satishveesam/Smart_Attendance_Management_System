@@ -216,18 +216,18 @@ const EmployeeSettings = () => {
                 </Box>
                 <Box>
                   <Typography sx={{ fontWeight: 'bold', fontSize: '13.5px', fontFamily: 'Outfit', color: '#0f172a' }}>
-                    Personal Details & Preferences
+                    Personal Details
                   </Typography>
                   <Typography sx={{ fontSize: '11px', color: '#64748b', fontFamily: 'Inter', mt: 0.2 }}>
-                    Review contact profile details and configure notification alerts
+                    Review secure personal contact and profile details
                   </Typography>
                 </Box>
               </Box>
             </AccordionSummary>
             <AccordionDetails sx={{ p: 3 }}>
               <Grid container spacing={4}>
-                {/* Left Side: Read-Only Profile Details */}
-                <Grid item xs={12} md={7}>
+                {/* Full-Width: Read-Only Profile Details */}
+                <Grid item xs={12}>
                   <Box sx={{ mb: 2.5 }}>
                     <Typography sx={{ fontWeight: 'bold', fontSize: '14.5px', fontFamily: 'Outfit', color: '#0f172a', mb: 0.5 }}>
                       Profile Information
@@ -285,84 +285,6 @@ const EmployeeSettings = () => {
                       </Box>
                     </Box>
                   </Box>
-                </Grid>
-
-                {/* Right Side: Preferences Switches */}
-                <Grid item xs={12} md={5}>
-                  <Card 
-                    variant="outlined" 
-                    sx={{ 
-                      p: 2.2, 
-                      borderRadius: 3.5, 
-                      bgcolor: '#f8fafc', 
-                      borderColor: '#e2e8f0',
-                      boxShadow: 'none'
-                    }}
-                  >
-                    <Typography sx={{ fontWeight: 'bold', fontSize: '13px', fontFamily: 'Outfit', color: '#0f172a', mb: 2 }}>
-                      Preferences & Alerts
-                    </Typography>
-
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={preferences.emailAlerts}
-                            onChange={(e) => setPreferences({ ...preferences, emailAlerts: e.target.checked })}
-                            size="small"
-                            color="primary"
-                          />
-                        }
-                        label={
-                          <Box>
-                            <Typography sx={{ fontSize: '11.5px', fontWeight: 700, color: '#334155', fontFamily: 'Outfit' }}>Email Alerts</Typography>
-                            <Typography sx={{ fontSize: '9.5px', color: '#64748b', fontFamily: 'Inter', mt: 0.1 }}>Check-in receipt logs via email</Typography>
-                          </Box>
-                        }
-                        sx={{ m: 0, width: '100%', justifyContent: 'space-between', flexDirection: 'row-reverse' }}
-                      />
-
-                      <Divider sx={{ borderColor: '#e2e8f0' }} />
-
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={preferences.pushNotifications}
-                            onChange={(e) => setPreferences({ ...preferences, pushNotifications: e.target.checked })}
-                            size="small"
-                            color="primary"
-                          />
-                        }
-                        label={
-                          <Box>
-                            <Typography sx={{ fontSize: '11.5px', fontWeight: 700, color: '#334155', fontFamily: 'Outfit' }}>Push Notifications</Typography>
-                            <Typography sx={{ fontSize: '9.5px', color: '#64748b', fontFamily: 'Inter', mt: 0.1 }}>Receive daily browser clock reminders</Typography>
-                          </Box>
-                        }
-                        sx={{ m: 0, width: '100%', justifyContent: 'space-between', flexDirection: 'row-reverse' }}
-                      />
-
-                      <Divider sx={{ borderColor: '#e2e8f0' }} />
-
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={preferences.locationVerification}
-                            onChange={(e) => setPreferences({ ...preferences, locationVerification: e.target.checked })}
-                            size="small"
-                            color="primary"
-                          />
-                        }
-                        label={
-                          <Box>
-                            <Typography sx={{ fontSize: '11.5px', fontWeight: 700, color: '#334155', fontFamily: 'Outfit' }}>Location Verification</Typography>
-                            <Typography sx={{ fontSize: '9.5px', color: '#64748b', fontFamily: 'Inter', mt: 0.1 }}>Allow high-accuracy GPS scans</Typography>
-                          </Box>
-                        }
-                        sx={{ m: 0, width: '100%', justifyContent: 'space-between', flexDirection: 'row-reverse' }}
-                      />
-                    </Box>
-                  </Card>
                 </Grid>
               </Grid>
             </AccordionDetails>
