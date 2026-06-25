@@ -167,7 +167,7 @@ const EmployeeProfile = () => {
                           component="img"
                           src={imgSrc}
                           alt="Captured Face Preview"
-                          sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          sx={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }}
                         />
                       ) : (
                         <Webcam
@@ -175,7 +175,7 @@ const EmployeeProfile = () => {
                           ref={webcamRef}
                           screenshotFormat="image/jpeg"
                           videoConstraints={{ width: 1280, height: 720, facingMode: 'user' }}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }}
                         />
                       )}
 

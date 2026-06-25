@@ -43,12 +43,68 @@ import {
 } from '@mui/icons-material';
 
 const AdminAttendance = () => {
-  // View Toggle: 'summary' (Calendar Grid) vs 'detail' (Logs List)
+  // View Toggle: 'summary' (Calendar Grid) vs 'detail' (Logs List) vs 'requests' (Correction requests)
   const [viewTab, setViewTab] = useState('summary');
   
   const [logs, setLogs] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Correction requests states
+  const [requests, setRequests] = useState([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [rejectionComment, setRejectionComment] = useState('');
+  const [actionSubmitting, setActionSubmitting] = useState(false);
+
+  const fetchRequests = async () => {
+    setRequestsLoading(true);
+    try {
+      const res = await API.get('/attendance-requests/all');
+      setRequests(res.data);
+    } catch (err) {
+      console.error("Failed to load requests", err);
+    } finally {
+      setRequestsLoading(false);
+    }
+  };
+
+  const handleApproveRequest = async (id) => {
+    if (!window.confirm("Are you sure you want to approve this attendance correction request?")) return;
+    setActionSubmitting(true);
+    try {
+      await API.post(`/attendance-requests/${id}/approve`);
+      alert("Request approved and attendance counted successfully!");
+      fetchRequests();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to approve request.");
+    } finally {
+      setActionSubmitting(false);
+    }
+  };
+
+  const handleRejectRequestSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedRequest) return;
+    setActionSubmitting(true);
+    try {
+      await API.post(`/attendance-requests/${selectedRequest.id}/reject`, {
+        comment: rejectionComment
+      });
+      alert("Request rejected successfully!");
+      setRejectDialogOpen(false);
+      setRejectionComment('');
+      setSelectedRequest(null);
+      fetchRequests();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to reject request.");
+    } finally {
+      setActionSubmitting(false);
+    }
+  };
 
   // Selected Month & Year for Report
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -349,7 +405,7 @@ const AdminAttendance = () => {
       }}>
         <Grid container spacing={2.5} alignItems="center" justifyContent="space-between">
           <Grid item xs={12} sm={6}>
-            {/* Segmented Summary/Detail Tabs */}
+            {/* Segmented Summary/Detail/Requests Tabs */}
             <Box sx={{ display: 'flex', bgcolor: '#f1f5f9', p: 0.5, borderRadius: 2.5, width: 'fit-content' }}>
               <Button
                 onClick={() => { setViewTab('summary'); fetchAttendanceLogs(); }}
@@ -386,6 +442,24 @@ const AdminAttendance = () => {
                 }}
               >
                 Detailed Logs
+              </Button>
+              <Button
+                onClick={() => { setViewTab('requests'); fetchRequests(); }}
+                sx={{
+                  px: 3,
+                  py: 0.8,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  fontSize: '12px',
+                  fontFamily: 'Outfit',
+                  bgcolor: viewTab === 'requests' ? '#fff' : 'transparent',
+                  color: viewTab === 'requests' ? '#1e293b' : '#64748b',
+                  boxShadow: viewTab === 'requests' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none',
+                  '&:hover': { bgcolor: viewTab === 'requests' ? '#fff' : 'rgba(0,0,0,0.02)' }
+                }}
+              >
+                Correction Requests
               </Button>
             </Box>
           </Grid>
@@ -583,9 +657,107 @@ const AdminAttendance = () => {
       )}
 
       {/* 3. Report Content Section */}
-      {loading ? (
+      {loading || requestsLoading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 8 }}>
           <CircularProgress color="primary" />
+        </Box>
+      ) : viewTab === 'requests' ? (
+        /* CORRECTION REQUESTS PANEL */
+        <Box sx={{ width: '100%' }}>
+          {requests.length === 0 ? (
+            <Paper sx={{ p: 6, textAlign: 'center', color: '#64748b', borderRadius: 3.5, border: '1px solid #e2e8f0', boxShadow: 'none' }}>
+              <Typography variant="body1" sx={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px' }}>
+                No attendance correction requests found.
+              </Typography>
+            </Paper>
+          ) : (
+            <TableContainer component={Paper} sx={{ borderRadius: 3.5, boxShadow: 'none', border: '1px solid #e2e8f0', overflowX: 'auto', width: '100%' }}>
+              <Table>
+                <TableHead sx={{ bgcolor: '#f8fafc' }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit' }}>Employee</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit' }}>Date</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit' }}>Proposed In</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit' }}>Proposed Out</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit' }}>Reason</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit' }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit' }}>Admin Comment</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit' }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {requests.map((req) => (
+                    <TableRow key={req.id} hover>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Avatar sx={{ bgcolor: getAvatarColor(req.employeeName), width: 32, height: 32, fontSize: '13px', fontWeight: 'bold', fontFamily: 'Outfit' }}>
+                            {req.employeeName?.charAt(0)}
+                          </Avatar>
+                          <Box>
+                            <Typography sx={{ fontWeight: 'bold', fontSize: '13px', color: '#1e293b', fontFamily: 'Outfit' }}>{req.employeeName}</Typography>
+                            <Typography sx={{ fontSize: '11px', color: '#64748b', fontFamily: 'Inter' }}>{req.employeeCode}</Typography>
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: '#1e293b', fontFamily: 'Outfit' }}>{req.attendanceDate}</TableCell>
+                      <TableCell sx={{ fontFamily: 'Inter', fontSize: '12px' }}>{formatTime(req.checkInTime)}</TableCell>
+                      <TableCell sx={{ fontFamily: 'Inter', fontSize: '12px' }}>{formatTime(req.checkOutTime)}</TableCell>
+                      <TableCell sx={{ color: '#475569', fontSize: '12px', fontFamily: 'Inter', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {req.reason}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={req.status}
+                          size="small"
+                          sx={{
+                            bgcolor: req.status === 'APPROVED' ? '#dcfce7' : req.status === 'REJECTED' ? '#fee2e2' : '#fef9c3',
+                            color: req.status === 'APPROVED' ? '#15803d' : req.status === 'REJECTED' ? '#b91c1c' : '#854d0e',
+                            fontSize: '10px',
+                            fontWeight: 'bold',
+                            borderRadius: '6px',
+                            fontFamily: 'Outfit'
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ fontSize: '11.5px', color: '#64748b', fontFamily: 'Inter', maxWidth: 180 }}>{req.adminComment || '-'}</TableCell>
+                      <TableCell align="right">
+                        {req.status === 'PENDING' ? (
+                          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                            <Button
+                              variant="contained"
+                              color="success"
+                              size="small"
+                              disabled={actionSubmitting}
+                              onClick={() => handleApproveRequest(req.id)}
+                              sx={{ textTransform: 'none', fontWeight: 'bold', fontFamily: 'Outfit', fontSize: '11px', px: 1.5, py: 0.5, borderRadius: 1.5 }}
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              variant="contained"
+                              color="error"
+                              size="small"
+                              disabled={actionSubmitting}
+                              onClick={() => {
+                                setSelectedRequest(req);
+                                setRejectionComment('');
+                                setRejectDialogOpen(true);
+                              }}
+                              sx={{ textTransform: 'none', fontWeight: 'bold', fontFamily: 'Outfit', fontSize: '11px', px: 1.5, py: 0.5, borderRadius: 1.5 }}
+                            >
+                              Reject
+                            </Button>
+                          </Box>
+                        ) : (
+                          <Typography variant="caption" sx={{ color: '#94a3b8', fontStyle: 'italic', fontFamily: 'Inter' }}>Processed</Typography>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
         </Box>
       ) : logs.length === 0 && viewTab === 'detail' ? (
         <Paper sx={{ p: 6, textAlign: 'center', color: '#64748b', borderRadius: 3.5, border: '1px solid #e2e8f0', boxShadow: 'none' }}>
@@ -1089,6 +1261,49 @@ const AdminAttendance = () => {
             Close Audit Log
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* Rejection Comment Dialog */}
+      <Dialog
+        open={rejectDialogOpen}
+        onClose={() => !actionSubmitting && setRejectDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 4, p: 1 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 'bold', fontFamily: 'Outfit' }}>Reject Attendance Request</DialogTitle>
+        <form onSubmit={handleRejectRequestSubmit}>
+          <DialogContent sx={{ pt: 1, pb: 2 }}>
+            <Typography variant="body2" sx={{ mb: 2, color: '#64748b', fontFamily: 'Inter', fontSize: '13px' }}>
+              Please provide a reason or comment for rejecting <strong>{selectedRequest?.employeeName}</strong>'s request for <strong>{selectedRequest?.attendanceDate}</strong>. This feedback will be visible in their attendance log.
+            </Typography>
+            <TextField
+              label="Rejection Comment / Feedback"
+              placeholder="e.g. Timesheet entries do not match card swipe logs, or incorrect date selected."
+              required
+              fullWidth
+              multiline
+              rows={3}
+              value={rejectionComment}
+              onChange={(e) => setRejectionComment(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2.5 }}>
+            <Button onClick={() => setRejectDialogOpen(false)} disabled={actionSubmitting} color="inherit" sx={{ textTransform: 'none', fontWeight: 'bold' }}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              color="error"
+              disabled={actionSubmitting || !rejectionComment.trim()}
+              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 'bold' }}
+            >
+              {actionSubmitting ? 'Rejecting...' : 'Reject Request'}
+            </Button>
+          </DialogActions>
+        </form>
       </Dialog>
     </AdminLayout>
   );

@@ -32,7 +32,7 @@ export const getFaceDescriptor = async (imageSrc) => {
       try {
         const detection = await faceapi.detectSingleFace(
           img,
-          new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })
+          new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 })
         )
         .withFaceLandmarks()
         .withFaceDescriptor();
