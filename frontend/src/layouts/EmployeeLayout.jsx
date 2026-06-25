@@ -40,6 +40,7 @@ import {
 
 const EmployeeLayout = ({ children }) => {
   const [anchorEl, setAnchorEl] = useState(null);
+  const [showId, setShowId] = useState(false);
   const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
   const location = useLocation();
@@ -153,67 +154,59 @@ const EmployeeLayout = ({ children }) => {
             <Typography variant="body2" sx={{ display: { xs: 'none', md: 'block' }, color: '#64748b', fontSize: '12px', fontFamily: 'Inter' }}>
               Welcome, <strong>{user?.username}</strong>
             </Typography>
+            
+            {/* Smooth sliding Employee ID badge within the navbar */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                overflow: 'hidden',
+                maxWidth: showId ? '160px' : '0px',
+                opacity: showId ? 1 : 0,
+                transform: showId ? 'scale(1) translateX(0)' : 'scale(0.8) translateX(10px)',
+                transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                mr: 0.5,
+              }}
+            >
+              <Box
+                sx={{
+                  px: 1.5,
+                  py: 0.6,
+                  height: '30px',
+                  borderRadius: '15px',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  color: '#ffffff',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  fontFamily: 'Outfit',
+                  letterSpacing: '0.5px',
+                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.2)',
+                }}
+              >
+                <span style={{ opacity: 0.85, fontWeight: 500 }}>ID:</span>
+                <span>{user?.employeeCode || 'N/A'}</span>
+              </Box>
+            </Box>
+
             <IconButton
               size="large"
               aria-label="account of current user"
-              onClick={handleMenu}
+              onClick={() => setShowId(!showId)}
               color="inherit"
-              sx={{ p: 0.5 }}
+              sx={{ 
+                p: 0.5,
+                transition: 'all 0.3s ease',
+                transform: showId ? 'scale(1.08)' : 'scale(1)',
+              }}
             >
               <Avatar sx={{ width: 32, height: 32, bgcolor: '#10b981', fontSize: '13px', fontWeight: 'bold' }}>
                 {user?.username ? user.username[0].toUpperCase() : 'E'}
               </Avatar>
             </IconButton>
-            <Drawer
-              anchor="right"
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-              transitionDuration={{ enter: 600, exit: 400 }}
-              PaperProps={{
-                sx: {
-                  width: 260,
-                  bgcolor: 'rgba(255, 255, 255, 0.9)',
-                  backdropFilter: 'blur(20px)',
-                  borderLeft: '1px solid rgba(226, 232, 240, 0.8)',
-                  boxShadow: '-10px 0 40px rgba(0,0,0,0.04)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  p: 3,
-                }
-              }}
-            >
-              <Box sx={{ textAlign: 'center', width: '100%' }}>
-                <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', fontSize: '9px', display: 'block', mb: 2, fontFamily: 'Inter' }}>
-                  🔑 Verified Profile
-                </Typography>
-                <Avatar sx={{ width: 64, height: 64, bgcolor: '#10b981', fontSize: '22px', fontWeight: 'bold', mx: 'auto', mb: 2, boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)' }}>
-                  {user?.username ? user.username[0].toUpperCase() : 'E'}
-                </Avatar>
-                <Typography sx={{ fontWeight: 800, color: '#1e293b', fontSize: '16px', fontFamily: 'Outfit', mb: 0.5 }}>
-                  {user?.username}
-                </Typography>
-                <Typography sx={{ fontSize: '11px', color: '#64748b', fontFamily: 'Inter', mb: 4 }}>
-                  {user?.email}
-                </Typography>
-                
-                <Box sx={{ 
-                  p: 2.5, 
-                  borderRadius: 4, 
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
-                  color: '#fff',
-                  boxShadow: '0 8px 20px -6px rgba(16, 185, 129, 0.4)'
-                }}>
-                  <Typography sx={{ fontSize: '9.5px', fontWeight: 800, textTransform: 'uppercase', opacity: 0.85, letterSpacing: '0.5px', fontFamily: 'Inter' }}>
-                    Employee Code
-                  </Typography>
-                  <Typography sx={{ fontSize: '20px', fontWeight: 900, mt: 0.8, fontFamily: 'Outfit', letterSpacing: '0.5px' }}>
-                    {user?.employeeCode || 'N/A'}
-                  </Typography>
-                </Box>
-              </Box>
-            </Drawer>
           </Box>
         </Toolbar>
       </AppBar>
