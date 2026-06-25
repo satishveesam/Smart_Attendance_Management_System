@@ -45,6 +45,7 @@ const EmployeeAttendance = () => {
   const [isInGeofence, setIsInGeofence] = useState(false);
   const [simulateLocation, setSimulateLocation] = useState(false);
   const [elapsedHours, setElapsedHours] = useState('00:00:00');
+  const [officeCoordinates, setOfficeCoordinates] = useState({ latitude: 17.4483, longitude: 78.3741, radius: 200 });
 
   // Camera & Biometrics state
   const webcamRef = useRef(null);
@@ -58,7 +59,23 @@ const EmployeeAttendance = () => {
   const [apiError, setApiError] = useState('');
   const [apiSuccess, setApiSuccess] = useState('');
 
-  // Calculate distance to HITEC City office coordinates (17.4483, 78.3741)
+  // Fetch office location dynamically
+  const fetchOfficeLocation = async () => {
+    try {
+      const res = await API.get('/attendance/office-location');
+      if (res.data && res.data.latitude && res.data.longitude) {
+        setOfficeCoordinates({
+          latitude: res.data.latitude,
+          longitude: res.data.longitude,
+          radius: res.data.radiusMeters || 200
+        });
+      }
+    } catch (err) {
+      console.error("Failed to fetch office location from backend: ", err);
+    }
+  };
+
+  // Calculate distance to office coordinates
   useEffect(() => {
     if (simulateLocation) {
       setDistanceToOffice(0);
@@ -66,9 +83,9 @@ const EmployeeAttendance = () => {
     } else if (gps.latitude && gps.longitude) {
       const R = 6371e3; // meters
       const lat1 = gps.latitude * Math.PI / 180;
-      const lat2 = 17.4483 * Math.PI / 180;
-      const deltaLat = (17.4483 - gps.latitude) * Math.PI / 180;
-      const deltaLon = (78.3741 - gps.longitude) * Math.PI / 180;
+      const lat2 = officeCoordinates.latitude * Math.PI / 180;
+      const deltaLat = (officeCoordinates.latitude - gps.latitude) * Math.PI / 180;
+      const deltaLon = (officeCoordinates.longitude - gps.longitude) * Math.PI / 180;
 
       const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
         Math.cos(lat1) * Math.cos(lat2) *
@@ -77,12 +94,12 @@ const EmployeeAttendance = () => {
       const distance = R * c;
 
       setDistanceToOffice(distance);
-      setIsInGeofence(distance <= 200);
+      setIsInGeofence(distance <= officeCoordinates.radius);
     } else {
       setDistanceToOffice(null);
       setIsInGeofence(false);
     }
-  }, [gps.latitude, gps.longitude, simulateLocation]);
+  }, [gps.latitude, gps.longitude, simulateLocation, officeCoordinates]);
 
   // Live Timer for Checked-In hours
   useEffect(() => {
@@ -112,6 +129,7 @@ const EmployeeAttendance = () => {
     fetchTodayStatus();
     fetchLocation();
     fetchRegisteredFace();
+    fetchOfficeLocation();
   }, []);
 
   const fetchRegisteredFace = async () => {
@@ -201,35 +219,49 @@ const EmployeeAttendance = () => {
     try {
       // 1. Get face descriptor
       const descriptor = await getFaceDescriptor(screenshot);
+      if (!descriptor) {
+        setFaceStatus('failed');
+        setApiError('No face detected in the captured selfie. Please align your face clearly in the camera frame.');
+        setSubmitting(false);
+        return;
+      }
       
-      // 2. Local biometric matching
-      if (registeredDescriptor) {
-        let sum = 0;
-        for (let i = 0; i < descriptor.length; i++) {
-          const diff = descriptor[i] - registeredDescriptor[i];
-          sum += diff * diff;
-        }
-        const distance = Math.sqrt(sum);
-        if (distance > 0.6) {
-          setFaceStatus('failed');
-          setApiError('Face does not match registered profile. Verification failed.');
-          setSubmitting(false);
-          return;
-        }
+      // 2. Enforce registered biometric profile
+      if (!registeredDescriptor) {
+        setFaceStatus('failed');
+        setApiError('No registered face profile found. Please register your face profile in your settings first before marking attendance.');
+        setSubmitting(false);
+        return;
+      }
+
+      // 3. Local biometric matching
+      let sum = 0;
+      for (let i = 0; i < descriptor.length; i++) {
+        const diff = descriptor[i] - registeredDescriptor[i];
+        sum += diff * diff;
+      }
+      const distance = Math.sqrt(sum);
+      if (distance > 0.6) {
+        setFaceStatus('failed');
+        setApiError(`Face does not match registered profile. Verification failed (Confidence distance: ${distance.toFixed(3)}, allowed limit: 0.600).`);
+        setSubmitting(false);
+        return;
       }
 
       setFaceDescriptor(descriptor);
       setFaceStatus('success');
 
-      // 3. Submit check-in or check-out to backend
+      // 4. Submit check-in or check-out to backend
       const isCheckOut = todayLog && !todayLog.checkOut;
       const endpoint = isCheckOut ? '/attendance/checkout' : '/attendance/checkin';
       const payload = {
-        latitude: gps.latitude,
-        longitude: gps.longitude,
+        // Send simulated office coordinates to backend if simulation is active
+        latitude: simulateLocation ? officeCoordinates.latitude : gps.latitude,
+        longitude: simulateLocation ? officeCoordinates.longitude : gps.longitude,
         qrToken: (!isCheckOut && attendanceType === 'qr') ? qrToken : null,
         faceDescriptor: JSON.stringify(descriptor),
-        selfie: screenshot,
+        selfie: screenshot,          // Handled by CheckOutRequest DTO
+        selfieBase64: screenshot,    // Handled by CheckInRequest DTO
         address: 'C9WH+W92, HUDA Techno Enclave, HITEC City, Hyderabad',
       };
 
@@ -401,32 +433,60 @@ const EmployeeAttendance = () => {
                     </Box>
 
                     {/* Integrated Action Button */}
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      disabled={submitting}
-                      onClick={handleVerifyAndSubmit}
-                      sx={{
-                        py: 1.5,
-                        borderRadius: 3,
-                        textTransform: 'none',
-                        fontWeight: 'bold',
-                        fontSize: '13px',
-                        fontFamily: 'Outfit',
-                        backgroundColor: (todayLog && !todayLog.checkOut) ? '#f59e0b' : '#10b981',
-                        '&:hover': { backgroundColor: (todayLog && !todayLog.checkOut) ? '#d97706' : '#059669' },
-                        boxShadow: 'none',
-                        '&:disabled': { backgroundColor: '#e2e8f0', color: '#94a3b8' }
-                      }}
-                    >
-                      {submitting ? (
-                        <CircularProgress size={18} color="inherit" />
-                      ) : (todayLog && !todayLog.checkOut) ? (
-                        'Verify & Confirm Check-Out'
-                      ) : (
-                        'Verify & Confirm Check-In'
-                      )}
-                    </Button>
+                    {faceStatus === 'failed' ? (
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        color="error"
+                        onClick={() => {
+                          setImgSrc(null);
+                          setFaceDescriptor(null);
+                          setFaceStatus('idle');
+                          setApiError('');
+                        }}
+                        sx={{
+                          py: 1.5,
+                          borderRadius: 3,
+                          textTransform: 'none',
+                          fontWeight: 'bold',
+                          fontSize: '13px',
+                          fontFamily: 'Outfit',
+                          boxShadow: 'none',
+                          '&:hover': {
+                            backgroundColor: '#dc2626'
+                          }
+                        }}
+                      >
+                        🔄 Retake Selfie / Try Again
+                      </Button>
+                    ) : (
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        disabled={submitting}
+                        onClick={handleVerifyAndSubmit}
+                        sx={{
+                          py: 1.5,
+                          borderRadius: 3,
+                          textTransform: 'none',
+                          fontWeight: 'bold',
+                          fontSize: '13px',
+                          fontFamily: 'Outfit',
+                          backgroundColor: (todayLog && !todayLog.checkOut) ? '#f59e0b' : '#10b981',
+                          '&:hover': { backgroundColor: (todayLog && !todayLog.checkOut) ? '#d97706' : '#059669' },
+                          boxShadow: 'none',
+                          '&:disabled': { backgroundColor: '#e2e8f0', color: '#94a3b8' }
+                        }}
+                      >
+                        {submitting ? (
+                          <CircularProgress size={18} color="inherit" />
+                        ) : (todayLog && !todayLog.checkOut) ? (
+                          'Verify & Confirm Check-Out'
+                        ) : (
+                          'Verify & Confirm Check-In'
+                        )}
+                      </Button>
+                    )}
                   </Box>
                 </CardContent>
               </Card>
