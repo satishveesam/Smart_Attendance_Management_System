@@ -29,6 +29,13 @@ import {
 import { Close as CloseIcon, Add as AddIcon, History as HistoryIcon, PostAdd as RequestIcon } from '@mui/icons-material';
 
 const EmployeeHistory = () => {
+  const getLocalDateString = (date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
@@ -88,7 +95,7 @@ const EmployeeHistory = () => {
   };
 
   const handleFormOpen = () => {
-    setReqDate(new Date().toISOString().split('T')[0]);
+    setReqDate(getLocalDateString());
     setReqCheckIn('09:00');
     setReqCheckOut('18:00');
     setReqReason('');
@@ -378,7 +385,7 @@ const EmployeeHistory = () => {
               onChange={(e) => setReqDate(e.target.value)}
               fullWidth
               InputLabelProps={{ shrink: true }}
-              inputProps={{ max: new Date().toISOString().split('T')[0] }}
+              inputProps={{ max: getLocalDateString() }}
             />
 
             <Grid container spacing={2}>

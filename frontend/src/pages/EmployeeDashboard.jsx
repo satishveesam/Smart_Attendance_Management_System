@@ -44,6 +44,13 @@ import {
 } from '@mui/icons-material';
 
 const EmployeeDashboard = () => {
+  const getLocalDateString = (date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const { user } = useSelector((state) => state.auth);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -68,6 +75,9 @@ const EmployeeDashboard = () => {
 
   // Late entry dialog state
   const [lateEntriesOpen, setLateEntriesOpen] = useState(false);
+
+  // Extra shifts dialog state
+  const [extraShiftsOpen, setExtraShiftsOpen] = useState(false);
 
   const navigate = useNavigate();
 
@@ -96,7 +106,7 @@ const EmployeeDashboard = () => {
       setAttendanceHistory(attRes.data);
       setLeaveHistory(leaveRes.data);
 
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = getLocalDateString();
       const todayRecord = attRes.data.find((r) => r.attendanceDate === todayStr);
       setTodayLog(todayRecord || null);
     } catch (err) {
@@ -111,6 +121,8 @@ const EmployeeDashboard = () => {
       setWorkEntryOpen(true);
     } else if (action === 'late-entries') {
       setLateEntriesOpen(true);
+    } else if (action === 'extra-shifts') {
+      setExtraShiftsOpen(true);
     } else if (path) {
       navigate(path);
     } else {
@@ -141,7 +153,7 @@ const EmployeeDashboard = () => {
     setSubmittingTask(true);
     try {
       await API.post('/work-entries/submit', {
-        entryDate: new Date().toISOString().split('T')[0],
+        entryDate: getLocalDateString(),
         taskDescription: taskDescription,
         hoursSpent: Number(hoursSpent)
       });
@@ -173,6 +185,7 @@ const EmployeeDashboard = () => {
     { title: 'Daily Work Entry', icon: <TasksIcon sx={{ fontSize: { xs: 16, sm: 22 }, color: '#4f46e5' }} />, action: 'work-entry', bg: '#e0e7ff' },
     { title: 'Face Registration', icon: <ProfileIcon sx={{ fontSize: { xs: 16, sm: 22 }, color: '#ec4899' }} />, path: '/employee/profile', bg: '#fdf2f8' },
     { title: 'Late Entries', icon: <TimeIcon sx={{ fontSize: { xs: 16, sm: 22 }, color: '#ef4444' }} />, action: 'late-entries', bg: '#fef2f2' },
+    { title: 'Extra Shifts', icon: <TimeIcon sx={{ fontSize: { xs: 16, sm: 22 }, color: '#8b5cf6' }} />, action: 'extra-shifts', bg: '#f3e8ff' },
     { title: 'Roster Schedule', icon: <RosterIcon sx={{ fontSize: { xs: 16, sm: 22 }, color: '#8b5cf6' }} />, bg: '#f5f3ff' },
     { title: 'Salary Overview', icon: <SalaryIcon sx={{ fontSize: { xs: 16, sm: 22 }, color: '#10b981' }} />, bg: '#ecfdf5' },
     { title: 'Salary Slips', icon: <SlipsIcon sx={{ fontSize: { xs: 16, sm: 22 }, color: '#06b6d4' }} />, bg: '#ecfeff' },
@@ -576,6 +589,126 @@ const EmployeeDashboard = () => {
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
           <Button 
             onClick={() => setLateEntriesOpen(false)} 
+            variant="contained" 
+            sx={{ 
+              borderRadius: 2, 
+              textTransform: 'none', 
+              bgcolor: '#1e293b', 
+              fontSize: '11px', 
+              fontWeight: 'bold',
+              '&:hover': { bgcolor: '#0f172a' }
+            }}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Extra Shifts Dialog */}
+      <Dialog 
+        open={extraShiftsOpen} 
+        onClose={() => setExtraShiftsOpen(false)} 
+        fullWidth 
+        maxWidth="xs" 
+        PaperProps={{ sx: { borderRadius: 4, p: 1 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 'bold', fontSize: { xs: '15px', sm: '17px' }, fontFamily: 'Outfit', display: 'flex', alignItems: 'center', gap: 1.2 }}>
+          <TimeIcon sx={{ color: '#8b5cf6', fontSize: 22 }} /> Extra Shifts & Overtime
+        </DialogTitle>
+        <DialogContent sx={{ pt: 0 }}>
+          <Typography sx={{ color: '#64748b', fontSize: '11px', fontFamily: 'Inter', mb: 2, lineHeight: 1.4 }}>
+            Work durations exceeding the standard <strong>8.5 hours</strong> are calculated as extra hours to reward your dedication!
+          </Typography>
+
+          {attendanceHistory.filter(r => r.totalHours && r.totalHours > 8.5).length === 0 ? (
+            <Box sx={{ py: 3, textAlign: 'center', bgcolor: '#fbfbfe', borderRadius: 3, border: '1px dashed #e2e8f0', p: 2 }}>
+              <Typography sx={{ fontWeight: 'bold', color: '#64748b', fontSize: '13px', fontFamily: 'Outfit' }}>
+                No Extra Shifts Yet
+              </Typography>
+              <Typography sx={{ color: '#94a3b8', fontSize: '10.5px', mt: 0.5, fontFamily: 'Inter' }}>
+                Extra hours will accumulate automatically once your checked shift exceeds 8.5 hours.
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              {/* Summary Card */}
+              <Card sx={{ bgcolor: '#f5f3ff', border: '1px solid #ddd6fe', borderRadius: 3, p: 2, mb: 1, boxShadow: 'none' }}>
+                <Grid container spacing={2}>
+                  <Grid item xs={6} sx={{ borderRight: '1px solid #ddd6fe', textAlign: 'center' }}>
+                    <Typography sx={{ color: '#7c3aed', fontWeight: 'bold', fontSize: '11px', textTransform: 'uppercase' }}>
+                      Extra Shifts
+                    </Typography>
+                    <Typography sx={{ fontWeight: 800, fontSize: '18px', color: '#5b21b6', fontFamily: 'Outfit' }}>
+                      {attendanceHistory.filter(r => r.totalHours && r.totalHours > 8.5).length} Days
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6} sx={{ textAlign: 'center' }}>
+                    <Typography sx={{ color: '#7c3aed', fontWeight: 'bold', fontSize: '11px', textTransform: 'uppercase' }}>
+                      Extra Hours
+                    </Typography>
+                    <Typography sx={{ fontWeight: 800, fontSize: '18px', color: '#5b21b6', fontFamily: 'Outfit' }}>
+                      {attendanceHistory.filter(r => r.totalHours && r.totalHours > 8.5)
+                        .reduce((sum, r) => sum + (r.totalHours - 8.5), 0)
+                        .toFixed(2)} hrs
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Card>
+
+              {/* Logs list */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.2, maxHeight: 200, overflowY: 'auto', pr: 0.5 }}>
+                {attendanceHistory.filter(r => r.totalHours && r.totalHours > 8.5).map((log, i) => {
+                  const extraHrs = log.totalHours - 8.5;
+                  return (
+                    <Box 
+                      key={i} 
+                      sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center', 
+                        p: 1.2, 
+                        bgcolor: '#fff', 
+                        borderRadius: 3, 
+                        border: '1px solid #f1f5f9',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        {log.checkInSelfie ? (
+                          <Avatar
+                            src={log.checkInSelfie}
+                            variant="rounded"
+                            sx={{ width: 36, height: 36, borderRadius: 2, border: '1px solid #e2e8f0' }}
+                          />
+                        ) : (
+                          <Avatar variant="rounded" sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: '#f1f5f9', color: '#94a3b8' }}>
+                            <ProfileIcon sx={{ fontSize: 16 }} />
+                          </Avatar>
+                        )}
+                        <Box>
+                          <Typography sx={{ fontSize: '11.5px', fontWeight: 'bold', color: '#1e293b', fontFamily: 'Outfit' }}>
+                            {new Date(log.attendanceDate).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </Typography>
+                          <Typography sx={{ fontSize: '9.5px', color: '#64748b', fontFamily: 'Inter', mt: 0.1 }}>
+                            Total: {log.totalHours.toFixed(2)} hrs
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Chip
+                        label={`+${extraHrs.toFixed(2)} hrs`}
+                        size="small"
+                        sx={{ height: 18, fontSize: '9px', fontWeight: 800, bgcolor: '#f5f3ff', color: '#7c3aed', border: '1px solid #ddd6fe' }}
+                      />
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button 
+            onClick={() => setExtraShiftsOpen(false)} 
             variant="contained" 
             sx={{ 
               borderRadius: 2, 

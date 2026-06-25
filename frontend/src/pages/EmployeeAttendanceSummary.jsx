@@ -35,6 +35,13 @@ import {
 } from '@mui/icons-material';
 
 const EmployeeAttendanceSummary = () => {
+  const getLocalDateString = (date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
@@ -145,7 +152,7 @@ const EmployeeAttendanceSummary = () => {
     setSubmittingTask(true);
     try {
       await API.post('/work-entries/submit', {
-        entryDate: new Date().toISOString().split('T')[0],
+        entryDate: getLocalDateString(),
         taskDescription: taskDescription,
         hoursSpent: Number(hoursSpent)
       });
@@ -176,7 +183,7 @@ const EmployeeAttendanceSummary = () => {
 
     for (let day = maxDay; day >= 1; day--) {
       const dateObj = new Date(year, month, day);
-      const dateStr = dateObj.toISOString().split('T')[0];
+      const dateStr = getLocalDateString(dateObj);
 
       const log = history.find(l => l.attendanceDate === dateStr);
       dates.push({
