@@ -576,9 +576,9 @@ const AdminAttendance = () => {
 
       {/* 2. Detailed View Filters (Only shown in Detail tab) */}
       {viewTab === 'detail' && (
-        <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 4, borderRadius: 3.5, border: '1px solid #e2e8f0', boxShadow: 'none' }}>
+        <Paper sx={{ p: { xs: 2.5, sm: 3.5 }, mb: 4, borderRadius: 4, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
           <Box component="form" onSubmit={handleFilterSubmit}>
-            <Grid container spacing={2} alignItems="flex-end">
+            <Grid container spacing={{ xs: 2.5, sm: 2 }} alignItems="flex-end">
               <Grid item xs={12} sm={6} md={3}>
                 <TextField
                   fullWidth
@@ -587,8 +587,8 @@ const AdminAttendance = () => {
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   slotProps={{ inputLabel: { shrink: true } }}
-                  InputProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter' } }}
-                  InputLabelProps={{ style: { fontSize: '12px', fontFamily: 'Inter' } }}
+                  InputProps={{ style: { fontSize: '13px', fontFamily: 'Inter', borderRadius: '10px' } }}
+                  InputLabelProps={{ style: { fontSize: '12.5px', fontFamily: 'Outfit', fontWeight: 600 } }}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
@@ -599,8 +599,8 @@ const AdminAttendance = () => {
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   slotProps={{ inputLabel: { shrink: true } }}
-                  InputProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter' } }}
-                  InputLabelProps={{ style: { fontSize: '12px', fontFamily: 'Inter' } }}
+                  InputProps={{ style: { fontSize: '13px', fontFamily: 'Inter', borderRadius: '10px' } }}
+                  InputLabelProps={{ style: { fontSize: '12.5px', fontFamily: 'Outfit', fontWeight: 600 } }}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
@@ -610,8 +610,8 @@ const AdminAttendance = () => {
                   label="Employee"
                   value={selectedEmp}
                   onChange={(e) => setSelectedEmp(e.target.value)}
-                  InputProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter' } }}
-                  InputLabelProps={{ style: { fontSize: '12px', fontFamily: 'Inter' } }}
+                  InputProps={{ style: { fontSize: '13px', fontFamily: 'Inter', borderRadius: '10px' } }}
+                  InputLabelProps={{ style: { fontSize: '12.5px', fontFamily: 'Outfit', fontWeight: 600 } }}
                 >
                   <MenuItem value="" style={{ fontSize: '13px', fontFamily: 'Inter' }}>All Employees</MenuItem>
                   {employees.map((emp) => (
@@ -628,23 +628,24 @@ const AdminAttendance = () => {
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
                   placeholder="e.g. Engineering"
-                  InputProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter' } }}
-                  InputLabelProps={{ style: { fontSize: '12px', fontFamily: 'Inter' } }}
+                  InputProps={{ style: { fontSize: '13px', fontFamily: 'Inter', borderRadius: '10px' } }}
+                  InputLabelProps={{ style: { fontSize: '12.5px', fontFamily: 'Outfit', fontWeight: 600 } }}
                 />
               </Grid>
             </Grid>
             
-            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 1.5 }}>
+            <Box sx={{ mt: 3, display: 'flex', justifyContent: { xs: 'stretch', sm: 'flex-end' } }}>
               <Button
                 type="submit"
                 variant="contained"
                 startIcon={<SearchIcon sx={{ fontSize: 16 }} />}
                 sx={{
-                  height: 38,
-                  borderRadius: 2,
+                  width: { xs: '100%', sm: 'auto' },
+                  height: 42,
+                  borderRadius: 2.5,
                   fontFamily: 'Outfit',
-                  fontWeight: 600,
-                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  fontSize: '13px',
                   textTransform: 'none',
                   bgcolor: '#4f46e5',
                   boxShadow: 'none',

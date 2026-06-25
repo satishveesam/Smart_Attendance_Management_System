@@ -142,13 +142,48 @@ public class EmployeeService {
         return mapToDto(updatedEmployee);
     }
 
+    @Autowired
+    private jakarta.persistence.EntityManager entityManager;
+
     @Transactional
     public void deleteEmployee(Long id) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + id));
 
-        // Deleting employee will delete the linked user due to cascade
+        Long userId = (employee.getUser() != null) ? employee.getUser().getId() : null;
+
+        // 1. Delete associated attendance requests
+        entityManager.createQuery("DELETE FROM AttendanceRequest r WHERE r.employee.id = :empId")
+                .setParameter("empId", id)
+                .executeUpdate();
+
+        // 2. Delete associated attendance logs (including longtext selfies stored in the database)
+        entityManager.createQuery("DELETE FROM Attendance a WHERE a.employee.id = :empId")
+                .setParameter("empId", id)
+                .executeUpdate();
+
+        // 3. Delete associated face biometrics data (stored face descriptors)
+        entityManager.createQuery("DELETE FROM FaceData f WHERE f.employee.id = :empId")
+                .setParameter("empId", id)
+                .executeUpdate();
+
+        // 4. Delete associated leave requests
+        entityManager.createQuery("DELETE FROM LeaveRequest l WHERE l.employee.id = :empId")
+                .setParameter("empId", id)
+                .executeUpdate();
+
+        // 5. Delete associated work entries
+        entityManager.createQuery("DELETE FROM WorkEntry w WHERE w.employee.id = :empId")
+                .setParameter("empId", id)
+                .executeUpdate();
+
+        // 6. Delete the employee profile
         employeeRepository.delete(employee);
+
+        // 7. Delete the linked user account
+        if (userId != null) {
+            userRepository.deleteById(userId);
+        }
     }
 
     @Transactional(readOnly = true)

@@ -36,6 +36,7 @@ import {
   Wifi as LiveIcon,
   Map as MapIcon,
   Close as CloseIcon,
+  Campaign as CampaignIcon,
 } from '@mui/icons-material';
 import {
   ResponsiveContainer,
@@ -83,6 +84,58 @@ const AdminDashboard = () => {
   const [locSaving, setLocSaving] = useState(false);
   const [locError, setLocError] = useState('');
   const [locSuccess, setLocSuccess] = useState('');
+
+  // Broadcast & Roster Settings state
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [broadcastVal, setBroadcastVal] = useState('');
+  const [rosterVal, setRosterVal] = useState('');
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsError, setSettingsError] = useState('');
+  const [settingsSuccess, setSettingsSuccess] = useState('');
+
+  const handleOpenSettingsDialog = async () => {
+    setSettingsError('');
+    setSettingsSuccess('');
+    setSettingsOpen(true);
+    setSettingsSaving(true);
+    try {
+      const bRes = await API.get('/settings/broadcast_message');
+      const rRes = await API.get('/settings/roster_schedule');
+      setBroadcastVal(bRes.data.settingValue || '');
+      setRosterVal(rRes.data.settingValue || '');
+    } catch (err) {
+      console.error(err);
+      setSettingsError('Failed to fetch settings');
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const handleSaveSettings = async (e) => {
+    e.preventDefault();
+    setSettingsError('');
+    setSettingsSuccess('');
+    setSettingsSaving(true);
+    try {
+      await API.post('/settings', {
+        settingKey: 'broadcast_message',
+        settingValue: broadcastVal
+      });
+      await API.post('/settings', {
+        settingKey: 'roster_schedule',
+        settingValue: rosterVal
+      });
+      setSettingsSuccess('Settings updated successfully!');
+      setTimeout(() => {
+        setSettingsOpen(false);
+      }, 1500);
+    } catch (err) {
+      console.error(err);
+      setSettingsError('Failed to save settings');
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
 
   // Update clock every second
   useEffect(() => {
@@ -389,6 +442,31 @@ const AdminDashboard = () => {
         <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', width: { xs: '100%', md: 'auto' } }}>
           <Button
             variant="outlined"
+            startIcon={<CampaignIcon sx={{ fontSize: 16 }} />}
+            onClick={handleOpenSettingsDialog}
+            fullWidth
+            sx={{
+              width: { sm: 'auto' },
+              textTransform: 'none',
+              borderRadius: 2.5,
+              px: 3,
+              py: 1.1,
+              fontFamily: 'Outfit',
+              fontSize: '12.5px',
+              borderColor: '#e2e8f0',
+              color: '#4f46e5',
+              bgcolor: '#f5f3ff',
+              fontWeight: 700,
+              '&:hover': {
+                borderColor: '#c084fc',
+                backgroundColor: '#ede9fe',
+              },
+            }}
+          >
+            Broadcast & Roster Settings
+          </Button>
+          <Button
+            variant="outlined"
             startIcon={<PinIcon sx={{ fontSize: 16 }} />}
             onClick={handleOpenLocationSettings}
             fullWidth
@@ -439,32 +517,7 @@ const AdminDashboard = () => {
         </Box>
       </Box>
 
-      {/* 2. System Status Bar */}
-      <Card sx={{ 
-        mb: 4, 
-        borderRadius: 3, 
-        bgcolor: '#f8fafc', 
-        border: '1px solid #f1f5f9', 
-        p: '10px 20px', 
-        boxShadow: 'none'
-      }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2.5 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <LiveIcon sx={{ color: '#10b981', fontSize: 16 }} />
-            <Typography sx={{ fontSize: '11.5px', color: '#475569', fontFamily: 'Inter', fontWeight: 600 }}>
-              System Status: <span style={{ color: '#16a34a' }}>OPERATIONAL</span>
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 3 }}>
-            <Typography sx={{ fontSize: '11px', color: '#64748b', fontFamily: 'Inter', display: 'flex', alignItems: 'center', gap: 0.6 }}>
-              🟢 Biometrics Engine: <strong>ONLINE</strong>
-            </Typography>
-            <Typography sx={{ fontSize: '11px', color: '#64748b', fontFamily: 'Inter', display: 'flex', alignItems: 'center', gap: 0.6 }}>
-              🗺️ Geofence Boundaries: <strong>ACTIVE</strong>
-            </Typography>
-          </Box>
-        </Box>
-      </Card>
+
 
       {loading && !stats ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '40vh' }}>
@@ -1127,6 +1180,123 @@ const AdminDashboard = () => {
             }}
           />
         </DialogContent>
+      </Dialog>
+
+      {/* Broadcast & Roster Settings Dialog */}
+      <Dialog 
+        open={settingsOpen} 
+        onClose={() => !settingsSaving && setSettingsOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        sx={{ '& .MuiDialog-paper': { borderRadius: 4, px: 1, py: 1 } }}
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1, fontFamily: 'Outfit', fontWeight: 'bold' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
+            <Box sx={{ p: 0.6, borderRadius: 2, bgcolor: '#f5f3ff', color: '#8b5cf6', display: 'flex' }}>
+              <CampaignIcon sx={{ fontSize: 20 }} />
+            </Box>
+            <Typography variant="h6" sx={{ fontFamily: 'Outfit', fontWeight: '900', color: '#1e293b' }}>
+              Broadcast & Roster Settings
+            </Typography>
+          </Box>
+          <IconButton onClick={() => setSettingsOpen(false)} size="small" disabled={settingsSaving} sx={{ color: '#94a3b8' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <form onSubmit={handleSaveSettings}>
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1, borderTop: '1px solid #f1f5f9' }}>
+            {settingsError && <Alert severity="error" sx={{ borderRadius: 2, fontSize: '12.5px', fontFamily: 'Inter' }}>{settingsError}</Alert>}
+            {settingsSuccess && <Alert severity="success" sx={{ borderRadius: 2, fontSize: '12.5px', fontFamily: 'Inter' }}>{settingsSuccess}</Alert>}
+
+            {settingsSaving && !broadcastVal && !rosterVal ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress size={30} />
+              </Box>
+            ) : (
+              <>
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#475569', mb: 1, fontFamily: 'Outfit' }}>
+                    📢 Global Broadcast Message
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#64748b', mb: 1.5, fontFamily: 'Inter', fontSize: '12px' }}>
+                    This notice will be shown to all employees in their Broadcast Messages section on their dashboard.
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={4}
+                    placeholder="e.g. 📢 Notice: Biometric facial check-in is mandatory for all office working days..."
+                    value={broadcastVal}
+                    onChange={(e) => setBroadcastVal(e.target.value)}
+                    InputProps={{ style: { fontSize: '13px', fontFamily: 'Inter', borderRadius: '10px' } }}
+                  />
+                </Box>
+
+                <Divider sx={{ my: 1 }} />
+
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#475569', mb: 1, fontFamily: 'Outfit' }}>
+                    📅 General Roster Shift Schedule
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#64748b', mb: 1.5, fontFamily: 'Inter', fontSize: '12px' }}>
+                    This will update the active shift timing and weekend off information on employee dashboards.
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    placeholder="e.g. Shift Schedule:\nGeneral Shift (10:00 AM - 06:30 PM)\nWeekly Offs: Saturday, Sunday"
+                    value={rosterVal}
+                    onChange={(e) => setRosterVal(e.target.value)}
+                    InputProps={{ style: { fontSize: '13px', fontFamily: 'Inter', borderRadius: '10px' } }}
+                  />
+                </Box>
+              </>
+            )}
+          </DialogContent>
+
+          <DialogActions sx={{ px: 3, pt: 2, pb: 1, gap: 1 }}>
+            <Button 
+              onClick={() => setSettingsOpen(false)} 
+              variant="outlined" 
+              disabled={settingsSaving}
+              sx={{ 
+                borderRadius: 2.5, 
+                textTransform: 'none', 
+                px: 3,
+                fontFamily: 'Outfit',
+                fontWeight: 700,
+                fontSize: '12px',
+                borderColor: '#cbd5e1',
+                color: '#64748b'
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={settingsSaving}
+              variant="contained"
+              sx={{ 
+                borderRadius: 2.5, 
+                textTransform: 'none', 
+                px: 3,
+                fontFamily: 'Outfit',
+                fontWeight: 700,
+                fontSize: '12px',
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                boxShadow: 'none',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                  boxShadow: 'none',
+                }
+              }}
+            >
+              {settingsSaving ? <CircularProgress size={18} color="inherit" /> : 'Save Settings'}
+            </Button>
+          </DialogActions>
+        </form>
       </Dialog>
 
     </AdminLayout>

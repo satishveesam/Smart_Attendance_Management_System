@@ -118,7 +118,7 @@ const EmployeeDashboard = () => {
     }
   };
 
-  const handleCardClick = (title, path, action) => {
+  const handleCardClick = async (title, path, action) => {
     if (action === 'work-entry') {
       setWorkEntryOpen(true);
     } else if (action === 'late-entries') {
@@ -129,6 +129,9 @@ const EmployeeDashboard = () => {
       navigate(path);
     } else {
       setDialogTitle(title);
+      setDialogContent('Loading...');
+      setInfoDialogOpen(true);
+      
       if (title === 'Salary Overview') {
         setDialogContent('Current Month Salary: ₹55,000\nBasic Pay: ₹35,000\nHRA: ₹15,000\nSpecial Allowance: ₹5,000\nDeductions (PF/Tax): ₹4,200\nNet Take Home: ₹50,800');
       } else if (title === 'Salary Slips') {
@@ -136,11 +139,22 @@ const EmployeeDashboard = () => {
       } else if (title === 'Loan') {
         setDialogContent('No active loans found.\nMaximum eligible advance loan amount: ₹50,000.\nClick Apply to request an advance salary loan.');
       } else if (title === 'Broadcast Messages') {
-        setDialogContent('📢 Notice: Biometric facial check-in is mandatory for all office working days.\n📢 Update: System upgrading scheduled on Sunday 2:00 AM.');
+        try {
+          const res = await API.get('/settings/broadcast_message');
+          setDialogContent(res.data.settingValue || 'No active broadcast messages.');
+        } catch (err) {
+          console.error(err);
+          setDialogContent('📢 Notice: Biometric facial check-in is mandatory for all office working days.\n📢 Update: System upgrading scheduled on Sunday 2:00 AM.');
+        }
       } else if (title === 'Roster Schedule') {
-        setDialogContent('Shift Schedule:\nGeneral Shift (10:00 AM - 06:30 PM)\nWeekly Offs: Saturday, Sunday');
+        try {
+          const res = await API.get('/settings/roster_schedule');
+          setDialogContent(res.data.settingValue || 'No roster schedule configured.');
+        } catch (err) {
+          console.error(err);
+          setDialogContent('Shift Schedule:\nGeneral Shift (10:00 AM - 06:30 PM)\nWeekly Offs: Saturday, Sunday');
+        }
       }
-      setInfoDialogOpen(true);
     }
   };
 
