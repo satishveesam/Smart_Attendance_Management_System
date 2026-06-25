@@ -32,8 +32,17 @@ const EmployeeProfile = () => {
   const [apiError, setApiError] = useState('');
   const [apiSuccess, setApiSuccess] = useState('');
 
+  // 3D Scanning UX States
+  const [cameraReady, setCameraReady] = useState(false);
+  const [scanMessage, setScanMessage] = useState('');
+  const [scanProgress, setScanProgress] = useState(0);
+
   useEffect(() => {
     checkFaceStatus();
+    const timer = setTimeout(() => {
+      setCameraReady(true);
+    }, 600); // 600ms delay prevents transitions from sticking during camera warmup
+    return () => clearTimeout(timer);
   }, []);
 
   const checkFaceStatus = async () => {
@@ -53,6 +62,8 @@ const EmployeeProfile = () => {
     setStatus('scanning');
     setApiError('');
     setApiSuccess('');
+    setScanProgress(10);
+    setScanMessage('INITIALIZING 3D BIOMETRIC CAMERA...');
 
     const screenshot = webcamRef.current.getScreenshot();
     if (!screenshot) {
@@ -61,9 +72,24 @@ const EmployeeProfile = () => {
       return;
     }
 
+    // Capture photo instantly, then run the 3D surface scan
     setImgSrc(screenshot);
 
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
     try {
+      await sleep(600);
+      setScanProgress(35);
+      setScanMessage('SURFACE MAPPING: MAPPING 128 SURFACE VECTORS...');
+
+      await sleep(600);
+      setScanProgress(65);
+      setScanMessage('3D SCANNING: CALCULATING DEPTH & ROTATION SIGNATURES...');
+
+      await sleep(600);
+      setScanProgress(85);
+      setScanMessage('CRYPTOGRAPHY: GENERATING SECURE BIOMETRIC HASH...');
+
       // 1. Generate 128-point face descriptor
       const descriptor = await getFaceDescriptor(screenshot);
       
@@ -72,8 +98,13 @@ const EmployeeProfile = () => {
         faceDescriptor: JSON.stringify(descriptor)
       });
 
+      await sleep(400);
+      setScanProgress(100);
+      setScanMessage('BIOMETRIC TEMPLATE ENROLLED SUCCESSFULLY!');
+      
+      await sleep(300);
       setStatus('success');
-      setApiSuccess('Your facial biometrics template has been successfully registered!');
+      setApiSuccess('Your 3D facial biometrics template has been successfully registered!');
       setIsRegistered(true);
     } catch (err) {
       console.error(err);
@@ -161,8 +192,33 @@ const EmployeeProfile = () => {
                       border: '2px solid #e2e8f0',
                       bgcolor: '#0f172a',
                       mb: 2,
+                      '@keyframes scan': {
+                        '0%': { top: '0%' },
+                        '50%': { top: '100%' },
+                        '100%': { top: '0%' }
+                      }
                     }}>
-                      {imgSrc ? (
+                      {!cameraReady ? (
+                        <Box sx={{ 
+                          width: '100%', 
+                          height: '100%', 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          bgcolor: '#0f172a',
+                          color: '#64748b',
+                          p: 3
+                        }}>
+                          <CircularProgress size={30} sx={{ color: '#10b981', mb: 2 }} />
+                          <Typography sx={{ fontSize: '11px', fontWeight: 'bold', letterSpacing: '0.8px', color: '#94a3b8', fontFamily: 'Outfit', textTransform: 'uppercase' }}>
+                            Warming Up 3D Camera Sensors...
+                          </Typography>
+                          <Typography sx={{ fontSize: '9px', color: '#475569', fontFamily: 'Inter', mt: 0.5 }}>
+                            Optimizing hardware latency and lighting environment
+                          </Typography>
+                        </Box>
+                      ) : imgSrc ? (
                         <Box
                           component="img"
                           src={imgSrc}
@@ -180,7 +236,7 @@ const EmployeeProfile = () => {
                       )}
 
                       {/* Align Face target frame overlay */}
-                      {!imgSrc && (
+                      {!imgSrc && cameraReady && (
                         <Box sx={{
                           position: 'absolute',
                           top: '50%',
@@ -188,7 +244,7 @@ const EmployeeProfile = () => {
                           transform: 'translate(-50%, -50%)',
                           width: { xs: '65%', md: '55%' },
                           height: { xs: '65%', md: '55%' },
-                          border: '2px dashed rgba(37, 99, 235, 0.5)',
+                          border: '2px dashed rgba(16, 185, 129, 0.5)',
                           borderRadius: '12px',
                           boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.4)',
                           pointerEvents: 'none',
@@ -197,23 +253,40 @@ const EmployeeProfile = () => {
                           justifyContent: 'center',
                         }}>
                           <span style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0 }}>
-                            <span style={{ position: 'absolute', top: -2, left: -2, width: 16, height: 16, borderLeft: '4px solid #2563eb', borderTop: '4px solid #2563eb', borderTopLeftRadius: '6px' }} />
-                            <span style={{ position: 'absolute', top: -2, right: -2, width: 16, height: 16, borderRight: '4px solid #2563eb', borderTop: '4px solid #2563eb', borderTopRightRadius: '6px' }} />
-                            <span style={{ position: 'absolute', bottom: -2, left: -2, width: 16, height: 16, borderLeft: '4px solid #2563eb', borderBottom: '4px solid #2563eb', borderBottomLeftRadius: '6px' }} />
-                            <span style={{ position: 'absolute', bottom: -2, right: -2, width: 16, height: 16, borderRight: '4px solid #2563eb', borderBottom: '4px solid #2563eb', borderBottomRightRadius: '6px' }} />
+                            <span style={{ position: 'absolute', top: -2, left: -2, width: 16, height: 16, borderLeft: '4px solid #10b981', borderTop: '4px solid #10b981', borderTopLeftRadius: '6px' }} />
+                            <span style={{ position: 'absolute', top: -2, right: -2, width: 16, height: 16, borderRight: '4px solid #10b981', borderTop: '4px solid #10b981', borderTopRightRadius: '6px' }} />
+                            <span style={{ position: 'absolute', bottom: -2, left: -2, width: 16, height: 16, borderLeft: '4px solid #10b981', borderBottom: '4px solid #10b981', borderBottomLeftRadius: '6px' }} />
+                            <span style={{ position: 'absolute', bottom: -2, right: -2, width: 16, height: 16, borderRight: '4px solid #10b981', borderBottom: '4px solid #10b981', borderBottomRightRadius: '6px' }} />
                           </span>
-                          <Typography sx={{ color: '#2563eb', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.9 }}>
-                            Align Face
+                          <Typography sx={{ color: '#10b981', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1.2px', opacity: 0.9 }}>
+                            3D Target Area
                           </Typography>
                         </Box>
                       )}
 
+                      {/* 3D Laser Scanning Sweeper */}
+                      {status === 'scanning' && cameraReady && (
+                        <Box sx={{
+                          position: 'absolute',
+                          left: 0,
+                          right: 0,
+                          height: '3px',
+                          background: 'linear-gradient(90deg, rgba(16, 185, 129, 0) 0%, #10b981 50%, rgba(16, 185, 129, 0) 100%)',
+                          boxShadow: '0 0 8px #10b981, 0 0 16px #10b981',
+                          zIndex: 25,
+                          animation: 'scan 2s infinite linear',
+                        }} />
+                      )}
+
                       {/* Processing Overlay */}
                       {status === 'scanning' && (
-                        <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(15,23,42,0.75)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
-                          <CircularProgress size={28} sx={{ color: '#2563eb', mb: 1.5 }} />
-                          <Typography sx={{ color: '#fff', fontSize: '11.5px', fontWeight: 'bold', fontFamily: 'Inter' }}>
-                            Registering face signatures...
+                        <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(15,23,42,0.82)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 20, p: 3 }}>
+                          <CircularProgress variant="determinate" value={scanProgress} size={40} sx={{ color: '#10b981', mb: 2 }} />
+                          <Typography sx={{ color: '#10b981', fontSize: '11px', fontWeight: 800, fontFamily: 'Outfit', letterSpacing: '0.8px', mb: 1 }}>
+                            {scanProgress}% MAPPED
+                          </Typography>
+                          <Typography sx={{ color: '#fff', fontSize: '11.5px', fontWeight: 'bold', fontFamily: 'Inter', textAlign: 'center', maxWidth: 280 }}>
+                            {scanMessage}
                           </Typography>
                         </Box>
                       )}

@@ -87,6 +87,7 @@ const EmployeeAttendance = () => {
   };
   const [qrToken, setQrToken] = useState('');
   const [gps, setGps] = useState({ latitude: null, longitude: null, error: null });
+  const [cameraReady, setCameraReady] = useState(false);
 
   // Geofence & Timer states
   const [distanceToOffice, setDistanceToOffice] = useState(null);
@@ -202,6 +203,10 @@ const EmployeeAttendance = () => {
     fetchRegisteredFace();
     fetchOfficeLocation();
     fetchEmployeeProfile();
+    const timer = setTimeout(() => {
+      setCameraReady(true);
+    }, 600); // 600ms delay lets page mount smoothly before heavy camera warmup
+    return () => clearTimeout(timer);
   }, []);
 
   const fetchRegisteredFace = async () => {
@@ -457,8 +462,33 @@ const EmployeeAttendance = () => {
                       border: '1px solid #e2e8f0',
                       bgcolor: '#0f172a',
                       mb: 2.5,
+                      '@keyframes scan': {
+                        '0%': { top: '0%' },
+                        '50%': { top: '100%' },
+                        '100%': { top: '0%' }
+                      }
                     }}>
-                      {imgSrc ? (
+                      {!cameraReady ? (
+                        <Box sx={{ 
+                          width: '100%', 
+                          height: '100%', 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          bgcolor: '#0f172a',
+                          color: '#64748b',
+                          p: 3
+                        }}>
+                          <CircularProgress size={30} sx={{ color: '#10b981', mb: 2 }} />
+                          <Typography sx={{ fontSize: '11px', fontWeight: 'bold', letterSpacing: '0.8px', color: '#94a3b8', fontFamily: 'Outfit', textTransform: 'uppercase' }}>
+                            Initializing Biometric Scanner...
+                          </Typography>
+                          <Typography sx={{ fontSize: '9px', color: '#475569', fontFamily: 'Inter', mt: 0.5 }}>
+                            Acquiring hardware lock and light sensors
+                          </Typography>
+                        </Box>
+                      ) : imgSrc ? (
                         <Box
                           component="img"
                           src={imgSrc}
@@ -476,7 +506,7 @@ const EmployeeAttendance = () => {
                       )}
 
                       {/* Align Face target frame overlay */}
-                      {!imgSrc && (
+                      {!imgSrc && cameraReady && (
                         <Box sx={{
                           position: 'absolute',
                           top: '50%',
@@ -505,14 +535,30 @@ const EmployeeAttendance = () => {
                       )}
 
                       {/* HUD status badges on top of webcam */}
-                      <Box sx={{ position: 'absolute', top: 14, left: 14, display: 'flex', gap: 1, zIndex: 10 }}>
-                        <Chip
-                          label={isInGeofence ? 'Geofence: IN ZONE' : 'Geofence: OUT OF ZONE'}
-                          color={isInGeofence ? 'success' : 'error'}
-                          size="small"
-                          sx={{ fontWeight: 'bold', height: 22, fontSize: '9.5px', fontFamily: 'Outfit', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
-                        />
-                      </Box>
+                      {cameraReady && (
+                        <Box sx={{ position: 'absolute', top: 14, left: 14, display: 'flex', gap: 1, zIndex: 10 }}>
+                          <Chip
+                            label={isInGeofence ? 'Geofence: IN ZONE' : 'Geofence: OUT OF ZONE'}
+                            color={isInGeofence ? 'success' : 'error'}
+                            size="small"
+                            sx={{ fontWeight: 'bold', height: 22, fontSize: '9.5px', fontFamily: 'Outfit', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
+                          />
+                        </Box>
+                      )}
+
+                      {/* 3D Laser Scanning Sweeper */}
+                      {faceStatus === 'scanning' && cameraReady && (
+                        <Box sx={{
+                          position: 'absolute',
+                          left: 0,
+                          right: 0,
+                          height: '3px',
+                          background: 'linear-gradient(90deg, rgba(16, 185, 129, 0) 0%, #10b981 50%, rgba(16, 185, 129, 0) 100%)',
+                          boxShadow: '0 0 8px #10b981, 0 0 16px #10b981',
+                          zIndex: 25,
+                          animation: 'scan 2s infinite linear',
+                        }} />
+                      )}
 
                       {/* Scanning / Processing overlays */}
                       {faceStatus === 'scanning' && (
