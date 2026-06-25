@@ -50,9 +50,16 @@ const EmployeeAttendanceDetail = () => {
     }
   };
 
+  const parseLocalDate = (dateStr) => {
+    if (!dateStr) return new Date();
+    const parts = dateStr.split('-');
+    if (parts.length < 3) return new Date(dateStr);
+    return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  };
+
   const getFormattedHeaderDate = (dateStr) => {
     if (!dateStr) return '';
-    const d = new Date(dateStr);
+    const d = parseLocalDate(dateStr);
     return `${d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })} • ${d.toLocaleDateString('en-US', { weekday: 'long' })}`;
   };
 

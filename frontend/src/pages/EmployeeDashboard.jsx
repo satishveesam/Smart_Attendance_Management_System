@@ -53,6 +53,28 @@ const EmployeeDashboard = () => {
     return `${year}-${month}-${day}`;
   };
 
+  const parseLocalDate = (dateStr) => {
+    if (!dateStr) return new Date();
+    const parts = dateStr.split('-');
+    if (parts.length < 3) return new Date(dateStr);
+    return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  };
+
+  const parseLocalDateTime = (dateTimeStr) => {
+    if (!dateTimeStr) return null;
+    const parts = dateTimeStr.split(/[T ]/);
+    if (parts.length < 2) return new Date(dateTimeStr);
+    const dateParts = parts[0].split('-');
+    const timeParts = parts[1].split(':');
+    const year = parseInt(dateParts[0], 10);
+    const month = parseInt(dateParts[1], 10) - 1; // 0-indexed
+    const day = parseInt(dateParts[2], 10);
+    const hour = parseInt(timeParts[0], 10);
+    const minute = parseInt(timeParts[1], 10);
+    const second = timeParts.length > 2 ? parseInt(timeParts[2].split('.')[0], 10) : 0;
+    return new Date(year, month, day, hour, minute, second);
+  };
+
   const { user } = useSelector((state) => state.auth);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -313,7 +335,7 @@ const EmployeeDashboard = () => {
                 />
                 <Typography sx={{ color: '#64748b', fontSize: '8px', display: 'block', mt: 0.3 }}>
                   {todayLog?.checkIn
-                    ? `In: ${new Date(todayLog.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                    ? `In: ${parseLocalDateTime(todayLog.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
                     : '10:00 AM Shift'}
                 </Typography>
               </Box>
@@ -426,14 +448,14 @@ const EmployeeDashboard = () => {
                           <ListItemText
                             primary={
                               <Typography sx={{ fontWeight: 'bold', fontSize: { xs: '12px', sm: '13px' }, color: '#1e293b', fontFamily: 'Outfit' }}>
-                                {new Date(log.attendanceDate).toLocaleDateString([], { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                                {parseLocalDate(log.attendanceDate).toLocaleDateString([], { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
                               </Typography>
                             }
                             secondary={
                               <Typography variant="caption" sx={{ color: '#64748b', fontSize: '10px', fontFamily: 'Inter', mt: 0.2, display: 'block' }}>
-                                📥 In: <strong>{log.checkIn ? new Date(log.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</strong>
+                                📥 In: <strong>{log.checkIn ? parseLocalDateTime(log.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</strong>
                                 {log.checkOut ? `  |  📤 Out: ` : ''}
-                                {log.checkOut ? <strong>{new Date(log.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong> : ''}
+                                {log.checkOut ? <strong>{parseLocalDateTime(log.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong> : ''}
                               </Typography>
                             }
                           />
@@ -553,7 +575,7 @@ const EmployeeDashboard = () => {
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, maxHeight: 280, overflowY: 'auto', pr: 0.5 }}>
               {attendanceHistory.filter(r => r.status === 'LATE').map((log, i) => {
-                const checkInTime = log.checkIn ? new Date(log.checkIn) : null;
+                const checkInTime = log.checkIn ? parseLocalDateTime(log.checkIn) : null;
                 const minutesLate = checkInTime ? Math.max(0, (checkInTime.getHours() * 60 + checkInTime.getMinutes()) - (9 * 60 + 15)) : 0;
                 
                 return (
@@ -584,7 +606,7 @@ const EmployeeDashboard = () => {
                       )}
                       <Box>
                         <Typography sx={{ fontSize: '11.5px', fontWeight: 'bold', color: '#1e293b', fontFamily: 'Outfit' }}>
-                          {new Date(log.attendanceDate).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' })}
+                          {parseLocalDate(log.attendanceDate).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' })}
                         </Typography>
                         <Typography sx={{ fontSize: '9.5px', color: '#64748b', fontFamily: 'Inter', mt: 0.1 }}>
                           In: {checkInTime ? checkInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
@@ -703,7 +725,7 @@ const EmployeeDashboard = () => {
                         )}
                         <Box>
                           <Typography sx={{ fontSize: '11.5px', fontWeight: 'bold', color: '#1e293b', fontFamily: 'Outfit' }}>
-                            {new Date(log.attendanceDate).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' })}
+                            {parseLocalDate(log.attendanceDate).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' })}
                           </Typography>
                           <Typography sx={{ fontSize: '9.5px', color: '#64748b', fontFamily: 'Inter', mt: 0.1 }}>
                             Total: {log.totalHours.toFixed(2)} hrs

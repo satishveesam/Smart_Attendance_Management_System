@@ -33,6 +33,7 @@ import {
   AccountBalance as BankIcon,
   Settings as SettingsIcon,
   Lock as LockIcon,
+  Fingerprint as FingerprintIcon,
 } from '@mui/icons-material';
 
 const EmployeeSettings = () => {
@@ -799,70 +800,154 @@ const EmployeeSettings = () => {
             </AccordionDetails>
           </Accordion>
 
+          {/* Panel 6: Account Security & Authentication */}
+          <Accordion 
+            expanded={expanded === 'security_auth'} 
+            onChange={handleChange('security_auth')}
+            sx={{
+              borderRadius: '16px !important',
+              border: '1px solid #f1f5f9',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.02)',
+              '&:before': { display: 'none' },
+              overflow: 'hidden',
+              bgcolor: '#fff'
+            }}
+          >
+            <AccordionSummary 
+              expandIcon={<ExpandIcon sx={{ color: '#94a3b8' }} />}
+              sx={{ 
+                bgcolor: expanded === 'security_auth' ? '#f8fafc' : 'transparent',
+                borderBottom: expanded === 'security_auth' ? '1px solid #f1f5f9' : 'none',
+                minHeight: 64,
+                px: 3
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  width: 38, 
+                  height: 38, 
+                  borderRadius: 2.5, 
+                  bgcolor: '#ecfdf5', 
+                  color: '#10b981' 
+                }}>
+                  <FingerprintIcon sx={{ fontSize: 20 }} />
+                </Box>
+                <Box>
+                  <Typography sx={{ fontWeight: 'bold', fontSize: '13.5px', fontFamily: 'Outfit', color: '#0f172a' }}>
+                    Account Security & Biometrics
+                  </Typography>
+                  <Typography sx={{ fontSize: '11px', color: '#64748b', fontFamily: 'Inter', mt: 0.2 }}>
+                    Manage your 3D facial biometrics template and active session
+                  </Typography>
+                </Box>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails sx={{ p: 3 }}>
+              <Box sx={{ mb: 2.5 }}>
+                <Typography sx={{ fontWeight: 'bold', fontSize: '14.5px', fontFamily: 'Outfit', color: '#0f172a', mb: 0.5 }}>
+                  Authentication Configuration
+                </Typography>
+                <Typography sx={{ color: '#64748b', fontSize: '11.5px', fontFamily: 'Inter' }}>
+                  Configure biological credentials and manage your secure system portal session.
+                </Typography>
+              </Box>
+
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <Paper 
+                    variant="outlined" 
+                    sx={{ 
+                      p: 2.5, 
+                      borderRadius: 3, 
+                      borderColor: '#e2e8f0', 
+                      bgcolor: '#f8fafc', 
+                      height: '100%', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      justifyContent: 'space-between',
+                      transition: 'all 0.2s',
+                      '&:hover': { borderColor: '#cbd5e1', bgcolor: '#fff' }
+                    }}
+                  >
+                    <Box sx={{ mb: 2 }}>
+                      <Typography sx={{ fontWeight: 'bold', fontSize: '13px', color: '#0f172a', fontFamily: 'Outfit', mb: 0.5 }}>
+                        3D Face Biometrics
+                      </Typography>
+                      <Typography sx={{ color: '#64748b', fontSize: '11px', fontFamily: 'Inter', lineHeight: 1.5 }}>
+                        Register or update your high-security 3D multi-angle facial template. This is required for liveness-based attendance logging.
+                      </Typography>
+                    </Box>
+                    <Button
+                      variant="contained"
+                      onClick={() => navigate('/employee/profile')}
+                      sx={{
+                        textTransform: 'none',
+                        fontFamily: 'Outfit',
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        borderRadius: 2,
+                        bgcolor: '#2563eb',
+                        boxShadow: 'none',
+                        py: 1,
+                        '&:hover': { bgcolor: '#1d4ed8', boxShadow: 'none' }
+                      }}
+                    >
+                      Manage Biometrics
+                    </Button>
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Paper 
+                    variant="outlined" 
+                    sx={{ 
+                      p: 2.5, 
+                      borderRadius: 3, 
+                      borderColor: '#fee2e2', 
+                      bgcolor: '#fff5f5', 
+                      height: '100%', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      justifyContent: 'space-between',
+                      transition: 'all 0.2s',
+                      '&:hover': { borderColor: '#fca5a5', bgcolor: '#fff8f8' }
+                    }}
+                  >
+                    <Box sx={{ mb: 2 }}>
+                      <Typography sx={{ fontWeight: 'bold', fontSize: '13px', color: '#991b1b', fontFamily: 'Outfit', mb: 0.5 }}>
+                        Active Session
+                      </Typography>
+                      <Typography sx={{ color: '#b91c1c', fontSize: '11px', fontFamily: 'Inter', lineHeight: 1.5 }}>
+                        Safely sign out of your employee portal account. You will need to enter your password again to log back in.
+                      </Typography>
+                    </Box>
+                    <Button
+                      variant="contained"
+                      color="error"
+                      onClick={handleLogout}
+                      sx={{
+                        textTransform: 'none',
+                        fontFamily: 'Outfit',
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        borderRadius: 2,
+                        bgcolor: '#ef4444',
+                        boxShadow: 'none',
+                        py: 1,
+                        '&:hover': { bgcolor: '#dc2626', boxShadow: 'none' }
+                      }}
+                    >
+                      Sign Out Account
+                    </Button>
+                  </Paper>
+                </Grid>
+              </Grid>
+            </AccordionDetails>
+          </Accordion>
+
         </Box>
-
-        {/* 4. Bottom Account & Biometrics Action Center */}
-        <Card 
-          sx={{ 
-            borderRadius: 4, 
-            border: '1px solid #fee2e2', 
-            boxShadow: '0 1px 3px 0 rgba(239, 68, 68, 0.02)', 
-            mt: 3.5, 
-            bgcolor: '#fff5f5',
-            p: 3
-          }}
-        >
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
-            <Box>
-              <Typography sx={{ fontWeight: 'bold', color: '#991b1b', fontSize: '14.5px', fontFamily: 'Outfit' }}>
-                Account Security & Authentication
-              </Typography>
-              <Typography sx={{ color: '#b91c1c', fontSize: '11.5px', fontFamily: 'Inter', mt: 0.5 }}>
-                Manage your 3D facial biometrics template or sign out of your active session safely.
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', gap: 2, width: { xs: '100%', sm: 'auto' }, flexDirection: { xs: 'column', sm: 'row' } }}>
-              <Button
-                variant="contained"
-                onClick={() => navigate('/employee/profile')}
-                sx={{
-                  textTransform: 'none',
-                  fontFamily: 'Outfit',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  borderRadius: 2.5,
-                  bgcolor: '#2563eb',
-                  boxShadow: 'none',
-                  px: 3,
-                  py: 1.2,
-                  '&:hover': { bgcolor: '#1d4ed8', boxShadow: 'none' }
-                }}
-              >
-                Register Face Biometrics
-              </Button>
-              <Button
-                variant="contained"
-                color="error"
-                onClick={handleLogout}
-                sx={{
-                  textTransform: 'none',
-                  fontFamily: 'Outfit',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  borderRadius: 2.5,
-                  bgcolor: '#ef4444',
-                  boxShadow: 'none',
-                  px: 3,
-                  py: 1.2,
-                  '&:hover': { bgcolor: '#dc2626', boxShadow: 'none' }
-                }}
-              >
-                Sign Out Account
-              </Button>
-            </Box>
-          </Box>
-        </Card>
-
       </Box>
     </EmployeeLayout>
   );

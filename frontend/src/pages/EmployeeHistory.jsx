@@ -36,6 +36,13 @@ const EmployeeHistory = () => {
     return `${year}-${month}-${day}`;
   };
 
+  const parseLocalDate = (dateStr) => {
+    if (!dateStr) return new Date();
+    const parts = dateStr.split('-');
+    if (parts.length < 3) return new Date(dateStr);
+    return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  };
+
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
@@ -67,7 +74,7 @@ const EmployeeHistory = () => {
     try {
       const res = await API.get('/attendance/history');
       // Sort logs descending by date
-      const sorted = res.data.sort((a, b) => new Date(b.attendanceDate) - new Date(a.attendanceDate));
+      const sorted = res.data.sort((a, b) => parseLocalDate(b.attendanceDate) - parseLocalDate(a.attendanceDate));
       setLogs(sorted);
     } catch (err) {
       console.error("Failed to load attendance logs", err);
@@ -263,7 +270,7 @@ const EmployeeHistory = () => {
                 {logs.map((log) => (
                   <TableRow key={log.id} hover>
                     <TableCell sx={{ fontWeight: 'bold', color: '#1e293b', fontFamily: 'Outfit' }}>
-                      {new Date(log.attendanceDate).toLocaleDateString([], { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                      {parseLocalDate(log.attendanceDate).toLocaleDateString([], { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
                     </TableCell>
                     <TableCell sx={{ fontFamily: 'Inter', fontSize: '12px' }}>{formatTime(log.checkIn)}</TableCell>
                     <TableCell>
@@ -337,7 +344,7 @@ const EmployeeHistory = () => {
                 {requests.map((req) => (
                   <TableRow key={req.id} hover>
                     <TableCell sx={{ fontWeight: 'bold', color: '#1e293b', fontFamily: 'Outfit' }}>
-                      {new Date(req.attendanceDate).toLocaleDateString([], { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                      {parseLocalDate(req.attendanceDate).toLocaleDateString([], { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
                     </TableCell>
                     <TableCell sx={{ fontFamily: 'Inter', fontSize: '12px' }}>{formatTime(req.checkInTime)}</TableCell>
                     <TableCell sx={{ fontFamily: 'Inter', fontSize: '12px' }}>{formatTime(req.checkOutTime)}</TableCell>

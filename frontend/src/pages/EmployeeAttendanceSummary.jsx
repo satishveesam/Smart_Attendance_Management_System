@@ -42,6 +42,13 @@ const EmployeeAttendanceSummary = () => {
     return `${year}-${month}-${day}`;
   };
 
+  const parseLocalDate = (dateStr) => {
+    if (!dateStr) return new Date();
+    const parts = dateStr.split('-');
+    if (parts.length < 3) return new Date(dateStr);
+    return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  };
+
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
@@ -88,7 +95,7 @@ const EmployeeAttendanceSummary = () => {
 
       // Filter logs for this month
       const monthLogs = res.data.filter(log => {
-        const d = new Date(log.attendanceDate);
+        const d = parseLocalDate(log.attendanceDate);
         return d.getMonth() === targetMonth && d.getFullYear() === targetYear;
       });
 

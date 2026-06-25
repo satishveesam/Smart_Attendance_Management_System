@@ -446,26 +446,55 @@ const EmployeeAttendance = () => {
             {showScanner ? (
               <Card sx={{ borderRadius: 4, border: '1px solid #f1f5f9', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03)', bgcolor: '#fff', overflow: 'hidden' }}>
                 <CardContent sx={{ p: 3 }}>
-                  <Typography sx={{ fontWeight: 'bold', mb: 2, color: '#0f172a', fontSize: '14px', fontFamily: 'Outfit' }}>
-                    1. Biometric Scanner Terminal
-                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography sx={{ fontWeight: 'bold', color: '#0f172a', fontSize: '14px', fontFamily: 'Outfit' }}>
+                      1. Biometric Scanner Terminal
+                    </Typography>
+                    <Chip
+                      label={isInGeofence ? 'Geofence: IN ZONE' : 'Geofence: OUT OF ZONE'}
+                      color={isInGeofence ? 'success' : 'error'}
+                      size="small"
+                      sx={{ fontWeight: 'bold', fontSize: '10px', fontFamily: 'Outfit' }}
+                    />
+                  </Box>
                   <Divider sx={{ mb: 2.5, borderColor: '#f1f5f9' }} />
 
                   <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    {/* Camera view container with target square framing */}
+                    {/* Premium Circular Biometric Camera Kiosk */}
                     <Box sx={{
                       position: 'relative',
-                      width: '100%',
-                      aspectRatio: '4/3',
-                      borderRadius: 3.5,
+                      width: { xs: '260px', sm: '300px' },
+                      height: { xs: '260px', sm: '300px' },
+                      borderRadius: '50%',
+                      margin: '0 auto 24px auto',
+                      border: `4px solid ${
+                        faceStatus === 'success' ? '#10b981' : 
+                        faceStatus === 'failed' ? '#ef4444' : 
+                        faceStatus === 'scanning' ? '#06b6d4' : '#f1f5f9'
+                      }`,
+                      boxShadow: `0 0 25px ${
+                        faceStatus === 'success' ? 'rgba(16, 185, 129, 0.35)' : 
+                        faceStatus === 'failed' ? 'rgba(239, 68, 68, 0.35)' : 
+                        faceStatus === 'scanning' ? 'rgba(6, 182, 212, 0.35)' : 'rgba(0,0,0,0.06)'
+                      }`,
+                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                       overflow: 'hidden',
-                      border: '1px solid #e2e8f0',
                       bgcolor: '#0f172a',
-                      mb: 2.5,
-                      '@keyframes scan': {
-                        '0%': { top: '0%' },
-                        '50%': { top: '100%' },
-                        '100%': { top: '0%' }
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      '@keyframes rotateRing': {
+                        '0%': { transform: 'rotate(0deg)' },
+                        '100%': { transform: 'rotate(360deg)' }
+                      },
+                      '@keyframes scanCircle': {
+                        '0%': { top: '10%' },
+                        '50%': { top: '90%' },
+                        '100%': { top: '10%' }
+                      },
+                      '@keyframes pulse': {
+                        '0%, 100%': { opacity: 0.4 },
+                        '50%': { opacity: 1 }
                       }
                     }}>
                       {!cameraReady ? (
@@ -478,14 +507,12 @@ const EmployeeAttendance = () => {
                           justifyContent: 'center',
                           bgcolor: '#0f172a',
                           color: '#64748b',
-                          p: 3
+                          p: 3,
+                          textAlign: 'center'
                         }}>
                           <CircularProgress size={30} sx={{ color: '#10b981', mb: 2 }} />
-                          <Typography sx={{ fontSize: '11px', fontWeight: 'bold', letterSpacing: '0.8px', color: '#94a3b8', fontFamily: 'Outfit', textTransform: 'uppercase' }}>
-                            Initializing Biometric Scanner...
-                          </Typography>
-                          <Typography sx={{ fontSize: '9px', color: '#475569', fontFamily: 'Inter', mt: 0.5 }}>
-                            Acquiring hardware lock and light sensors
+                          <Typography sx={{ fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.8px', color: '#94a3b8', fontFamily: 'Outfit', textTransform: 'uppercase' }}>
+                            Initializing Scanner...
                           </Typography>
                         </Box>
                       ) : imgSrc ? (
@@ -505,76 +532,80 @@ const EmployeeAttendance = () => {
                         />
                       )}
 
-                      {/* Align Face target frame overlay */}
-                      {!imgSrc && cameraReady && (
+                      {/* Glowing Biometric HUD Telemetry Overlays */}
+                      {cameraReady && !imgSrc && (
+                        <>
+                          {/* Top-Left: Liveness Status */}
+                          <Box sx={{ position: 'absolute', top: 24, left: 32, zIndex: 15, display: 'flex', alignItems: 'center', gap: 0.6 }}>
+                            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#10b981', animation: 'pulse 1.5s infinite' }} />
+                            <Typography sx={{ color: '#10b981', fontSize: '7.5px', fontWeight: 900, fontFamily: 'Outfit', letterSpacing: '0.5px' }}>
+                              LIVENESS: ACTIVE
+                            </Typography>
+                          </Box>
+
+                          {/* Top-Right: Encryption Mode */}
+                          <Box sx={{ position: 'absolute', top: 24, right: 32, zIndex: 15 }}>
+                            <Typography sx={{ color: '#06b6d4', fontSize: '7.5px', fontWeight: 900, fontFamily: 'Outfit', letterSpacing: '0.5px' }}>
+                              3D ENCRYPTED
+                            </Typography>
+                          </Box>
+
+                          {/* Bottom-Center: Alignment Instructions */}
+                          <Box sx={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 15, bgcolor: 'rgba(15,23,42,0.7)', px: 1.5, py: 0.5, borderRadius: 1.5, border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(4px)' }}>
+                            <Typography sx={{ color: '#fff', fontSize: '8px', fontWeight: 800, fontFamily: 'Outfit', letterSpacing: '0.8px', whiteSpace: 'nowrap' }}>
+                              ALIGN FACE IN PORTAL
+                            </Typography>
+                          </Box>
+                        </>
+                      )}
+
+
+
+
+
+                      {/* Rotating futuristic HUD ring when scanning */}
+                      {faceStatus === 'scanning' && (
                         <Box sx={{
                           position: 'absolute',
-                          top: '50%',
-                          left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                          width: { xs: '68%', md: '58%' },
-                          height: { xs: '68%', md: '58%' },
-                          border: '2px dashed rgba(16, 185, 129, 0.4)',
-                          borderRadius: '16px',
-                          boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.4)',
+                          inset: 6,
+                          border: '2px dashed #06b6d4',
+                          borderRadius: '50%',
+                          animation: 'rotateRing 8s infinite linear',
                           pointerEvents: 'none',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}>
-                          <span style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0 }}>
-                            <span style={{ position: 'absolute', top: -2, left: -2, width: 20, height: 20, borderLeft: '4px solid #10b981', borderTop: '4px solid #10b981', borderTopLeftRadius: '8px' }} />
-                            <span style={{ position: 'absolute', top: -2, right: -2, width: 20, height: 20, borderRight: '4px solid #10b981', borderTop: '4px solid #10b981', borderTopRightRadius: '8px' }} />
-                            <span style={{ position: 'absolute', bottom: -2, left: -2, width: 20, height: 20, borderLeft: '4px solid #10b981', borderBottom: '4px solid #10b981', borderBottomLeftRadius: '8px' }} />
-                            <span style={{ position: 'absolute', bottom: -2, right: -2, width: 20, height: 20, borderRight: '4px solid #10b981', borderBottom: '4px solid #10b981', borderBottomRightRadius: '8px' }} />
-                          </span>
-                          <Typography sx={{ color: '#10b981', fontSize: '9.5px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.2px', opacity: 0.85, fontFamily: 'Outfit' }}>
-                            Align Face
-                          </Typography>
-                        </Box>
+                          zIndex: 10,
+                        }} />
                       )}
 
-                      {/* HUD status badges on top of webcam */}
-                      {cameraReady && (
-                        <Box sx={{ position: 'absolute', top: 14, left: 14, display: 'flex', gap: 1, zIndex: 10 }}>
-                          <Chip
-                            label={isInGeofence ? 'Geofence: IN ZONE' : 'Geofence: OUT OF ZONE'}
-                            color={isInGeofence ? 'success' : 'error'}
-                            size="small"
-                            sx={{ fontWeight: 'bold', height: 22, fontSize: '9.5px', fontFamily: 'Outfit', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
-                          />
-                        </Box>
-                      )}
-
-                      {/* 3D Laser Scanning Sweeper */}
+                      {/* Circular Laser Sweeper */}
                       {faceStatus === 'scanning' && cameraReady && (
                         <Box sx={{
                           position: 'absolute',
-                          left: 0,
-                          right: 0,
-                          height: '3px',
-                          background: 'linear-gradient(90deg, rgba(16, 185, 129, 0) 0%, #10b981 50%, rgba(16, 185, 129, 0) 100%)',
-                          boxShadow: '0 0 8px #10b981, 0 0 16px #10b981',
+                          left: '5%',
+                          right: '5%',
+                          height: '2px',
+                          background: 'linear-gradient(90deg, rgba(6, 182, 212, 0) 0%, #06b6d4 50%, rgba(6, 182, 212, 0) 100%)',
+                          boxShadow: '0 0 6px #06b6d4, 0 0 12px #06b6d4',
                           zIndex: 25,
-                          animation: 'scan 2s infinite linear',
+                          animation: 'scanCircle 2s infinite linear',
                         }} />
                       )}
 
                       {/* Scanning / Processing overlays */}
                       {faceStatus === 'scanning' && (
-                        <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(15,23,42,0.75)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
-                          <CircularProgress size={30} sx={{ color: '#10b981', mb: 1.5 }} />
-                          <Typography sx={{ color: '#fff', fontSize: '12px', fontWeight: 'bold', fontFamily: 'Inter' }}>
-                            Analyzing biometrics...
+                        <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(15,23,42,0.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
+                          <CircularProgress size={32} sx={{ color: '#06b6d4', mb: 1.5 }} />
+                          <Typography sx={{ color: '#fff', fontSize: '11px', fontWeight: 'bold', fontFamily: 'Inter' }}>
+                            Verifying facial signature...
                           </Typography>
                         </Box>
                       )}
 
+                      {/* Success / Matching overlays */}
                       {faceStatus === 'success' && (
-                        <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(16,185,129,0.9)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
-                          <SuccessIcon sx={{ color: '#fff', fontSize: 50, mb: 1.5 }} />
-                          <Typography sx={{ color: '#fff', fontSize: '14.5px', fontWeight: 800, fontFamily: 'Outfit' }}>
-                            Biometrics Matching Success!
+                        <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(16,185,129,0.92)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
+                          <SuccessIcon sx={{ color: '#fff', fontSize: 44, mb: 1 }} />
+                          <Typography sx={{ color: '#fff', fontSize: '13px', fontWeight: 800, fontFamily: 'Outfit', letterSpacing: '0.5px' }}>
+                            MATCH CONFIRMED
                           </Typography>
                         </Box>
                       )}
@@ -717,7 +748,7 @@ const EmployeeAttendance = () => {
                       {elapsedHours}
                     </Typography>
                     <Typography sx={{ color: '#64748b', fontSize: '10px', fontFamily: 'Inter' }}>
-                      Checked in at: <strong>{todayLog.checkIn ? new Date(todayLog.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</strong>
+                      Checked in at: <strong>{todayLog.checkIn ? parseLocalDateTime(todayLog.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</strong>
                     </Typography>
                   </Box>
                 )}

@@ -117,16 +117,23 @@ const EmployeeLeaves = () => {
     }
   };
 
+  const parseLocalDate = (dateStr) => {
+    if (!dateStr) return new Date();
+    const parts = dateStr.split('-');
+    if (parts.length < 3) return new Date(dateStr);
+    return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  };
+
   const calculateDays = (start, end) => {
     if (!start || !end) return '';
-    const diffTime = Math.abs(new Date(end) - new Date(start));
+    const diffTime = Math.abs(parseLocalDate(end) - parseLocalDate(start));
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
     return `${diffDays} Day${diffDays > 1 ? 's' : ''}`;
   };
 
   const formatDateLabel = (dateStr) => {
     if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+    return parseLocalDate(dateStr).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
   return (

@@ -40,6 +40,23 @@ export const getFaceDescriptor = async (imageSrc) => {
         if (!detection) {
           reject(new Error("No face detected in photo. Please ensure your face is fully visible and try again."));
         } else {
+          // Detect eye closure using Eye Aspect Ratio (EAR)
+          const landmarks = detection.landmarks;
+          const leftEye = landmarks.getLeftEye();
+          const rightEye = landmarks.getRightEye();
+          
+          const calculateDistance = (p1, p2) => Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+          const getEAR = (eye) => (calculateDistance(eye[1], eye[5]) + calculateDistance(eye[2], eye[4])) / (2 * calculateDistance(eye[0], eye[3]));
+          
+          const leftEAR = getEAR(leftEye);
+          const rightEAR = getEAR(rightEye);
+          const avgEAR = (leftEAR + rightEAR) / 2;
+          
+          if (avgEAR < 0.20) {
+            reject(new Error("Eyes closed detected. Please look directly into the camera with your eyes open to verify liveness."));
+            return;
+          }
+          
           resolve(Array.from(detection.descriptor));
         }
       } catch (err) {
