@@ -54,6 +54,21 @@ const EmployeeAttendance = () => {
     return `${year}-${month}-${day}`;
   };
 
+  const parseLocalDateTime = (dateTimeStr) => {
+    if (!dateTimeStr) return null;
+    const parts = dateTimeStr.split(/[T ]/);
+    if (parts.length < 2) return new Date(dateTimeStr);
+    const dateParts = parts[0].split('-');
+    const timeParts = parts[1].split(':');
+    const year = parseInt(dateParts[0], 10);
+    const month = parseInt(dateParts[1], 10) - 1; // 0-indexed
+    const day = parseInt(dateParts[2], 10);
+    const hour = parseInt(timeParts[0], 10);
+    const minute = parseInt(timeParts[1], 10);
+    const second = timeParts.length > 2 ? parseInt(timeParts[2].split('.')[0], 10) : 0;
+    return new Date(year, month, day, hour, minute, second);
+  };
+
   // Camera & Biometrics state
   const webcamRef = useRef(null);
   const [imgSrc, setImgSrc] = useState(null);
@@ -113,7 +128,7 @@ const EmployeeAttendance = () => {
   useEffect(() => {
     let interval = null;
     if (todayLog && todayLog.checkIn && !todayLog.checkOut) {
-      const checkInTime = new Date(todayLog.checkIn).getTime();
+      const checkInTime = parseLocalDateTime(todayLog.checkIn).getTime();
       interval = setInterval(() => {
         const diff = Date.now() - checkInTime;
         if (diff > 0) {
