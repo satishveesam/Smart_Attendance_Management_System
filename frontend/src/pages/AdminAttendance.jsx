@@ -310,6 +310,8 @@ const AdminAttendance = () => {
 
   const getStatusChip = (status) => {
     switch (status) {
+      case 'PENDING':
+        return <Chip label="Pending Approval" color="warning" size="small" sx={{ fontWeight: 'bold', fontSize: '10px', height: 20, bgcolor: '#fef3c7', color: '#d97706' }} />;
       case 'PRESENT':
         return <Chip label="Present" color="success" size="small" sx={{ fontWeight: 'bold', fontSize: '10px', height: 20 }} />;
       case 'LATE':
@@ -1006,26 +1008,86 @@ const AdminAttendance = () => {
                       {log.checkOutLatitude ? `${log.checkOutLatitude.toFixed(4)}, ${log.checkOutLongitude.toFixed(4)}` : '-'}
                     </TableCell>
                     <TableCell align="right">
-                      <Tooltip title="View Biometric & Location Audit">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => {
-                            setSelectedLog(log);
-                            setAuditOpen(true);
-                          }}
-                          sx={{ bgcolor: '#eff6ff', '&:hover': { bgcolor: '#dbeafe' } }}
-                        >
-                          <ViewIcon fontSize="small" sx={{ fontSize: 15, color: '#2563eb' }} />
-                        </IconButton>
-                      </Tooltip>
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1 }}>
+                        {log.status === 'PENDING' && (
+                          <>
+                            <Button
+                              size="small"
+                              variant="contained"
+                              color="success"
+                              onClick={async () => {
+                                if (!window.confirm(`Are you sure you want to approve attendance for ${log.employeeName}?`)) return;
+                                try {
+                                  await API.post(`/attendance/${log.id}/approve`);
+                                  alert("Attendance approved successfully!");
+                                  fetchAttendanceLogs();
+                                } catch (err) {
+                                  console.error(err);
+                                  alert(err.response?.data?.message || "Failed to approve attendance");
+                                }
+                              }}
+                              sx={{ 
+                                textTransform: 'none', 
+                                fontSize: '11px', 
+                                py: 0.2, 
+                                px: 1.5,
+                                borderRadius: 1.5,
+                                fontWeight: 'bold',
+                                boxShadow: 'none'
+                              }}
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="contained"
+                              color="error"
+                              onClick={async () => {
+                                if (!window.confirm(`Are you sure you want to reject attendance for ${log.employeeName}?`)) return;
+                                try {
+                                  await API.post(`/attendance/${log.id}/reject`);
+                                  alert("Attendance rejected successfully!");
+                                  fetchAttendanceLogs();
+                                } catch (err) {
+                                  console.error(err);
+                                  alert(err.response?.data?.message || "Failed to reject attendance");
+                                }
+                              }}
+                              sx={{ 
+                                textTransform: 'none', 
+                                fontSize: '11px', 
+                                py: 0.2, 
+                                px: 1.5,
+                                borderRadius: 1.5,
+                                fontWeight: 'bold',
+                                boxShadow: 'none'
+                              }}
+                            >
+                              Reject
+                            </Button>
+                          </>
+                        )}
+                        <Tooltip title="View Biometric & Location Audit">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => {
+                              setSelectedLog(log);
+                              setAuditOpen(true);
+                            }}
+                            sx={{ bgcolor: '#eff6ff', '&:hover': { bgcolor: '#dbeafe' } }}
+                          >
+                            <ViewIcon fontSize="small" sx={{ fontSize: 15, color: '#2563eb' }} />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </TableContainer>
-
+ 
           {/* Mobile Cards List View (xs only) */}
           <Box sx={{ display: { xs: 'flex', sm: 'none' }, flexDirection: 'column', gap: 2.5 }}>
             {logs.map((log) => (
@@ -1065,7 +1127,7 @@ const AdminAttendance = () => {
                 <Typography variant="body2" sx={{ color: '#64748b', mt: 0.5, fontSize: '12px', fontFamily: 'Inter' }}>
                   📅 Date: {log.attendanceDate}
                 </Typography>
-
+ 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2, pt: 2, borderTop: '1px solid #f1f5f9' }}>
                   <Box>
                     <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block', fontFamily: 'Inter', fontSize: '10px' }}>Check In</Typography>
@@ -1082,6 +1144,51 @@ const AdminAttendance = () => {
                     </Typography>
                   </Box>
                 </Box>
+
+                {log.status === 'PENDING' && (
+                  <Box sx={{ display: 'flex', gap: 1, mt: 2, pt: 2, borderTop: '1px solid #f1f5f9' }}>
+                    <Button
+                      fullWidth
+                      size="small"
+                      variant="contained"
+                      color="success"
+                      onClick={async () => {
+                        if (!window.confirm(`Are you sure you want to approve attendance for ${log.employeeName}?`)) return;
+                        try {
+                          await API.post(`/attendance/${log.id}/approve`);
+                          alert("Attendance approved successfully!");
+                          fetchAttendanceLogs();
+                        } catch (err) {
+                          console.error(err);
+                          alert(err.response?.data?.message || "Failed to approve attendance");
+                        }
+                      }}
+                      sx={{ textTransform: 'none', fontSize: '11px', fontWeight: 'bold', borderRadius: 1.5, boxShadow: 'none' }}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      fullWidth
+                      size="small"
+                      variant="contained"
+                      color="error"
+                      onClick={async () => {
+                        if (!window.confirm(`Are you sure you want to reject attendance for ${log.employeeName}?`)) return;
+                        try {
+                          await API.post(`/attendance/${log.id}/reject`);
+                          alert("Attendance rejected successfully!");
+                          fetchAttendanceLogs();
+                        } catch (err) {
+                          console.error(err);
+                          alert(err.response?.data?.message || "Failed to reject attendance");
+                        }
+                      }}
+                      sx={{ textTransform: 'none', fontSize: '11px', fontWeight: 'bold', borderRadius: 1.5, boxShadow: 'none' }}
+                    >
+                      Reject
+                    </Button>
+                  </Box>
+                )}
               </Card>
             ))}
           </Box>

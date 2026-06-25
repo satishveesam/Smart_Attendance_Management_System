@@ -145,14 +145,9 @@ public class AttendanceService {
             throw new BadRequestException("Selfie biometric face scan is required for check-in");
         }
 
-        // 5. Establish Attendance status
+        // 5. Establish Attendance status (Biometric check-ins are PENDING approval)
         LocalDateTime now = LocalDateTime.now();
-        AttendanceStatus status = AttendanceStatus.PRESENT;
-        if (isWfhToday) {
-            status = AttendanceStatus.WFH;
-        } else if (now.toLocalTime().isAfter(LATE_THRESHOLD)) {
-            status = AttendanceStatus.LATE;
-        }
+        AttendanceStatus status = AttendanceStatus.PENDING;
 
         Attendance attendance = Attendance.builder()
                 .employee(employee)
@@ -257,11 +252,7 @@ public class AttendanceService {
         // Calculate Total Working Hours
         double hours = Duration.between(attendance.getCheckIn(), now).toMinutes() / 60.0;
         attendance.setTotalHours(hours);
-
-        // If hours is less than 4, mark as HALF_DAY (unless they are WFH)
-        if (hours < 4.0 && attendance.getStatus() != AttendanceStatus.WFH) {
-            attendance.setStatus(AttendanceStatus.HALF_DAY);
-        }
+        attendance.setStatus(AttendanceStatus.PENDING);
 
         Attendance savedAttendance = attendanceRepository.save(attendance);
 
@@ -379,5 +370,60 @@ public class AttendanceService {
     public OfficeLocation updateOfficeLocation(OfficeLocation newLocation) {
         newLocation.setId(1L);
         return officeLocationRepository.save(newLocation);
+    }
+
+    @Transactional
+    public AttendanceDto approveAttendance(Long id) {
+        Attendance attendance = attendanceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Attendance record not found"));
+        
+        // Calculate approved status based on check-in time and total hours
+        LocalDateTime checkIn = attendance.getCheckIn();
+        LocalDateTime checkOut = attendance.getCheckOut();
+        
+        AttendanceStatus status = AttendanceStatus.PRESENT;
+        
+        // Check if WFH (active approved WFH request on that date)
+        LocalDate date = attendance.getAttendanceDate();
+        boolean isWfhToday = false;
+        List<LeaveRequest> activeApprovedRequests = leaveRequestRepository.findByEmployeeIdAndStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+                attendance.getEmployee().getId(), LeaveRequest.LeaveStatus.APPROVED, date, date);
+        for (LeaveRequest r : activeApprovedRequests) {
+            if (r.getLeaveType() == LeaveRequest.LeaveType.WFH) {
+                isWfhToday = true;
+                break;
+            }
+        }
+
+        if (isWfhToday) {
+            status = AttendanceStatus.WFH;
+        } else {
+            // Check if late
+            if (checkIn != null && checkIn.toLocalTime().isAfter(LATE_THRESHOLD)) {
+                status = AttendanceStatus.LATE;
+            }
+            // Check if half day (working hours < 4 hours, only if checked out)
+            if (checkOut != null) {
+                double hours = Duration.between(checkIn, checkOut).toMinutes() / 60.0;
+                attendance.setTotalHours(hours);
+                if (hours < 4.0) {
+                    status = AttendanceStatus.HALF_DAY;
+                }
+            }
+        }
+        
+        attendance.setStatus(status);
+        Attendance saved = attendanceRepository.save(attendance);
+        return mapToDto(saved);
+    }
+
+    @Transactional
+    public AttendanceDto rejectAttendance(Long id) {
+        Attendance attendance = attendanceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Attendance record not found"));
+        
+        attendance.setStatus(AttendanceStatus.ABSENT);
+        Attendance saved = attendanceRepository.save(attendance);
+        return mapToDto(saved);
     }
 }

@@ -136,14 +136,16 @@ const EmployeeHistory = () => {
 
   const getStatusChip = (status) => {
     switch (status) {
+      case 'PENDING':
+        return <Chip label="Waiting for Approval" color="warning" size="small" sx={{ fontWeight: 'bold', fontFamily: 'Outfit', bgcolor: '#fef3c7', color: '#d97706' }} />;
       case 'PRESENT':
-        return <Chip label="Present" color="success" size="small" sx={{ fontWeight: 'bold', fontFamily: 'Outfit' }} />;
+        return <Chip label="Approved" color="success" size="small" sx={{ fontWeight: 'bold', fontFamily: 'Outfit' }} />;
       case 'LATE':
-        return <Chip label="Late" color="warning" size="small" sx={{ fontWeight: 'bold', fontFamily: 'Outfit' }} />;
+        return <Chip label="Late (Approved)" color="warning" size="small" sx={{ fontWeight: 'bold', fontFamily: 'Outfit' }} />;
       case 'HALF_DAY':
-        return <Chip label="Half Day" color="primary" size="small" sx={{ fontWeight: 'bold', fontFamily: 'Outfit' }} />;
+        return <Chip label="Half Day (Approved)" color="primary" size="small" sx={{ fontWeight: 'bold', fontFamily: 'Outfit' }} />;
       case 'ABSENT':
-        return <Chip label="Absent" color="error" size="small" sx={{ fontWeight: 'bold', fontFamily: 'Outfit' }} />;
+        return <Chip label="Absent / Rejected" color="error" size="small" sx={{ fontWeight: 'bold', fontFamily: 'Outfit' }} />;
       default:
         return <Chip label={status} size="small" sx={{ fontFamily: 'Outfit' }} />;
     }
