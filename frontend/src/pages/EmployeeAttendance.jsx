@@ -53,6 +53,7 @@ const EmployeeAttendance = () => {
   const [faceDescriptor, setFaceDescriptor] = useState(null);
   const [registeredDescriptor, setRegisteredDescriptor] = useState(null);
   const [faceStatus, setFaceStatus] = useState('idle'); // 'idle', 'scanning', 'success', 'failed'
+  const [allowReCheckIn, setAllowReCheckIn] = useState(false);
 
   const [todayLog, setTodayLog] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -226,24 +227,30 @@ const EmployeeAttendance = () => {
         return;
       }
       
-      // 2. Enforce registered biometric profile
-      if (!registeredDescriptor) {
+      // 2. Enforce registered biometric profile and 128 face points
+      if (!descriptor || descriptor.length !== 128) {
         setFaceStatus('failed');
-        setApiError('No registered face profile found. Please register your face profile in your settings first before marking attendance.');
+        setApiError('Invalid face scan. Face descriptor must contain exactly 128 points.');
+        setSubmitting(false);
+        return;
+      }
+      if (!registeredDescriptor || registeredDescriptor.length !== 128) {
+        setFaceStatus('failed');
+        setApiError('No valid registered 128-point face signature found. Please register your face profile in your settings first.');
         setSubmitting(false);
         return;
       }
 
-      // 3. Local biometric matching
+      // 3. Local biometric matching with secure 0.5 threshold
       let sum = 0;
       for (let i = 0; i < descriptor.length; i++) {
         const diff = descriptor[i] - registeredDescriptor[i];
         sum += diff * diff;
       }
       const distance = Math.sqrt(sum);
-      if (distance > 0.6) {
+      if (distance > 0.5) {
         setFaceStatus('failed');
-        setApiError(`Face does not match registered profile. Verification failed (Confidence distance: ${distance.toFixed(3)}, allowed limit: 0.600).`);
+        setApiError(`Face does not match registered profile. Verification failed (Confidence distance: ${distance.toFixed(3)}, allowed limit: 0.500).`);
         setSubmitting(false);
         return;
       }
@@ -273,6 +280,7 @@ const EmployeeAttendance = () => {
         setApiSuccess(`Successfully checked in today at ${new Date(res.data.checkIn).toLocaleTimeString()}`);
       }
       setTodayLog(res.data);
+      setAllowReCheckIn(false);
       
       // Clear visual feedback after 3 seconds
       setTimeout(() => {
@@ -336,7 +344,7 @@ const EmployeeAttendance = () => {
           
           {/* CAMERA SCANNER PANEL */}
           <Grid item xs={12} md={7}>
-            {(!todayLog || (todayLog && !todayLog.checkOut)) ? (
+            {(!todayLog || (todayLog && !todayLog.checkOut) || allowReCheckIn) ? (
               <Card sx={{ borderRadius: 4, border: '1px solid #f1f5f9', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03)', bgcolor: '#fff', overflow: 'hidden' }}>
                 <CardContent sx={{ p: 3 }}>
                   <Typography sx={{ fontWeight: 'bold', mb: 2, color: '#0f172a', fontSize: '14px', fontFamily: 'Outfit' }}>
@@ -496,9 +504,26 @@ const EmployeeAttendance = () => {
                 <Typography sx={{ fontWeight: 800, color: '#0f172a', mb: 1, fontSize: '15px', fontFamily: 'Outfit' }}>
                   Shift Completed Successfully
                 </Typography>
-                <Typography sx={{ fontSize: '12px', color: '#64748b', fontFamily: 'Inter', maxWidth: 380, mx: 'auto', lineHeight: 1.5 }}>
-                  Your check-in and check-out logs are recorded for today. Biometric scanner is locked until your next shift starts.
+                <Typography sx={{ fontSize: '12px', color: '#64748b', fontFamily: 'Inter', maxWidth: 380, mx: 'auto', lineHeight: 1.5, mb: 3 }}>
+                  Your check-in and check-out logs are recorded for today.
                 </Typography>
+                <Button
+                  variant="contained"
+                  onClick={() => setAllowReCheckIn(true)}
+                  sx={{
+                    py: 1.2,
+                    px: 4,
+                    borderRadius: 2.5,
+                    textTransform: 'none',
+                    fontWeight: 'bold',
+                    fontFamily: 'Outfit',
+                    backgroundColor: '#10b981',
+                    '&:hover': { backgroundColor: '#059669' },
+                    boxShadow: 'none',
+                  }}
+                >
+                  🔄 Check-In Again (Start New Session)
+                </Button>
               </Card>
             )}
           </Grid>

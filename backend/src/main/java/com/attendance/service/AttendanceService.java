@@ -71,11 +71,37 @@ public class AttendanceService {
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found for current user account"));
 
         LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
         
         // 1. Check if already checked in today
-        Optional<Attendance> existingAttendance = attendanceRepository.findByEmployeeIdAndAttendanceDate(employee.getId(), today);
-        if (existingAttendance.isPresent()) {
-            throw new BadRequestException("You have already checked in for today!");
+        Optional<Attendance> existingAttendanceOpt = attendanceRepository.findByEmployeeIdAndAttendanceDate(employee.getId(), today);
+        Attendance attendance;
+        if (existingAttendanceOpt.isPresent()) {
+            Attendance existing = existingAttendanceOpt.get();
+            if (existing.getCheckOut() == null) {
+                throw new BadRequestException("You are already checked in. Please check out first before checking in again.");
+            }
+            
+            // Allow multiple check-in session! Update existing record to start a new session,
+            // clearing previous checkout details so they can check out again later.
+            attendance = existing;
+            attendance.setCheckIn(now);
+            attendance.setCheckInSelfie(request.getSelfieBase64());
+            attendance.setCheckInAddress(request.getAddress());
+            attendance.setCheckOut(null);
+            attendance.setCheckOutSelfie(null);
+            attendance.setCheckOutAddress(null);
+            attendance.setStatus(AttendanceStatus.PENDING);
+        } else {
+            // First check-in of the day
+            attendance = Attendance.builder()
+                    .employee(employee)
+                    .attendanceDate(today)
+                    .checkIn(now)
+                    .status(AttendanceStatus.PENDING)
+                    .checkInSelfie(request.getSelfieBase64())
+                    .checkInAddress(request.getAddress())
+                    .build();
         }
 
         // 2. Geofence Verification
@@ -131,9 +157,9 @@ public class AttendanceService {
                 double[] registeredDescriptor = objectMapper.readValue(faceData.getFaceDescriptor(), double[].class);
                 
                 double euclideanDistance = calculateEuclideanDistance(targetDescriptor, registeredDescriptor);
-                // Standard face recognition threshold for Euclidean distance is <= 0.6 for match (equivalent to 90% match threshold)
-                if (euclideanDistance > 0.6) {
-                    throw new BadRequestException(String.format("Facial verification failed. Match confidence below threshold (Distance: %.3f)", euclideanDistance));
+                // Standard face recognition threshold for Euclidean distance is <= 0.5 for high-security match
+                if (euclideanDistance > 0.5) {
+                    throw new BadRequestException(String.format("Facial verification failed. Face does not match registered profile (Distance: %.3f, allowed limit: 0.500)", euclideanDistance));
                 }
             } catch (BadRequestException ex) {
                 throw ex;
@@ -144,19 +170,6 @@ public class AttendanceService {
             // Face-descriptor is required for check-in
             throw new BadRequestException("Selfie biometric face scan is required for check-in");
         }
-
-        // 5. Establish Attendance status (Biometric check-ins are PENDING approval)
-        LocalDateTime now = LocalDateTime.now();
-        AttendanceStatus status = AttendanceStatus.PENDING;
-
-        Attendance attendance = Attendance.builder()
-                .employee(employee)
-                .attendanceDate(today)
-                .checkIn(now)
-                .status(status)
-                .checkInSelfie(request.getSelfieBase64())
-                .checkInAddress(request.getAddress())
-                .build();
 
         Attendance savedAttendance = attendanceRepository.save(attendance);
 
@@ -231,8 +244,8 @@ public class AttendanceService {
                 double[] registeredDescriptor = objectMapper.readValue(faceData.getFaceDescriptor(), double[].class);
                 
                 double euclideanDistance = calculateEuclideanDistance(targetDescriptor, registeredDescriptor);
-                if (euclideanDistance > 0.6) {
-                    throw new BadRequestException(String.format("Facial verification failed. Match confidence below threshold (Distance: %.3f)", euclideanDistance));
+                if (euclideanDistance > 0.5) {
+                    throw new BadRequestException(String.format("Facial verification failed. Face does not match registered profile (Distance: %.3f, allowed limit: 0.500)", euclideanDistance));
                 }
             } catch (BadRequestException ex) {
                 throw ex;
@@ -249,9 +262,10 @@ public class AttendanceService {
         attendance.setCheckOutSelfie(request.getSelfie());
         attendance.setCheckOutAddress(request.getAddress());
         
-        // Calculate Total Working Hours
-        double hours = Duration.between(attendance.getCheckIn(), now).toMinutes() / 60.0;
-        attendance.setTotalHours(hours);
+        // Calculate and accumulate Total Working Hours
+        double sessionHours = Duration.between(attendance.getCheckIn(), now).toMinutes() / 60.0;
+        double cumulativeHours = (attendance.getTotalHours() != null ? attendance.getTotalHours() : 0.0) + sessionHours;
+        attendance.setTotalHours(cumulativeHours);
         attendance.setStatus(AttendanceStatus.PENDING);
 
         Attendance savedAttendance = attendanceRepository.save(attendance);
@@ -315,8 +329,8 @@ public class AttendanceService {
     }
 
     private double calculateEuclideanDistance(double[] desc1, double[] desc2) {
-        if (desc1.length != desc2.length) {
-            throw new IllegalArgumentException("Descriptors length mismatch: " + desc1.length + " vs " + desc2.length);
+        if (desc1 == null || desc2 == null || desc1.length != 128 || desc2.length != 128) {
+            throw new BadRequestException("Facial signature verification error: Face descriptor must contain exactly 128 points.");
         }
         double sum = 0.0;
         for (int i = 0; i < desc1.length; i++) {
