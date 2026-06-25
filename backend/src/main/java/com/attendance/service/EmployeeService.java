@@ -185,4 +185,17 @@ public class EmployeeService {
 
         return builder.build();
     }
+
+    @Transactional
+    public void resetEmployeePassword(Long employeeId, String newPassword) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + employeeId));
+        if (employee.getUser() != null) {
+            User user = employee.getUser();
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+        } else {
+            throw new BadRequestException("No user account is linked to this employee profile.");
+        }
+    }
 }

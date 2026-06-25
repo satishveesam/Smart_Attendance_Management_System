@@ -43,4 +43,15 @@ public class AuthController {
         response.put("message", "Log out successful");
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal User user,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(user.getId(), request);
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Password changed successfully");
+        return ResponseEntity.ok(response);
+    }
 }

@@ -38,6 +38,7 @@ import {
   Close as CloseIcon,
   Badge as BadgeIcon,
   AccountBalance as BankIcon,
+  VpnKey as PasswordIcon,
 } from '@mui/icons-material';
 
 const AdminEmployees = () => {
@@ -50,6 +51,15 @@ const AdminEmployees = () => {
   const [open, setOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentId, setCurrentId] = useState(null);
+
+  // Reset Password states
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resetEmployee, setResetEmployee] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetError, setResetError] = useState('');
+  const [resetSuccess, setResetSuccess] = useState('');
+  const [resetSubmitting, setResetSubmitting] = useState(false);
 
   // Form Fields
   const [form, setForm] = useState({
@@ -88,7 +98,46 @@ const AdminEmployees = () => {
       setLoading(false);
     }
   };
+  const handleOpenReset = (emp) => {
+    setResetEmployee(emp);
+    setNewPassword('');
+    setConfirmPassword('');
+    setResetError('');
+    setResetSuccess('');
+    setResetSubmitting(false);
+    setResetDialogOpen(true);
+  };
 
+  const handleResetSubmit = async (e) => {
+    e.preventDefault();
+    setResetError('');
+    setResetSuccess('');
+
+    if (newPassword !== confirmPassword) {
+      setResetError('Passwords do not match!');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setResetError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setResetSubmitting(true);
+    try {
+      await API.post(`/employees/${resetEmployee.id}/reset-password`, {
+        newPassword
+      });
+      setResetSuccess('Employee password reset successfully!');
+      setTimeout(() => {
+        setResetDialogOpen(false);
+      }, 1500);
+    } catch (err) {
+      console.error(err);
+      setResetError(err.response?.data?.message || 'Failed to reset password.');
+    } finally {
+      setResetSubmitting(false);
+    }
+  };
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
@@ -418,6 +467,15 @@ const AdminEmployees = () => {
                       {/* Actions */}
                       <TableCell align="right" sx={{ pr: 3 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                          <Tooltip title="Reset Password">
+                            <IconButton 
+                              size="small" 
+                              onClick={() => handleOpenReset(emp)} 
+                              sx={{ color: '#d97706', bgcolor: '#fef3c7', '&:hover': { bgcolor: '#fde68a' } }}
+                            >
+                              <PasswordIcon fontSize="small" sx={{ fontSize: 15 }} />
+                            </IconButton>
+                          </Tooltip>
                           <Tooltip title="Edit Profile">
                             <IconButton 
                               size="small" 
@@ -467,6 +525,9 @@ const AdminEmployees = () => {
                       {emp.employeeCode}
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1 }}>
+                      <IconButton size="small" onClick={() => handleOpenReset(emp)} sx={{ bgcolor: '#fef3c7', color: '#d97706', p: 0.6 }}>
+                        <PasswordIcon sx={{ fontSize: 14 }} />
+                      </IconButton>
                       <IconButton size="small" onClick={() => handleOpenEdit(emp)} sx={{ bgcolor: '#eff6ff', color: '#2563eb', p: 0.6 }}>
                         <EditIcon sx={{ fontSize: 14 }} />
                       </IconButton>
@@ -855,6 +916,106 @@ const AdminEmployees = () => {
               }}
             >
               Save Employee
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      {/* 5. Reset Password Dialog */}
+      <Dialog 
+        open={resetDialogOpen} 
+        onClose={() => setResetDialogOpen(false)} 
+        maxWidth="xs" 
+        fullWidth 
+        sx={{ '& .MuiDialog-paper': { borderRadius: 4, p: 1.5 } }}
+      >
+        <form onSubmit={handleResetSubmit}>
+          <DialogTitle sx={{ fontWeight: 'bold', fontFamily: 'Outfit', fontSize: '18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
+            <Typography variant="h6" sx={{ fontWeight: '800', fontFamily: 'Outfit', fontSize: '17px', color: '#0f172a' }}>
+              Reset Password
+            </Typography>
+            <IconButton onClick={() => setResetDialogOpen(false)} size="small" sx={{ color: '#94a3b8' }}>
+              <CloseIcon sx={{ fontSize: 20 }} />
+            </IconButton>
+          </DialogTitle>
+          
+          <DialogContent sx={{ py: 2.5, borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9' }}>
+            <Typography sx={{ color: '#64748b', fontSize: '12.5px', fontFamily: 'Inter', mb: 2.5 }}>
+              Enter a new password for <strong>{resetEmployee ? `${resetEmployee.firstName} ${resetEmployee.lastName || ''}` : ''}</strong> (Code: {resetEmployee?.employeeCode}).
+            </Typography>
+
+            {resetError && (
+              <Alert severity="error" sx={{ mb: 2, borderRadius: 2, fontSize: '11.5px' }}>
+                {resetError}
+              </Alert>
+            )}
+            {resetSuccess && (
+              <Alert severity="success" sx={{ mb: 2, borderRadius: 2, fontSize: '11.5px' }}>
+                {resetSuccess}
+              </Alert>
+            )}
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <TextField
+                required
+                fullWidth
+                label="New Password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                InputProps={{ style: { fontSize: '13px', fontFamily: 'Inter', borderRadius: '10px' } }}
+                InputLabelProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter' } }}
+              />
+              <TextField
+                required
+                fullWidth
+                label="Confirm New Password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                InputProps={{ style: { fontSize: '13px', fontFamily: 'Inter', borderRadius: '10px' } }}
+                InputLabelProps={{ style: { fontSize: '12.5px', fontFamily: 'Inter' } }}
+              />
+            </Box>
+          </DialogContent>
+          
+          <DialogActions sx={{ px: 3, pt: 2, pb: 1, gap: 1 }}>
+            <Button 
+              onClick={() => setResetDialogOpen(false)} 
+              variant="outlined"
+              sx={{ 
+                textTransform: 'none', 
+                borderRadius: 2.5, 
+                px: 3,
+                fontFamily: 'Outfit',
+                fontWeight: 700,
+                fontSize: '12px',
+                borderColor: '#cbd5e1',
+                color: '#64748b'
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit"
+              variant="contained" 
+              disabled={resetSubmitting}
+              sx={{ 
+                textTransform: 'none', 
+                borderRadius: 2.5,
+                px: 3,
+                fontFamily: 'Outfit',
+                fontWeight: 700,
+                fontSize: '12px',
+                background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
+                boxShadow: 'none',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #b45309 0%, #92400e 100%)',
+                  boxShadow: 'none',
+                }
+              }}
+            >
+              {resetSubmitting ? 'Resetting...' : 'Reset Password'}
             </Button>
           </DialogActions>
         </form>

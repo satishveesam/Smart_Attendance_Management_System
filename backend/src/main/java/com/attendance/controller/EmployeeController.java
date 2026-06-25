@@ -55,4 +55,17 @@ public class EmployeeController {
         response.put("message", "Employee profile deleted successfully");
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/{id}/reset-password")
+    public ResponseEntity<?> resetPassword(@PathVariable("id") Long id, @RequestBody Map<String, String> request) {
+        String newPassword = request.get("newPassword");
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "New password is required"));
+        }
+        employeeService.resetEmployeePassword(id, newPassword);
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Employee password reset successfully");
+        return ResponseEntity.ok(response);
+    }
 }

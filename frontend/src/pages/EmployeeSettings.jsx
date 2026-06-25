@@ -20,6 +20,8 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Alert,
+  TextField,
 } from '@mui/material';
 import {
   Person as PersonalIcon,
@@ -39,6 +41,14 @@ const EmployeeSettings = () => {
   const [expanded, setExpanded] = useState('personal');
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  // Change password states
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [pwdSubmitting, setPwdSubmitting] = useState(false);
+  const [pwdSuccess, setPwdSuccess] = useState('');
+  const [pwdError, setPwdError] = useState('');
 
   const [preferences, setPreferences] = useState({
     emailAlerts: true,
@@ -66,6 +76,38 @@ const EmployeeSettings = () => {
 
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPwdError('');
+    setPwdSuccess('');
+
+    if (newPassword !== confirmPassword) {
+      setPwdError('New passwords do not match!');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPwdError('New password must be at least 6 characters long.');
+      return;
+    }
+
+    setPwdSubmitting(true);
+    try {
+      await API.post('/auth/change-password', {
+        currentPassword,
+        newPassword
+      });
+      setPwdSuccess('Password updated successfully!');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      console.error(err);
+      setPwdError(err.response?.data?.message || 'Failed to update password.');
+    } finally {
+      setPwdSubmitting(false);
+    }
   };
 
   return (
@@ -98,48 +140,7 @@ const EmployeeSettings = () => {
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 1.5, width: { xs: '100%', sm: 'auto' } }}>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() => navigate('/employee/profile')}
-              sx={{
-                flexGrow: { xs: 1, sm: 0 },
-                textTransform: 'none',
-                fontFamily: 'Outfit',
-                fontSize: '11.5px',
-                fontWeight: 700,
-                borderRadius: 2.5,
-                bgcolor: '#2563eb',
-                boxShadow: 'none',
-                px: 2.5,
-                py: 1,
-                '&:hover': { bgcolor: '#1d4ed8', boxShadow: 'none' }
-              }}
-            >
-              Register Face Biometrics
-            </Button>
-            <Button
-              variant="outlined"
-              color="error"
-              size="small"
-              onClick={handleLogout}
-              sx={{
-                flexGrow: { xs: 1, sm: 0 },
-                textTransform: 'none',
-                fontFamily: 'Outfit',
-                fontSize: '11.5px',
-                fontWeight: 700,
-                borderRadius: 2.5,
-                px: 2.5,
-                py: 1,
-                borderWidth: '1px',
-                '&:hover': { borderWidth: '1px', bgcolor: '#fef2f2' }
-              }}
-            >
-              Sign Out
-            </Button>
-          </Box>
+          {/* Removed top-header buttons to show at the bottom instead */}
         </Box>
 
         {/* 2. Compact Identity Overview Card */}
@@ -367,7 +368,118 @@ const EmployeeSettings = () => {
             </AccordionDetails>
           </Accordion>
 
-          {/* Panel 2: Employment Parameters */}
+          {/* Panel 2: Security & Password Settings */}
+          <Accordion 
+            expanded={expanded === 'security'} 
+            onChange={handleChange('security')}
+            sx={{
+              borderRadius: '16px !important',
+              border: '1px solid #f1f5f9',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.02)',
+              '&:before': { display: 'none' },
+              overflow: 'hidden',
+              bgcolor: '#fff'
+            }}
+          >
+            <AccordionSummary 
+              expandIcon={<ExpandIcon sx={{ color: '#94a3b8' }} />}
+              sx={{ 
+                bgcolor: expanded === 'security' ? '#f8fafc' : 'transparent',
+                borderBottom: expanded === 'security' ? '1px solid #f1f5f9' : 'none',
+                minHeight: 64,
+                px: 3
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  width: 38, 
+                  height: 38, 
+                  borderRadius: 2.5, 
+                  bgcolor: '#fee2e2', 
+                  color: '#ef4444' 
+                }}>
+                  <LockIcon sx={{ fontSize: 20 }} />
+                </Box>
+                <Box>
+                  <Typography sx={{ fontWeight: 'bold', fontSize: '13.5px', fontFamily: 'Outfit', color: '#0f172a' }}>
+                    Security & Password Settings
+                  </Typography>
+                  <Typography sx={{ fontSize: '11px', color: '#64748b', fontFamily: 'Inter', mt: 0.2 }}>
+                    Update your account password using your current credentials
+                  </Typography>
+                </Box>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails sx={{ p: 3 }}>
+              <Box component="form" onSubmit={handlePasswordChange} sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, maxWidth: 420 }}>
+                <Typography sx={{ fontWeight: 'bold', fontSize: '14px', fontFamily: 'Outfit', color: '#0f172a' }}>
+                  Update Password
+                </Typography>
+                {pwdError && <Alert severity="error" sx={{ py: 0.5, fontSize: '11.5px', borderRadius: 2 }}>{pwdError}</Alert>}
+                {pwdSuccess && <Alert severity="success" sx={{ py: 0.5, fontSize: '11.5px', borderRadius: 2 }}>{pwdSuccess}</Alert>}
+
+                <TextField
+                  label="Current Password"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  fullWidth
+                  required
+                  size="small"
+                  inputProps={{ style: { fontFamily: 'Inter', fontSize: '13px' } }}
+                  InputLabelProps={{ style: { fontFamily: 'Outfit', fontSize: '13px' } }}
+                />
+                <TextField
+                  label="New Password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  fullWidth
+                  required
+                  size="small"
+                  inputProps={{ style: { fontFamily: 'Inter', fontSize: '13px' } }}
+                  InputLabelProps={{ style: { fontFamily: 'Outfit', fontSize: '13px' } }}
+                />
+                <TextField
+                  label="Confirm New Password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  fullWidth
+                  required
+                  size="small"
+                  inputProps={{ style: { fontFamily: 'Inter', fontSize: '13px' } }}
+                  InputLabelProps={{ style: { fontFamily: 'Outfit', fontSize: '13px' } }}
+                />
+
+                <Button
+                  type="submit"
+                  disabled={pwdSubmitting}
+                  variant="contained"
+                  sx={{
+                    alignSelf: 'flex-start',
+                    textTransform: 'none',
+                    fontFamily: 'Outfit',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    borderRadius: 2,
+                    bgcolor: '#4f46e5',
+                    px: 3.5,
+                    py: 1,
+                    boxShadow: 'none',
+                    '&:hover': { bgcolor: '#4338ca', boxShadow: 'none' }
+                  }}
+                >
+                  {pwdSubmitting ? 'Updating...' : 'Update Password'}
+                </Button>
+              </Box>
+            </AccordionDetails>
+          </Accordion>
+
+          {/* Panel 3: Employment Parameters */}
           <Accordion 
             expanded={expanded === 'employment'} 
             onChange={handleChange('employment')}
@@ -766,6 +878,68 @@ const EmployeeSettings = () => {
           </Accordion>
 
         </Box>
+
+        {/* 4. Bottom Account & Biometrics Action Center */}
+        <Card 
+          sx={{ 
+            borderRadius: 4, 
+            border: '1px solid #fee2e2', 
+            boxShadow: '0 1px 3px 0 rgba(239, 68, 68, 0.02)', 
+            mt: 3.5, 
+            bgcolor: '#fff5f5',
+            p: 3
+          }}
+        >
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+            <Box>
+              <Typography sx={{ fontWeight: 'bold', color: '#991b1b', fontSize: '14.5px', fontFamily: 'Outfit' }}>
+                Account Security & Authentication
+              </Typography>
+              <Typography sx={{ color: '#b91c1c', fontSize: '11.5px', fontFamily: 'Inter', mt: 0.5 }}>
+                Manage your 3D facial biometrics template or sign out of your active session safely.
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2, width: { xs: '100%', sm: 'auto' }, flexDirection: { xs: 'column', sm: 'row' } }}>
+              <Button
+                variant="contained"
+                onClick={() => navigate('/employee/profile')}
+                sx={{
+                  textTransform: 'none',
+                  fontFamily: 'Outfit',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  borderRadius: 2.5,
+                  bgcolor: '#2563eb',
+                  boxShadow: 'none',
+                  px: 3,
+                  py: 1.2,
+                  '&:hover': { bgcolor: '#1d4ed8', boxShadow: 'none' }
+                }}
+              >
+                Register Face Biometrics
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleLogout}
+                sx={{
+                  textTransform: 'none',
+                  fontFamily: 'Outfit',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  borderRadius: 2.5,
+                  bgcolor: '#ef4444',
+                  boxShadow: 'none',
+                  px: 3,
+                  py: 1.2,
+                  '&:hover': { bgcolor: '#dc2626', boxShadow: 'none' }
+                }}
+              >
+                Sign Out Account
+              </Button>
+            </Box>
+          </Box>
+        </Card>
 
       </Box>
     </EmployeeLayout>

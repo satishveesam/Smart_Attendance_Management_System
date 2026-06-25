@@ -786,10 +786,10 @@ const AdminAttendance = () => {
               <TableHead sx={{ bgcolor: '#f8fafc' }}>
                 <TableRow>
                   {/* Sticky headers for employee descriptors */}
-                  <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12px', position: 'sticky', left: 0, zIndex: 12, bgcolor: '#f8fafc', borderRight: '1px solid #e2e8f0', minWidth: 50 }}>#</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12px', position: 'sticky', left: 50, zIndex: 12, bgcolor: '#f8fafc', borderRight: '1px solid #e2e8f0', minWidth: 180 }}>Employee</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12px', position: 'sticky', left: 230, zIndex: 12, bgcolor: '#f8fafc', borderRight: '1px solid #e2e8f0', minWidth: 120 }}>Department</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12px', position: 'sticky', left: 350, zIndex: 12, bgcolor: '#f8fafc', borderRight: '1px solid #e2e8f0', minWidth: 110 }}>Emp Status</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12px', position: { xs: 'static', sm: 'sticky' }, left: 0, zIndex: { xs: 1, sm: 12 }, bgcolor: '#f8fafc', borderRight: '1px solid #e2e8f0', minWidth: 50 }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12px', position: 'sticky', left: { xs: 0, sm: 50 }, zIndex: 12, bgcolor: '#f8fafc', borderRight: '1px solid #e2e8f0', minWidth: { xs: 130, sm: 180 } }}>Employee</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12px', position: { xs: 'static', sm: 'sticky' }, left: { xs: 'auto', sm: 230 }, zIndex: { xs: 1, sm: 12 }, bgcolor: '#f8fafc', borderRight: '1px solid #e2e8f0', minWidth: { xs: 90, sm: 120 } }}>Department</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', color: '#475569', fontFamily: 'Outfit', fontSize: '12px', position: { xs: 'static', sm: 'sticky' }, left: { xs: 'auto', sm: 350 }, zIndex: { xs: 1, sm: 12 }, bgcolor: '#f8fafc', borderRight: '1px solid #e2e8f0', minWidth: { xs: 90, sm: 110 } }}>Emp Status</TableCell>
                   
                   {/* Scrolling Daily Date headers */}
                   {days.map(day => (
@@ -820,14 +820,14 @@ const AdminAttendance = () => {
                   return (
                     <TableRow key={emp.id} hover>
                       {/* Sticky Index badge */}
-                      <TableCell sx={{ position: 'sticky', left: 0, zIndex: 10, bgcolor: '#fff', borderRight: '1px solid #e2e8f0', p: 1.2 }}>
+                      <TableCell sx={{ position: { xs: 'static', sm: 'sticky' }, left: 0, zIndex: { xs: 1, sm: 10 }, bgcolor: '#fff', borderRight: '1px solid #e2e8f0', p: 1.2 }}>
                         <Box sx={{ width: 24, height: 24, borderRadius: '50%', bgcolor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: '#475569', fontWeight: 600 }}>
                           {index + 1}
                         </Box>
                       </TableCell>
 
                       {/* Sticky Employee Avatar and Code */}
-                      <TableCell sx={{ position: 'sticky', left: 50, zIndex: 10, bgcolor: '#fff', borderRight: '1px solid #e2e8f0', p: 1.2 }}>
+                      <TableCell sx={{ position: 'sticky', left: { xs: 0, sm: 50 }, zIndex: 10, bgcolor: '#fff', borderRight: '1px solid #e2e8f0', p: 1.2, minWidth: { xs: 130, sm: 180 } }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
                           <Avatar sx={{ width: 28, height: 28, fontSize: '11px', bgcolor: getAvatarColor(emp.firstName), fontWeight: 'bold', fontFamily: 'Outfit' }}>
                             {emp.firstName ? emp.firstName[0].toUpperCase() : 'E'}
@@ -844,7 +844,7 @@ const AdminAttendance = () => {
                       </TableCell>
 
                       {/* Sticky Department Tag */}
-                      <TableCell sx={{ position: 'sticky', left: 230, zIndex: 10, bgcolor: '#fff', borderRight: '1px solid #e2e8f0', p: 1.2 }}>
+                      <TableCell sx={{ position: { xs: 'static', sm: 'sticky' }, left: { xs: 'auto', sm: 230 }, zIndex: { xs: 1, sm: 10 }, bgcolor: '#fff', borderRight: '1px solid #e2e8f0', p: 1.2 }}>
                         <Chip 
                           label={deptName} 
                           size="small" 
@@ -862,7 +862,7 @@ const AdminAttendance = () => {
                       </TableCell>
 
                       {/* Sticky Employee Status Tag */}
-                      <TableCell sx={{ position: 'sticky', left: 350, zIndex: 10, bgcolor: '#fff', borderRight: '1px solid #e2e8f0', p: 1.2 }}>
+                      <TableCell sx={{ position: { xs: 'static', sm: 'sticky' }, left: { xs: 'auto', sm: 350 }, zIndex: { xs: 1, sm: 10 }, bgcolor: '#fff', borderRight: '1px solid #e2e8f0', p: 1.2 }}>
                         <Chip 
                           label={empStatus} 
                           size="small" 
