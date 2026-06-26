@@ -59,7 +59,7 @@ const AdminLayout = ({ children }) => {
   ];
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', flexDirection: 'column', bgcolor: '#f8fafc' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', flexDirection: 'column', bgcolor: '#f8fafc', width: '100%', overflowX: 'hidden' }}>
       
       {/* Top Header Navbar */}
       <AppBar
@@ -201,18 +201,42 @@ const AdminLayout = ({ children }) => {
           borderTop: '1px solid #e2e8f0', 
           mt: 4, 
           display: 'flex', 
-          flexDirection: { xs: 'column', sm: 'row' }, 
-          justifyContent: 'space-between', 
+          flexDirection: 'column', 
           alignItems: 'center', 
           gap: 1.5 
         }}>
-          <Typography sx={{ fontSize: '11px', color: '#94a3b8', fontFamily: 'Inter' }}>
-            © {new Date().getFullYear()} SmartAttendance Inc. All rights reserved.
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Typography sx={{ fontSize: '11px', color: '#94a3b8', cursor: 'pointer', fontFamily: 'Inter', '&:hover': { color: '#64748b' } }}>Privacy Policy</Typography>
-            <Typography sx={{ fontSize: '11px', color: '#94a3b8', cursor: 'pointer', fontFamily: 'Inter', '&:hover': { color: '#64748b' } }}>Terms of Service</Typography>
-            <Typography sx={{ fontSize: '11px', color: '#94a3b8', fontFamily: 'Inter' }}>v1.2.0</Typography>
+          <Box sx={{
+            width: '100%',
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 1.5
+          }}>
+            <Typography sx={{ fontSize: '11px', color: '#94a3b8', fontFamily: 'Inter' }}>
+              © {new Date().getFullYear()} SmartAttendance Inc. All rights reserved.
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Typography sx={{ fontSize: '11px', color: '#94a3b8', cursor: 'pointer', fontFamily: 'Inter', '&:hover': { color: '#64748b' } }}>Privacy Policy</Typography>
+              <Typography sx={{ fontSize: '11px', color: '#94a3b8', cursor: 'pointer', fontFamily: 'Inter', '&:hover': { color: '#64748b' } }}>Terms of Service</Typography>
+              <Typography sx={{ fontSize: '11px', color: '#94a3b8', fontFamily: 'Inter' }}>v1.2.0</Typography>
+            </Box>
+          </Box>
+          <Box sx={{ mt: 1, textAlign: 'center' }}>
+            <Typography sx={{ 
+              fontSize: '9px', 
+              fontWeight: 800, 
+              color: '#06b6d4', 
+              fontFamily: 'Outfit', 
+              letterSpacing: '1.5px', 
+              textTransform: 'uppercase',
+              background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              textShadow: '0 2px 8px rgba(6, 182, 212, 0.15)'
+            }}>
+              DEVELOPED BY SATISHVEESAM
+            </Typography>
           </Box>
         </Box>
       </Box>
