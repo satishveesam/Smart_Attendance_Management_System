@@ -445,7 +445,7 @@ const EmployeeAttendance = () => {
           <Grid item xs={12} md={7}>
             {showScanner ? (
               <Card sx={{ borderRadius: 4, border: '1px solid #f1f5f9', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03)', bgcolor: '#fff', overflow: 'hidden' }}>
-                <CardContent sx={{ p: 3 }}>
+                <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography sx={{ fontWeight: 'bold', color: '#0f172a', fontSize: '14px', fontFamily: 'Outfit' }}>
                       1. Biometric Scanner Terminal
@@ -463,10 +463,10 @@ const EmployeeAttendance = () => {
                     {/* Premium Circular Biometric Camera Kiosk */}
                     <Box sx={{
                       position: 'relative',
-                      width: { xs: '260px', sm: '300px' },
-                      height: { xs: '260px', sm: '300px' },
+                      width: { xs: '230px', sm: '270px', md: '300px' },
+                      height: { xs: '230px', sm: '270px', md: '300px' },
                       borderRadius: '50%',
-                      margin: '0 auto 24px auto',
+                      margin: '0 auto 20px auto',
                       border: `4px solid ${
                         faceStatus === 'success' ? '#10b981' : 
                         faceStatus === 'failed' ? '#ef4444' : 
@@ -532,37 +532,6 @@ const EmployeeAttendance = () => {
                         />
                       )}
 
-                      {/* Glowing Biometric HUD Telemetry Overlays */}
-                      {cameraReady && !imgSrc && (
-                        <>
-                          {/* Top-Left: Liveness Status */}
-                          <Box sx={{ position: 'absolute', top: 24, left: 32, zIndex: 15, display: 'flex', alignItems: 'center', gap: 0.6 }}>
-                            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#10b981', animation: 'pulse 1.5s infinite' }} />
-                            <Typography sx={{ color: '#10b981', fontSize: '7.5px', fontWeight: 900, fontFamily: 'Outfit', letterSpacing: '0.5px' }}>
-                              LIVENESS: ACTIVE
-                            </Typography>
-                          </Box>
-
-                          {/* Top-Right: Encryption Mode */}
-                          <Box sx={{ position: 'absolute', top: 24, right: 32, zIndex: 15 }}>
-                            <Typography sx={{ color: '#06b6d4', fontSize: '7.5px', fontWeight: 900, fontFamily: 'Outfit', letterSpacing: '0.5px' }}>
-                              3D ENCRYPTED
-                            </Typography>
-                          </Box>
-
-                          {/* Bottom-Center: Alignment Instructions */}
-                          <Box sx={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 15, bgcolor: 'rgba(15,23,42,0.7)', px: 1.5, py: 0.5, borderRadius: 1.5, border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(4px)' }}>
-                            <Typography sx={{ color: '#fff', fontSize: '8px', fontWeight: 800, fontFamily: 'Outfit', letterSpacing: '0.8px', whiteSpace: 'nowrap' }}>
-                              ALIGN FACE IN PORTAL
-                            </Typography>
-                          </Box>
-                        </>
-                      )}
-
-
-
-
-
                       {/* Rotating futuristic HUD ring when scanning */}
                       {faceStatus === 'scanning' && (
                         <Box sx={{
@@ -610,6 +579,73 @@ const EmployeeAttendance = () => {
                         </Box>
                       )}
                     </Box>
+
+                    {/* Premium HUD telemetry bar below the scanner */}
+                    {cameraReady && !imgSrc && faceStatus === 'idle' && (
+                      <Box sx={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        gap: 1.2, 
+                        width: '100%', 
+                        mb: 2.5,
+                        px: 1 
+                      }}>
+                        <Box sx={{ 
+                          display: 'flex', 
+                          gap: 1, 
+                          width: '100%', 
+                          justifyContent: 'center',
+                          flexWrap: 'wrap'
+                        }}>
+                          <Box sx={{ 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            gap: 0.8, 
+                            bgcolor: 'rgba(16, 185, 129, 0.06)', 
+                            border: '1px solid rgba(16, 185, 129, 0.15)',
+                            px: 1.2, 
+                            py: 0.5, 
+                            borderRadius: 2,
+                          }}>
+                            <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: '#10b981', animation: 'pulse 1.5s infinite' }} />
+                            <Typography sx={{ color: '#10b981', fontSize: '8.5px', fontWeight: 800, fontFamily: 'Outfit', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                              Liveness: Active
+                            </Typography>
+                          </Box>
+
+                          <Box sx={{ 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            gap: 0.8, 
+                            bgcolor: 'rgba(6, 182, 212, 0.06)', 
+                            border: '1px solid rgba(6, 182, 212, 0.15)',
+                            px: 1.2, 
+                            py: 0.5, 
+                            borderRadius: 2,
+                          }}>
+                            <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: '#06b6d4', animation: 'pulse 1.5s infinite' }} />
+                            <Typography sx={{ color: '#06b6d4', fontSize: '8.5px', fontWeight: 800, fontFamily: 'Outfit', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                              3D Encrypted
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        <Box sx={{ 
+                          bgcolor: '#f8fafc', 
+                          border: '1px solid #e2e8f0', 
+                          borderRadius: 2, 
+                          py: 0.8, 
+                          width: '100%', 
+                          maxWidth: '280px', 
+                          textAlign: 'center',
+                        }}>
+                          <Typography sx={{ color: '#475569', fontSize: '10px', fontWeight: 700, fontFamily: 'Outfit', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                            📸 Align Face in the Portal
+                          </Typography>
+                        </Box>
+                      </Box>
+                    )}
 
                     {/* Integrated Action Button */}
                     {faceStatus === 'failed' ? (
