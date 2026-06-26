@@ -474,7 +474,7 @@ const EmployeeAttendance = () => {
                         color: '#06b6d4',
                         boxShadow: '0 2px 8px rgba(6, 182, 212, 0.15)'
                       }}>
-                        <CheckInIcon sx={{ fontSize: 18 }} />
+                        <FingerprintIcon sx={{ fontSize: 18 }} />
                       </Box>
                       <Box>
                         <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '13.5px', fontFamily: 'Outfit', letterSpacing: '0.3px' }}>
