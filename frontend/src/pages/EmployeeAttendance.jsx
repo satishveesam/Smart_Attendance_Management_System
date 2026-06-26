@@ -439,11 +439,16 @@ const EmployeeAttendance = () => {
           </Alert>
         )}
 
-        <Box sx={{ width: '100%', overflow: 'hidden' }}>
-          <Grid container spacing={3}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', md: 'row' }, 
+          gap: { xs: 2.5, md: 3 }, 
+          width: '100%',
+          alignItems: 'stretch'
+        }}>
           
           {/* CAMERA SCANNER PANEL */}
-          <Grid item xs={12} md={7}>
+          <Box sx={{ flex: { xs: '1 1 100%', md: '0 0 calc(58.333333% - 12px)' }, width: '100%', display: 'flex', flexDirection: 'column' }}>
             {showScanner ? (
               <Card sx={{ 
                 borderRadius: 4, 
@@ -856,10 +861,10 @@ const EmployeeAttendance = () => {
                 )}
               </Card>
             )}
-          </Grid>
+          </Box>
 
           {/* VERIFICATION & DETAILS PANEL */}
-          <Grid item xs={12} md={5}>
+          <Box sx={{ flex: { xs: '1 1 100%', md: '0 0 calc(41.666667% - 12px)' }, width: '100%', display: 'flex', flexDirection: 'column' }}>
             <Card sx={{ borderRadius: 4, border: '1px solid #f1f5f9', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03)', bgcolor: '#fff', height: '100%' }}>
               <CardContent sx={{ p: 3 }}>
                 <Typography sx={{ fontWeight: 'bold', mb: 2, color: '#0f172a', fontSize: '14px', fontFamily: 'Outfit' }}>
@@ -1007,10 +1012,9 @@ const EmployeeAttendance = () => {
                 )}
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
           
-        </Grid>
-      </Box>
+        </Box>
       </Box>
     </EmployeeLayout>
   );
