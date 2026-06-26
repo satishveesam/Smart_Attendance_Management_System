@@ -145,8 +145,8 @@ Ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/smart-attendance-management-system.git
-cd smart-attendance-management-system
+git clone https://github.com/satishveesam/Smart_Attendance_Management_System.git
+cd Smart_Attendance_Management_System
 ```
 
 ---
@@ -295,6 +295,59 @@ All API endpoints are prefixed with `/api`. The full interactive API documentati
 
 ---
 
+## 📷 Screenshots
+
+### 🔑 Authentication & Access Portal
+#### Login Page
+Modern, responsive login interface featuring secure role-based portals.
+![Login Page](screenshots/login.png)
+
+---
+
+### 👤 Employee Portal Experience
+
+#### 1. Employee Dashboard
+Overview of monthly/weekly attendance statistics, real-time KPI indicators, and quick action logs.
+![Employee Dashboard](screenshots/employee_dashboard.png)
+
+#### 2. Biometric Attendance Terminal (Facial Recognition & GPS Geofence)
+Dual-verification scanner using `face-api.js` to match facial features and GPS check-in validated against office coordinates.
+![Biometric Check-In](screenshots/employee_mark_attendance.png)
+
+#### 3. Leave & WFH Center
+Comprehensive dashboard to apply for leaves/WFH, track request histories, and view approval status.
+![Leave and WFH Center](screenshots/employee_leaves.png)
+
+#### 4. Personal Attendance Logs
+Detailed list of historical check-in/out records, complete with precise status (Present, Late, Absent).
+![Employee Attendance History](screenshots/employee_history.png)
+
+---
+
+### 🛡️ Admin Panel Experience
+
+#### 1. Operational Analytics Dashboard
+Provides live metrics (Total Present, Late, WFH, Absent, Leaves) alongside interactive weekly charts.
+![Admin Analytics Dashboard](screenshots/admin_dashboard.png)
+
+#### 2. Employee Directory & Geofence Control
+Full-featured CRUD directory to register new employees, manage roles, and set custom GPS geofences per employee.
+![Admin Employee Management](screenshots/admin_employees.png)
+
+#### 3. Enterprise Attendance Logs & Biometric Audit
+Central audit dashboard showing dates, times, check-in selfie captures, and geofence verification results.
+![Admin Attendance Logs](screenshots/admin_attendance.png)
+
+#### 4. Leave & WFH Request Center
+Admin-facing portal to review, approve, or reject pending employee leave and work-from-home requests.
+![Admin Leave Approvals](screenshots/admin_leaves.png)
+
+#### 5. Reports & Data Exports
+Filtered log generation with direct downloads for professional **PDF** and **Excel** audit sheets.
+![Admin Reports Generator](screenshots/admin_reports.png)
+
+---
+
 ## 🔒 Security
 
 - **JWT Bearer Tokens** — Stateless authentication with 24-hour expiry
@@ -357,10 +410,10 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 ## 👨‍💻 Author
 
-**Satish** — Full Stack Developer
+**Satish Veesam** — Full Stack Developer
 
-- GitHub: [@YOUR_GITHUB_USERNAME](https://github.com/YOUR_GITHUB_USERNAME)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/YOUR_LINKEDIN)
+- GitHub: [@satishveesam](https://github.com/satishveesam)
+- LinkedIn: [Satish Veesam](https://linkedin.com/in/satishveesam)
 
 ---
 
